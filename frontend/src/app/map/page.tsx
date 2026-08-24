@@ -1,8 +1,8 @@
 'use client';
 
 // F.2 — Live Map Page
-// Full-width map (70%) + visible complaints list synced to map bounds (30%)
-// Filter pill row for category/severity/ward
+// Full-width map (68%) + visible complaints list synced to map bounds (32%)
+// Responsive multi-row filter bar with high-contrast active states and instant clear action
 
 import React, { useEffect, useState } from 'react';
 import { MapView } from '@/components/MapView';
@@ -89,19 +89,29 @@ export default function MapPage() {
     set(active.includes(key) ? active.filter((k) => k !== key) : [...active, key]);
   };
 
+  const hasActiveFilters = activeCategories.length > 0 || activeSeverities.length > 0 || activeStatuses.length > 0;
+
+  const resetAllFilters = () => {
+    setActiveCategories([]);
+    setActiveSeverities([]);
+    setActiveStatuses([]);
+  };
+
   return (
     <>
       <div className="flex flex-col h-[calc(100vh-112px)] overflow-hidden">
-        {/* Filter pill row */}
-        <div className="px-6 py-3 bg-cp-bg border-b border-cp-border flex flex-col gap-2 flex-shrink-0">
-          <div className="flex gap-4 flex-wrap items-center">
+        {/* Filter bar container */}
+        <div className="px-6 py-3 bg-cp-bg border-b border-cp-border flex flex-col gap-2.5 flex-shrink-0">
+          {/* Row 1: Categories */}
+          <div className="flex gap-3 flex-wrap items-center">
             <span
               style={{
                 fontSize: 'var(--fs-eyebrow)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 color: 'var(--color-ink-muted)',
-                fontWeight: 600,
+                fontWeight: 700,
+                minWidth: 80,
                 flexShrink: 0,
               }}
             >
@@ -113,44 +123,91 @@ export default function MapPage() {
               onToggle={(k) => toggleFilter(k, activeCategories, setActiveCategories)}
             />
           </div>
-          <div className="flex gap-4 flex-wrap items-center">
-            <span
-              style={{
-                fontSize: 'var(--fs-eyebrow)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: 'var(--color-ink-muted)',
-                fontWeight: 600,
-                flexShrink: 0,
-                minWidth: 56,
-              }}
-            >
-              Status & Severity
-            </span>
-            <FilterPillRow
-              options={STATUS_FILTERS}
-              active={activeStatuses}
-              onToggle={(k) => toggleFilter(k, activeStatuses, setActiveStatuses)}
-            />
-            <FilterPillRow
-              options={SEVERITY_FILTERS}
-              active={activeSeverities}
-              onToggle={(k) => toggleFilter(k, activeSeverities, setActiveSeverities)}
-            />
-            <span className="ml-auto text-xs font-mono text-cp-muted flex-shrink-0 font-medium">
-              {filtered.length} of {safe.length} spots visible
-            </span>
+
+          {/* Row 2: Status, Severity & Clear Button */}
+          <div className="flex gap-4 flex-wrap items-center justify-between">
+            <div className="flex gap-4 flex-wrap items-center">
+              <div className="flex gap-2 items-center">
+                <span
+                  style={{
+                    fontSize: 'var(--fs-eyebrow)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: 'var(--color-ink-muted)',
+                    fontWeight: 700,
+                    minWidth: 80,
+                    flexShrink: 0,
+                  }}
+                >
+                  Status
+                </span>
+                <FilterPillRow
+                  options={STATUS_FILTERS}
+                  active={activeStatuses}
+                  onToggle={(k) => toggleFilter(k, activeStatuses, setActiveStatuses)}
+                />
+              </div>
+
+              <div className="h-4 w-px bg-cp-border-strong hidden sm:block" />
+
+              <div className="flex gap-2 items-center">
+                <span
+                  style={{
+                    fontSize: 'var(--fs-eyebrow)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: 'var(--color-ink-muted)',
+                    fontWeight: 700,
+                    flexShrink: 0,
+                  }}
+                >
+                  Severity
+                </span>
+                <FilterPillRow
+                  options={SEVERITY_FILTERS}
+                  active={activeSeverities}
+                  onToggle={(k) => toggleFilter(k, activeSeverities, setActiveSeverities)}
+                />
+              </div>
+            </div>
+
+            {/* Right side stats + Clear action */}
+            <div className="flex items-center gap-3 ml-auto">
+              {hasActiveFilters && (
+                <button
+                  onClick={resetAllFilters}
+                  type="button"
+                  style={{
+                    height: 28,
+                    padding: '0 10px',
+                    borderRadius: 'var(--radius-pill)',
+                    background: 'var(--color-surface-sunken)',
+                    border: '1px solid var(--color-border-strong)',
+                    color: 'var(--color-terracotta-700)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                >
+                  Clear Filters
+                </button>
+              )}
+              <span className="text-xs font-mono text-cp-ink font-semibold bg-cp-surface px-2.5 py-1 rounded-md border border-cp-border">
+                {filtered.length} of {safe.length} spots
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Map + List split */}
         <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
-          {/* Map */}
+          {/* Map View */}
           <div className="flex-1 lg:basis-[68%] relative h-[320px] lg:h-full">
             <MapView complaints={filtered} onSelectComplaint={setSelected} height="100%" />
           </div>
 
-          {/* Complaint list */}
+          {/* Complaint List */}
           <div className="lg:basis-[32%] flex-1 lg:flex-none overflow-y-auto border-t lg:border-t-0 lg:border-l border-cp-border bg-cp-bg flex flex-col">
             <div className="p-4 border-b border-cp-border bg-cp-surface flex items-center justify-between flex-shrink-0">
               <span
