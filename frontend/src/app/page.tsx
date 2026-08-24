@@ -1,22 +1,27 @@
 'use client';
 
-// F.1 — Overview Page (Executive Municipal Control Room)
+// F.1 — Overview Page (Executive Municipal Control Room) with Bilingual i18n
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
-// Clean, formal government dashboard with official zonal GIS radar and department dispatch metrics
 
 import React, { useEffect, useState } from 'react';
 import { MapView } from '@/components/MapView';
 import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
 import { Complaint, Officer } from '@/types';
 import { useSocket } from '@/components/SocketProvider';
+import { useLanguage } from '@/context/LanguageContext';
 import { MOCK_COMPLAINTS, MOCK_OFFICERS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-function timeAgo(d: string) {
+function timeAgo(d: string, lang: 'en' | 'gu') {
   const diff = Date.now() - new Date(d).getTime();
   const h = Math.floor(diff / 3600000);
   const m = Math.floor(diff / 60000);
+  if (lang === 'gu') {
+    if (h > 24) return `${Math.floor(h / 24)} દિવસ પહેલા`;
+    if (h > 0) return `${h} કલાક પહેલા`;
+    return `${m} મિનિટ પહેલા`;
+  }
   if (h > 24) return `${Math.floor(h / 24)}d ago`;
   if (h > 0) return `${h}h ago`;
   return `${m}m ago`;
@@ -27,6 +32,7 @@ export default function OverviewPage() {
   const [officers, setOfficers]     = useState<Officer[]>(MOCK_OFFICERS);
   const [selected, setSelected]     = useState<Complaint | null>(null);
   const { lastEvent } = useSocket();
+  const { language, t } = useLanguage();
 
   useEffect(() => {
     Promise.all([
@@ -57,7 +63,7 @@ export default function OverviewPage() {
   // Department counts
   const catCounts: Record<string, number> = {};
   safe.forEach((c) => {
-    const k = (c.category || 'other').replace(/_/g, ' ');
+    const k = c.category || 'other';
     catCounts[k] = (catCounts[k] || 0) + 1;
   });
   const catEntries = Object.entries(catCounts).sort(([, a], [, b]) => b - a).slice(0, 6);
@@ -71,24 +77,24 @@ export default function OverviewPage() {
         <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <span>Government of Gujarat</span>
+              <span>{t('vmc.gov_gujarat')}</span>
               <span>•</span>
-              <span>Urban Development & Urban Housing Department</span>
+              <span>{t('vmc.dept_name')}</span>
             </div>
             <h1 className="text-2xl font-bold text-[#0B2545] tracking-tight mt-1">
-              Municipal Operations & Citizen Grievance Dashboard
+              {t('overview.title')}
             </h1>
           </div>
 
           {/* Official Portal Metadata Badge */}
           <div className="flex items-center gap-3">
             <div className="bg-white px-3.5 py-2 rounded border border-slate-200 shadow-2xs text-xs">
-              <span className="text-slate-500">Jurisdiction: </span>
-              <span className="font-bold text-[#0B2545]">Vadodara (10 Administrative Wards)</span>
+              <span className="text-slate-500">{t('vmc.jurisdiction')}: </span>
+              <span className="font-bold text-[#0B2545]">{t('vmc.all_wards')}</span>
             </div>
             <div className="bg-white px-3.5 py-2 rounded border border-slate-200 shadow-2xs text-xs">
-              <span className="text-slate-500">System Status: </span>
-              <span className="font-bold text-emerald-700">● 100% Operational</span>
+              <span className="text-slate-500">{t('vmc.system_status')}: </span>
+              <span className="font-bold text-emerald-700">● {t('vmc.operational')}</span>
             </div>
           </div>
         </div>
@@ -97,49 +103,49 @@ export default function OverviewPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
             <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-              Total Grievances Logged
+              {t('overview.total_logged')}
             </div>
             <div className="text-3xl font-mono font-bold text-[#0B2545]">
               {safe.length}
             </div>
             <div className="text-xs text-slate-500 mt-2">
-              Citizen intake via WhatsApp Cloud API & Web Portal
+              {t('overview.total_logged_sub')}
             </div>
           </div>
 
           <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#1E40AF]">
             <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-              Pending Zonal Dispatch
+              {t('overview.pending_dispatch')}
             </div>
             <div className="text-3xl font-mono font-bold text-[#1E40AF]">
               {pending.length}
             </div>
             <div className="text-xs text-slate-500 mt-2">
-              Awaiting officer assignment and field inspection
+              {t('overview.pending_dispatch_sub')}
             </div>
           </div>
 
           <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#B45309]">
             <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-              Active Work In Progress
+              {t('overview.active_progress')}
             </div>
             <div className="text-3xl font-mono font-bold text-[#B45309]">
               {inProgress.length}
             </div>
             <div className="text-xs text-slate-500 mt-2">
-              Field repair crews and engineering teams dispatched
+              {t('overview.active_progress_sub')}
             </div>
           </div>
 
           <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#15803D]">
             <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-              Closed & Verified Fixes
+              {t('overview.closed_verified')}
             </div>
             <div className="text-3xl font-mono font-bold text-[#15803D]">
               {resolved.length} <span className="text-sm font-normal text-slate-500">({resolutionPct}%)</span>
             </div>
             <div className="text-xs text-slate-500 mt-2">
-              Audited with citizen WhatsApp confirmation
+              {t('overview.closed_verified_sub')}
             </div>
           </div>
         </div>
@@ -152,11 +158,11 @@ export default function OverviewPage() {
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#133E87]" />
                 <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider">
-                  VMC GIS Spatial Incident Map
+                  {t('overview.gis_map_title')}
                 </span>
               </div>
               <span className="text-xs font-mono text-slate-500">
-                18m Spatial Clustering Enabled
+                {t('overview.gis_map_sub')}
               </span>
             </div>
             <div className="flex-1 min-h-[460px] relative">
@@ -170,22 +176,22 @@ export default function OverviewPage() {
             <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
-                  Citizen Closed-Loop Verification Protocol
+                  {t('overview.closed_loop_title')}
                 </span>
                 <span className="text-xs font-mono font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
-                  Mandatory
+                  {t('overview.closed_loop_mandatory')}
                 </span>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed mb-3">
-                Per VMC Citizen Charter guidelines, no grievance is permanently closed until the reporting citizen confirms the repair quality via WhatsApp Quick-Reply prompt.
+                {t('overview.closed_loop_desc')}
               </p>
               <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100 text-xs">
                 <div>
-                  <span className="text-slate-500 block">Verification Rate</span>
+                  <span className="text-slate-500 block">{t('overview.verification_rate')}</span>
                   <span className="font-mono font-bold text-lg text-emerald-800">94.2%</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block">Auto-Reopen on 'No'</span>
+                  <span className="text-slate-500 block">{t('overview.auto_reopen')}</span>
                   <span className="font-mono font-bold text-lg text-[#B91C1C]">100% SLA</span>
                 </div>
               </div>
@@ -195,17 +201,18 @@ export default function OverviewPage() {
             <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs flex-1">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
-                  Departmental Workload Distribution
+                  {t('overview.dept_dist_title')}
                 </span>
-                <span className="text-[11px] font-mono text-slate-500">Active Tickets</span>
+                <span className="text-[11px] font-mono text-slate-500">{t('overview.active_tickets')}</span>
               </div>
               <div className="space-y-2.5">
                 {catEntries.map(([cat, count]) => {
                   const pct = Math.round((count / safe.length) * 100);
+                  const catLabel = t(`cat.${cat}`, cat.replace(/_/g, ' '));
                   return (
                     <div key={cat} className="space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span className="font-medium text-slate-700 capitalize">{cat}</span>
+                        <span className="font-medium text-slate-700 capitalize">{catLabel}</span>
                         <span className="font-mono font-bold text-slate-900">{count} ({pct}%)</span>
                       </div>
                       <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
@@ -228,27 +235,33 @@ export default function OverviewPage() {
           <div className="lg:col-span-6 bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-[#B91C1C]">⚠️ High-Priority Municipal Alert</span>
+                <span className="text-sm font-bold text-[#B91C1C]">{t('overview.high_priority_alert')}</span>
               </div>
               <span className="text-xs font-mono bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded">
-                Chronic Spot #103
+                {t('overview.chronic_spot')}
               </span>
             </div>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-500">Location:</span>
-                <span className="font-bold text-slate-900">Muktanand Circle • Ward 4 (Karelibaug)</span>
+                <span className="text-slate-500">{t('overview.location')}</span>
+                <span className="font-bold text-slate-900">
+                  {language === 'gu' ? 'મુક્તાનંદ સર્કલ • વોર્ડ ૪ (કારેલીબાગ)' : 'Muktanand Circle • Ward 4 (Karelibaug)'}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Defect Category:</span>
-                <span className="font-bold text-slate-900">Open Manhole & Storm Drain Collapse</span>
+                <span className="text-slate-500">{t('overview.defect_category')}</span>
+                <span className="font-bold text-slate-900">
+                  {language === 'gu' ? 'ખુલ્લી ગટર અને સ્ટ્રોમ ડ્રેનેજ નુકસાન' : 'Open Manhole & Storm Drain Collapse'}
+                </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Failure Recurrence:</span>
-                <span className="font-bold text-red-700">Reported 4× in 8 months (Structural Defect)</span>
+                <span className="text-slate-500">{t('overview.failure_recurrence')}</span>
+                <span className="font-bold text-red-700">
+                  {language === 'gu' ? '૮ મહિનામાં ૪ વખત પુનરાવર્તન (માળખાકીય ખામી)' : 'Reported 4× in 8 months (Structural Defect)'}
+                </span>
               </div>
               <div className="p-3 bg-slate-50 rounded border border-slate-200 mt-2 text-slate-700 leading-relaxed">
-                <strong>Executive Engineering Note:</strong> Sub-base erosion detected. Temporary asphalt patch insufficient. Requires capital structural reinforcement by Drainage & Sewerage Department.
+                <strong>{t('overview.exec_note')}</strong>
               </div>
             </div>
           </div>
@@ -257,38 +270,45 @@ export default function OverviewPage() {
           <div className="lg:col-span-6 bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
-                Recent Inbound Citizen Grievances
+                {t('overview.recent_inbound')}
               </span>
-              <span className="text-xs font-mono text-emerald-700 font-bold">Live Stream</span>
+              <span className="text-xs font-mono text-emerald-700 font-bold">{t('overview.live_stream')}</span>
             </div>
             <div className="divide-y divide-slate-100">
-              {safe.slice(0, 4).map((c) => (
-                <div
-                  key={c.id}
-                  onClick={() => setSelected(c)}
-                  className="py-2 flex items-center justify-between hover:bg-slate-50 cursor-pointer px-2 rounded transition-colors text-xs"
-                >
-                  <div className="space-y-0.5">
-                    <div className="font-bold text-slate-900 capitalize">
-                      {(c.category || '').replace(/_/g, ' ')} <span className="font-mono text-slate-500 font-normal">#{c.id}</span>
-                    </div>
-                    <div className="text-slate-500 text-[11px]">
-                      {c.ward_name || `Ward ${c.ward_id}`} • {timeAgo(c.created_at)}
-                    </div>
-                  </div>
-                  <span
-                    className={`px-2 py-0.5 rounded text-[11px] font-bold font-mono ${
-                      c.status === 'Resolved'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : c.status === 'In Progress'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}
+              {safe.slice(0, 4).map((c) => {
+                const catLabel = t(`cat.${c.category}`, (c.category || '').replace(/_/g, ' '));
+                const statusKey = (c.status || '').toLowerCase().replace(/ /g, '_');
+                const statusLabel = t(`status.${statusKey}`, c.status);
+                const wardLabel = t(`ward.${c.ward_id}`, c.ward_name || `Ward ${c.ward_id}`);
+
+                return (
+                  <div
+                    key={c.id}
+                    onClick={() => setSelected(c)}
+                    className="py-2 flex items-center justify-between hover:bg-slate-50 cursor-pointer px-2 rounded transition-colors text-xs"
                   >
-                    {c.status}
-                  </span>
-                </div>
-              ))}
+                    <div className="space-y-0.5">
+                      <div className="font-bold text-slate-900 capitalize">
+                        {catLabel} <span className="font-mono text-slate-500 font-normal">#{c.id}</span>
+                      </div>
+                      <div className="text-slate-500 text-[11px]">
+                        {wardLabel} • {timeAgo(c.created_at, language)}
+                      </div>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[11px] font-bold font-mono ${
+                        c.status === 'Resolved'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : c.status === 'In Progress'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}
+                    >
+                      {statusLabel}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

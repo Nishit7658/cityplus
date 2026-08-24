@@ -1,30 +1,31 @@
 'use client';
 
-// F.6 — Officers Page (Official Municipal Personnel Directory)
+// F.6 — Officers Page (Official Municipal Personnel Directory) with Bilingual i18n
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
-// Clean, dignified government directory with department cadres, zonal jurisdictions, and work order metrics
 
 import React, { useEffect, useState } from 'react';
 import { Officer } from '@/types';
+import { useLanguage } from '@/context/LanguageContext';
 import { MOCK_OFFICERS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-const DEPARTMENTS = [
-  'All Departments',
-  'Road & Building Dept',
-  'Drainage & Sewerage',
-  'Solid Waste Management',
-  'Electrical & Lighting',
-  'Water Supply Department',
-  'Health & Sanitation',
-];
-
 export default function OfficersPage() {
   const [officers, setOfficers] = useState<Officer[]>(MOCK_OFFICERS);
-  const [selectedDept, setSelectedDept] = useState('All Departments');
+  const [selectedDept, setSelectedDept] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const { language, t } = useLanguage();
+
+  const DEPARTMENTS = [
+    { key: 'all', label: t('dept.all') },
+    { key: 'Road', label: t('dept.road') },
+    { key: 'Drainage', label: t('dept.drainage') },
+    { key: 'Solid Waste', label: t('dept.waste') },
+    { key: 'Electrical', label: t('dept.electric') },
+    { key: 'Water', label: t('dept.water') },
+    { key: 'Health', label: t('dept.health') },
+  ];
 
   useEffect(() => {
     fetch(`${API_URL}/api/officers`)
@@ -40,7 +41,7 @@ export default function OfficersPage() {
   // Filter officers
   const filtered = safe.filter((o) => {
     const matchesDept =
-      selectedDept === 'All Departments' ||
+      selectedDept === 'all' ||
       (o.department || '').toLowerCase().includes(selectedDept.toLowerCase());
     const matchesSearch =
       (o.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -58,31 +59,31 @@ export default function OfficersPage() {
       <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            <span>Vadodara Municipal Corporation</span>
+            <span>{t('vmc.title')}</span>
             <span>•</span>
-            <span>Engineering & Field Cadre Directory</span>
+            <span>{t('officers.title')}</span>
           </div>
           <h1 className="text-2xl font-bold text-[#0B2545] tracking-tight mt-1">
-            Zonal Field Engineers & Departmental Officers
+            {t('officers.title')}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Official roster of designated ward engineers, active municipal work orders, and jurisdiction assignments.
+            {t('officers.desc')}
           </p>
         </div>
 
         {/* Cadre Metrics Summary */}
         <div className="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
           <div className="px-3 py-1 border-r border-slate-200 text-xs">
-            <span className="text-slate-500 block">Total Officers</span>
-            <span className="font-mono font-bold text-[#0B2545] text-base">{safe.length} Cadres</span>
+            <span className="text-slate-500 block">{t('officers.total_officers')}</span>
+            <span className="font-mono font-bold text-[#0B2545] text-base">{safe.length}</span>
           </div>
           <div className="px-3 py-1 border-r border-slate-200 text-xs">
-            <span className="text-slate-500 block">Active Work Orders</span>
-            <span className="font-mono font-bold text-[#B45309] text-base">{totalActive} Tasks</span>
+            <span className="text-slate-500 block">{t('officers.active_orders')}</span>
+            <span className="font-mono font-bold text-[#B45309] text-base">{totalActive}</span>
           </div>
           <div className="px-3 py-1 text-xs">
-            <span className="text-slate-500 block">Total Resolved</span>
-            <span className="font-mono font-bold text-[#15803D] text-base">{totalResolved} Fixed</span>
+            <span className="text-slate-500 block">{t('officers.total_resolved')}</span>
+            <span className="font-mono font-bold text-[#15803D] text-base">{totalResolved}</span>
           </div>
         </div>
       </div>
@@ -92,18 +93,18 @@ export default function OfficersPage() {
         {/* Department Filter Buttons */}
         <div className="flex gap-1.5 flex-wrap">
           {DEPARTMENTS.map((dept) => {
-            const isActive = selectedDept === dept;
+            const isActive = selectedDept === dept.key;
             return (
               <button
-                key={dept}
-                onClick={() => setSelectedDept(dept)}
-                className={`px-3 py-1.5 rounded text-xs font-semibold tracking-tight transition-colors ${
+                key={dept.key}
+                onClick={() => setSelectedDept(dept.key)}
+                className={`px-3 py-1.5 rounded text-xs font-semibold tracking-tight transition-colors cursor-pointer ${
                   isActive
                     ? 'bg-[#0B2545] text-white shadow-2xs'
                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
-                {dept}
+                {dept.label}
               </button>
             );
           })}
@@ -113,7 +114,7 @@ export default function OfficersPage() {
         <div className="flex items-center gap-3 shrink-0">
           <input
             type="text"
-            placeholder="Search by officer, ward, dept..."
+            placeholder={t('officers.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-8 px-3 text-xs rounded border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#133E87] w-64"
@@ -122,19 +123,19 @@ export default function OfficersPage() {
           <div className="flex items-center bg-slate-100 p-0.5 rounded border border-slate-300">
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded ${
+              className={`px-2.5 py-1 text-xs font-semibold rounded cursor-pointer ${
                 viewMode === 'grid' ? 'bg-white text-[#0B2545] shadow-2xs' : 'text-slate-600'
               }`}
             >
-              Cards
+              {t('officers.cards_view')}
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded ${
+              className={`px-2.5 py-1 text-xs font-semibold rounded cursor-pointer ${
                 viewMode === 'table' ? 'bg-white text-[#0B2545] shadow-2xs' : 'text-slate-600'
               }`}
             >
-              Table
+              {t('officers.table_view')}
             </button>
           </div>
         </div>
@@ -146,6 +147,7 @@ export default function OfficersPage() {
           {filtered.map((officer) => {
             const activeCount = officer.active_complaints || 0;
             const resolvedCount = officer.resolved_complaints || 0;
+            const wardLabel = t(`ward.${officer.ward_id}`, officer.ward_name || `Ward ${officer.ward_id}`);
 
             return (
               <div
@@ -159,7 +161,7 @@ export default function OfficersPage() {
                       VMC-CADRE-0{officer.id}
                     </span>
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                      Executive Engineer
+                      {language === 'gu' ? 'કાર્યપાલક ઇજનેર' : 'Executive Engineer'}
                     </span>
                   </div>
 
@@ -185,11 +187,11 @@ export default function OfficersPage() {
                   {/* Official Jurisdiction */}
                   <div className="bg-slate-50 p-2.5 rounded border border-slate-200 mb-4 space-y-1.5 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Assigned Ward:</span>
-                      <span className="font-bold text-slate-900">{officer.ward_name || `Ward ${officer.ward_id}`}</span>
+                      <span className="text-slate-500">{t('officers.assigned_ward')}</span>
+                      <span className="font-bold text-slate-900">{wardLabel}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Official Contact:</span>
+                      <span className="text-slate-500">{t('officers.official_contact')}</span>
                       <span className="font-mono font-semibold text-slate-800">{officer.phone || '+91 98250 12345'}</span>
                     </div>
                   </div>
@@ -197,11 +199,11 @@ export default function OfficersPage() {
                   {/* Work Order Stats */}
                   <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
                     <div className="p-2 bg-slate-50 rounded text-center">
-                      <span className="text-slate-500 block text-[11px]">Active Tasks</span>
+                      <span className="text-slate-500 block text-[11px]">{t('officers.active_tasks')}</span>
                       <span className="font-mono font-bold text-[#B45309] text-sm">{activeCount}</span>
                     </div>
                     <div className="p-2 bg-slate-50 rounded text-center">
-                      <span className="text-slate-500 block text-[11px]">Total Cleared</span>
+                      <span className="text-slate-500 block text-[11px]">{t('officers.total_cleared')}</span>
                       <span className="font-mono font-bold text-[#15803D] text-sm">{resolvedCount}</span>
                     </div>
                   </div>
@@ -209,12 +211,14 @@ export default function OfficersPage() {
 
                 {/* Dispatch Trigger */}
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-mono">Status: Active</span>
+                  <span className="text-slate-400 font-mono">
+                    {language === 'gu' ? 'સ્થિતિ: સક્રિય' : 'Status: Active'}
+                  </span>
                   <a
                     href={`tel:${officer.phone}`}
                     className="px-3 py-1 bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] font-semibold rounded hover:bg-[#DBEAFE] transition-colors"
                   >
-                    Direct Contact
+                    {t('officers.direct_contact')}
                   </a>
                 </div>
               </div>
@@ -227,13 +231,13 @@ export default function OfficersPage() {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
               <tr>
-                <th className="px-6 py-3.5">Cadre ID & Name</th>
-                <th className="px-4 py-3.5">Department</th>
-                <th className="px-4 py-3.5">Assigned Jurisdiction</th>
-                <th className="px-4 py-3.5">Active Workload</th>
-                <th className="px-4 py-3.5">Total Resolved</th>
-                <th className="px-4 py-3.5">Official Contact</th>
-                <th className="px-6 py-3.5 text-right">Action</th>
+                <th className="px-6 py-3.5">{language === 'gu' ? 'કેડર ID અને નામ' : 'Cadre ID & Name'}</th>
+                <th className="px-4 py-3.5">{language === 'gu' ? 'વિભાગ' : 'Department'}</th>
+                <th className="px-4 py-3.5">{language === 'gu' ? 'સોંપાયેલ અધિકારક્ષેત્ર' : 'Assigned Jurisdiction'}</th>
+                <th className="px-4 py-3.5">{t('officers.active_tasks')}</th>
+                <th className="px-4 py-3.5">{t('officers.total_cleared')}</th>
+                <th className="px-4 py-3.5">{t('officers.official_contact')}</th>
+                <th className="px-6 py-3.5 text-right">{t('queue.th_action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -246,14 +250,14 @@ export default function OfficersPage() {
                   <td className="px-4 py-3.5 font-medium text-slate-700">{officer.department}</td>
                   <td className="px-4 py-3.5">
                     <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-800 font-semibold">
-                      {officer.ward_name || `Ward ${officer.ward_id}`}
+                      {t(`ward.${officer.ward_id}`, officer.ward_name || `Ward ${officer.ward_id}`)}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 font-mono font-bold text-[#B45309]">
-                    {officer.active_complaints || 0} tasks
+                    {officer.active_complaints || 0}
                   </td>
                   <td className="px-4 py-3.5 font-mono font-bold text-[#15803D]">
-                    {officer.resolved_complaints || 0} cleared
+                    {officer.resolved_complaints || 0}
                   </td>
                   <td className="px-4 py-3.5 font-mono text-slate-600">
                     {officer.phone || '+91 98250 12345'}
@@ -263,7 +267,7 @@ export default function OfficersPage() {
                       href={`tel:${officer.phone}`}
                       className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded transition-colors"
                     >
-                      Contact
+                      {t('officers.direct_contact')}
                     </a>
                   </td>
                 </tr>

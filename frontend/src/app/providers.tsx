@@ -2,7 +2,12 @@
 
 import React from 'react';
 import { SocketProvider } from '@/components/SocketProvider';
+import { LanguageProvider } from '@/context/LanguageContext';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  return <SocketProvider>{children}</SocketProvider>;
+  return (
+    <LanguageProvider>
+      <SocketProvider>{children}</SocketProvider>
+    </LanguageProvider>
+  );
 }

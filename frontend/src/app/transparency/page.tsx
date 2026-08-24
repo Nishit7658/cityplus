@@ -1,40 +1,41 @@
 'use client';
 
-// F.7 — Transparency Page (Official Municipal Citizen Charter & Audit Record)
+// F.7 — Transparency Page (Official Municipal Citizen Charter & Audit Record) with Bilingual i18n
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
-// Clean, dignified government public audit terminal and 10-ward SLA compliance ledger
 
 import React, { useEffect, useState } from 'react';
 import { TransparencyStats } from '@/types';
+import { useLanguage } from '@/context/LanguageContext';
 import { MOCK_TRANSPARENCY } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-const WORKFLOW_STEPS = [
-  {
-    step: 'STAGE 1',
-    title: 'Citizen Grievance Intake',
-    desc: 'Citizens report civic defects via official VMC WhatsApp Helpline or web portal with photos and GPS geo-location.',
-  },
-  {
-    step: 'STAGE 2',
-    title: 'Spatial De-duplication',
-    desc: 'PostGIS spatial engine automatically clusters multi-citizen reports within 18m into a consolidated work order.',
-  },
-  {
-    step: 'STAGE 3',
-    title: 'Zonal Officer Dispatch',
-    desc: 'Tickets are dynamically prioritized and routed to designated ward executive engineers with strict turnaround SLAs.',
-  },
-  {
-    step: 'STAGE 4',
-    title: 'Citizen Verification',
-    desc: 'Automated verification message sent to citizen upon completion. Citizen confirms fix quality before final ticket closure.',
-  },
-];
-
 export default function TransparencyPage() {
   const [stats, setStats] = useState<TransparencyStats>(MOCK_TRANSPARENCY);
+  const { language, t } = useLanguage();
+
+  const WORKFLOW_STEPS = [
+    {
+      step: language === 'gu' ? 'તબક્કો ૧' : 'STAGE 1',
+      title: t('transparency.stage1_title'),
+      desc: t('transparency.stage1_desc'),
+    },
+    {
+      step: language === 'gu' ? 'તબક્કો ૨' : 'STAGE 2',
+      title: t('transparency.stage2_title'),
+      desc: t('transparency.stage2_desc'),
+    },
+    {
+      step: language === 'gu' ? 'તબક્કો ૩' : 'STAGE 3',
+      title: t('transparency.stage3_title'),
+      desc: t('transparency.stage3_desc'),
+    },
+    {
+      step: language === 'gu' ? 'તબક્કો ૪' : 'STAGE 4',
+      title: t('transparency.stage4_title'),
+      desc: t('transparency.stage4_desc'),
+    },
+  ];
 
   useEffect(() => {
     fetch(`${API_URL}/api/transparency`)
@@ -56,21 +57,21 @@ export default function TransparencyPage() {
       <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            <span>Vadodara Municipal Corporation</span>
+            <span>{t('vmc.title')}</span>
             <span>•</span>
-            <span>Public Record & Citizen Charter Compliance</span>
+            <span>{t('transparency.title')}</span>
           </div>
           <h1 className="text-2xl font-bold text-[#0B2545] tracking-tight mt-1">
-            Transparency, Civic Performance & Ward Audit
+            {t('transparency.title')}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Real-time public record of civic complaints, resolution turnaround times, and departmental accountability under the Citizen Charter.
+            {t('transparency.desc')}
           </p>
         </div>
 
         <div className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-lg border border-slate-200 shadow-2xs text-xs font-semibold text-slate-700">
-          <span>Official Public Record: </span>
-          <span className="font-mono text-emerald-700">Verified Open Access</span>
+          <span>{language === 'gu' ? 'સત્તાવાર જાહેર રેકોર્ડ: ' : 'Official Public Record: '}</span>
+          <span className="font-mono text-emerald-700">{t('transparency.open_access')}</span>
         </div>
       </div>
 
@@ -78,66 +79,66 @@ export default function TransparencyPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-            Total Intake (All Wards)
+            {language === 'gu' ? 'કુલ નોંધણી (બધા વોર્ડ)' : 'Total Intake (All Wards)'}
           </div>
           <div className="text-3xl font-mono font-bold text-[#0B2545]">
             {safeStats.total_complaints}
           </div>
           <div className="text-xs text-slate-500 mt-2">
-            Complaints logged across all 10 VMC wards
+            {language === 'gu' ? 'તમામ ૧૦ VMC વોર્ડમાં નોંધાયેલ ફરિયાદો' : 'Complaints logged across all 10 VMC wards'}
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#15803D]">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-            Resolved Grievances
+            {language === 'gu' ? 'ઉકેલાયેલ ફરિયાદો' : 'Resolved Grievances'}
           </div>
           <div className="text-3xl font-mono font-bold text-[#15803D]">
             {safeStats.resolved_complaints}
           </div>
           <div className="text-xs text-slate-500 mt-2">
-            Verified by reporting citizens via WhatsApp
+            {language === 'gu' ? 'નાગરિકો દ્વારા WhatsApp પર ચકાસાયેલ' : 'Verified by reporting citizens via WhatsApp'}
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#133E87]">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-            Resolution Efficiency
+            {language === 'gu' ? 'નિવારણ ક્ષમતા' : 'Resolution Efficiency'}
           </div>
           <div className="text-3xl font-mono font-bold text-[#133E87]">
             {resolutionRate}%
           </div>
           <div className="text-xs text-slate-500 mt-2">
-            SLA compliance across municipal departments
+            {language === 'gu' ? 'વિભાગો વચ્ચે SLA પાલન દર' : 'SLA compliance across municipal departments'}
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#B45309]">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-            Average Turnaround Time
+            {language === 'gu' ? 'સરેરાશ નિવારણ સમય' : 'Average Turnaround Time'}
           </div>
           <div className="text-3xl font-mono font-bold text-slate-900">
-            {Math.round(safeStats.avg_resolution_hours)} <span className="text-base font-normal text-slate-500">hours</span>
+            {Math.round(safeStats.avg_resolution_hours)} <span className="text-base font-normal text-slate-500">{language === 'gu' ? 'કલાક' : 'hours'}</span>
           </div>
           <div className="text-xs text-emerald-700 font-semibold mt-2">
-            Target SLA: &lt; 24.0 hours standard
+            {language === 'gu' ? 'લક્ષ્ય SLA: < ૨૪.૦ કલાક પ્રમાણભૂત' : 'Target SLA: < 24.0 hours standard'}
           </div>
         </div>
       </div>
 
-      {/* Official 4-Stage Redressal Protocol (Clean, crisp GovTech cards) */}
+      {/* Official 4-Stage Redressal Protocol */}
       <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-2xs mb-6">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-5">
           <div>
             <h2 className="text-base font-bold text-[#0B2545]">
-              Standard Operating Procedure (SOP) — Citizen Grievance Redressal
+              {t('transparency.sop_title')}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Automated 4-tier lifecycle ensuring spatial accuracy, rapid field dispatch, and citizen-verified closure.
+              {t('transparency.sop_sub')}
             </p>
           </div>
           <span className="text-xs font-mono font-semibold bg-slate-100 text-slate-700 px-2.5 py-1 rounded">
-            VMC Circular 2026/04
+            {t('transparency.circular')}
           </span>
         </div>
 
@@ -159,7 +160,7 @@ export default function TransparencyPage() {
                 </p>
               </div>
               <div className="mt-4 pt-2 border-t border-slate-200 text-[11px] text-slate-400 font-mono">
-                Automated System Check ✓
+                {language === 'gu' ? 'ઓટોમેટેડ સિસ્ટમ ચેક ✓' : 'Automated System Check ✓'}
               </div>
             </div>
           ))}
@@ -171,10 +172,10 @@ export default function TransparencyPage() {
         <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <div>
             <h2 className="text-base font-bold text-[#0B2545]">
-              Ward-Level Resolution Performance Ledger (10 VMC Wards)
+              {t('transparency.ward_ledger_title')}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Audited complaint volume, resolution count, and SLA performance across all administrative zones.
+              {t('transparency.ward_ledger_sub')}
             </p>
           </div>
         </div>
@@ -182,28 +183,29 @@ export default function TransparencyPage() {
         <table className="w-full text-left text-xs">
           <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
             <tr>
-              <th className="px-6 py-3.5">Administrative Ward</th>
-              <th className="px-4 py-3.5">Total Logged</th>
-              <th className="px-4 py-3.5">Resolved Fixed</th>
-              <th className="px-6 py-3.5">Resolution SLA Progress</th>
-              <th className="px-6 py-3.5 text-right">Status Compliance</th>
+              <th className="px-6 py-3.5">{language === 'gu' ? 'વહીવટી વોર્ડ' : 'Administrative Ward'}</th>
+              <th className="px-4 py-3.5">{language === 'gu' ? 'કુલ નોંધાયેલ' : 'Total Logged'}</th>
+              <th className="px-4 py-3.5">{language === 'gu' ? 'ઉકેલાયેલ' : 'Resolved Fixed'}</th>
+              <th className="px-6 py-3.5">{language === 'gu' ? 'SLA પ્રગતિ' : 'Resolution SLA Progress'}</th>
+              <th className="px-6 py-3.5 text-right">{language === 'gu' ? 'સ્થિતિ પાલન' : 'Status Compliance'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {safeStats.wards.map((ward) => {
+            {safeStats.wards.map((ward, idx) => {
               const pct = ward.total > 0 ? Math.round((ward.resolved / ward.total) * 100) : 0;
               const isCompliant = pct >= 75;
+              const wardLabel = t(`ward.${idx + 1}`, ward.ward_name);
 
               return (
                 <tr key={ward.ward_name} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-3.5 font-bold text-slate-900">
-                    {ward.ward_name}
+                    {wardLabel}
                   </td>
                   <td className="px-4 py-3.5 font-mono text-slate-700">
-                    {ward.total} tickets
+                    {ward.total} {language === 'gu' ? 'ફરિયાદો' : 'tickets'}
                   </td>
                   <td className="px-4 py-3.5 font-mono font-bold text-[#15803D]">
-                    {ward.resolved} cleared
+                    {ward.resolved} {language === 'gu' ? 'પૂર્ણ' : 'cleared'}
                   </td>
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-3 max-w-sm">
@@ -228,7 +230,7 @@ export default function TransparencyPage() {
                           : 'bg-amber-100 text-amber-800'
                       }`}
                     >
-                      {isCompliant ? 'SLA Compliant' : 'Under Review'}
+                      {isCompliant ? t('transparency.sla_compliant') : t('transparency.under_review')}
                     </span>
                   </td>
                 </tr>
