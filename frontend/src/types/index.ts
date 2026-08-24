@@ -1,0 +1,65 @@
+// TypeScript interfaces for CityPulse
+
+export interface Complaint {
+  id: number;
+  phone_number?: string;
+  category: string;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  ward_id?: number;
+  ward_name?: string;
+  status: 'Pending' | 'Assigned' | 'In Progress' | 'Resolved';
+  confirmation_count: number;
+  severity_score: number;
+  assigned_officer_id?: number;
+  assigned_officer_name?: string;
+  reopened_count: number;
+  is_recurring?: boolean;
+  total_cycles?: number;
+  months_span?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface Ward {
+  id: number;
+  ward_number: number;
+  ward_name: string;
+  population?: number;
+  area_sq_km?: number;
+}
+
+export interface Officer {
+  id: number;
+  name: string;
+  phone?: string;
+  department: string;
+  ward_id?: number;
+  ward_name?: string;
+  active_complaints?: number;
+  resolved_complaints?: number;
+  created_at?: string;
+}
+
+export interface TransparencyStats {
+  total_complaints: number;
+  resolved_complaints: number;
+  pending_complaints: number;
+  avg_resolution_hours: number;
+  wards: {
+    ward_name: string;
+    total: number;
+    resolved: number;
+  }[];
+}
+
+export interface StatusLog {
+  id: number;
+  complaint_id: number;
+  old_status: string;
+  new_status: string;
+  changed_by?: string;
+  officer_name?: string;
+  changed_at: string;
+}
