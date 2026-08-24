@@ -48,7 +48,7 @@ export const TopIdentityStrip: React.FC = () => {
   }, [lastEvent]);
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs flex-shrink-0">
+    <header className="sticky top-0 z-[1100] bg-white border-b border-slate-200 shadow-xs flex-shrink-0">
       {/* Subtle National / State Government Accent Bar */}
       <div className="h-[3px] w-full flex">
         <div className="h-full w-1/3 bg-[#FF9933]" />

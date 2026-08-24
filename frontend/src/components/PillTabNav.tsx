@@ -7,7 +7,6 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { useSocket } from './SocketProvider';
 import { Complaint } from '@/types';
 import { MOCK_COMPLAINTS } from '@/data/mockData';
@@ -136,7 +135,7 @@ export const PillTabNav: React.FC = () => {
   }, [lastEvent]);
 
   return (
-    <nav className="bg-white border-b border-slate-200 sticky top-[67px] z-30 shadow-2xs">
+    <nav className="bg-white border-b border-slate-200 sticky top-[67px] z-[1090] shadow-2xs">
       <div className="max-w-[1520px] mx-auto px-6 h-[48px] flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         {TABS.map((tab) => {
           const isActive = pathname === tab.href;

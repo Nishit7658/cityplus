@@ -80,6 +80,8 @@ export const MapView: React.FC<MapViewProps> = ({
         height: height || '100%',
         borderRadius: 'var(--radius-xl)',
         overflow: 'hidden',
+        isolation: 'isolate',
+        zIndex: 1,
       }}
     >
       <DynamicMap
@@ -96,7 +98,7 @@ export const MapView: React.FC<MapViewProps> = ({
           position: 'absolute',
           bottom: 16,
           right: 16,
-          zIndex: 500,
+          zIndex: 20,
           background: 'rgba(255,255,255,0.95)',
           backdropFilter: 'blur(8px)',
           borderRadius: 'var(--radius-lg)',
@@ -188,7 +190,7 @@ export const MapView: React.FC<MapViewProps> = ({
           position: 'absolute',
           bottom: 16,
           left: 16,
-          zIndex: 500,
+          zIndex: 20,
           background: 'rgba(255,255,255,0.92)',
           backdropFilter: 'blur(8px)',
           borderRadius: 'var(--radius-pill)',

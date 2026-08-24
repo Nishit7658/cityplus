@@ -25,42 +25,15 @@ body {
 }
 
 /* ============================================================
-   Pill Tab Navigation Styles (C.2)
-   Prevents hover/click color clash and disappearing text
+   Leaflet Map Isolation — prevents map elements from leaking above sticky headers
    ============================================================ */
-.pill-tab-item {
-  transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.pill-tab-inactive {
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-ink-muted);
-}
-
-.pill-tab-inactive:hover {
-  background: var(--color-surface-hover);
-  border-color: var(--color-border-strong);
-  color: var(--color-ink);
-  transform: translateY(-1px);
-}
-
-.pill-tab-active {
-  background: var(--color-teal-700) !important;
-  border: 1px solid var(--color-teal-700) !important;
-  color: #FAF7F2 !important;
-}
-
-.pill-tab-active:hover {
-  background: var(--color-teal-900) !important;
-  border-color: var(--color-teal-900) !important;
-  color: #FAF7F2 !important;
-  transform: translateY(-1px);
+.leaflet-container {
+  isolation: isolate;
+  z-index: 1 !important;
 }
 
 /* ============================================================
    D.3 — Pulse Dot Animation (sonar ping)
-   Used ONLY on: live status pill, Critical severity dots, current stepper step
    ============================================================ */
 @keyframes pulse-dot {
   0%   { transform: scale(1); opacity: 0.5; }
@@ -73,52 +46,6 @@ body {
   inset: 0;
   border-radius: 50%;
   animation: pulse-dot 2000ms ease-in-out infinite;
-}
-
-/* ============================================================
-   D.9 — Recurring Alert Stitch Reveal (top-to-bottom bar draw)
-   ============================================================ */
-@keyframes stitch-draw {
-  from { height: 0; }
-  to   { height: 100%; }
-}
-
-.stitch-bar {
-  animation: stitch-draw 400ms var(--ease-standard) forwards;
-}
-
-/* ============================================================
-   C.11 — Skeleton Loading: single diagonal sweep across grid
-   ============================================================ */
-@keyframes skeleton-sweep {
-  0%   { transform: translateX(-100%) skewX(-15deg); }
-  100% { transform: translateX(400%) skewX(-15deg); }
-}
-
-.skeleton-sweep::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(163, 208, 194, 0.18) 50%,
-    transparent 100%
-  );
-  animation: skeleton-sweep 1.8s ease-in-out infinite;
-  pointer-events: none;
-}
-
-/* ============================================================
-   D.1 — New complaint arrival highlight wash
-   ============================================================ */
-@keyframes arrival-wash {
-  0%   { background-color: var(--color-teal-100); }
-  100% { background-color: transparent; }
-}
-
-.complaint-arrival {
-  animation: arrival-wash 1400ms linear forwards;
 }
 
 /* ============================================================
@@ -180,35 +107,15 @@ body {
    Focus ring — accessibility, on every interactive element
    ============================================================ */
 *:focus-visible {
-  outline: 2px solid var(--color-teal-500);
+  outline: 2px solid var(--color-gov-navy-800);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 
 /* ============================================================
-   Scrollbar — subtle, warm-toned
+   Scrollbar — subtle, formal
    ============================================================ */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-ink-faint); }
-
-/* ============================================================
-   Utility classes for design tokens
-   ============================================================ */
-.font-display { font-family: var(--font-display); }
-.font-body    { font-family: var(--font-body); }
-.font-mono    { font-family: var(--font-mono); }
-
-.text-ink        { color: var(--color-ink); }
-.text-ink-muted  { color: var(--color-ink-muted); }
-.text-ink-faint  { color: var(--color-ink-faint); }
-
-.bg-surface      { background: var(--color-surface); }
-.bg-app          { background: var(--color-bg-app); }
-
-/* Edge fade mask for horizontal scroll */
-.edge-fade-right {
-  -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
-  mask-image: linear-gradient(to right, black 80%, transparent 100%);
-}
