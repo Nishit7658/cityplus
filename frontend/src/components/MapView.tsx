@@ -14,6 +14,7 @@ interface MapViewProps {
   center?: [number, number];
   zoom?: number;
   height?: number | string;
+  showHeatmap?: boolean;
 }
 
 const DynamicMap = dynamic(
@@ -64,8 +65,9 @@ export const MapView: React.FC<MapViewProps> = ({
   center,
   zoom,
   height,
+  showHeatmap: initialHeatmap = false,
 }) => {
-  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(initialHeatmap);
   const [showPins, setShowPins] = useState(true);
   const [showWards, setShowWards] = useState(false);
   const safeComplaints = Array.isArray(complaints) ? complaints : [];
@@ -88,7 +90,7 @@ export const MapView: React.FC<MapViewProps> = ({
         showHeatmap={showHeatmap}
       />
 
-      {/* C.7 — Floating control cluster, bottom-right (Pins / Heat / Wards) */}
+      {/* Floating control cluster, bottom-right (Pins / Heat / Wards) */}
       <div
         style={{
           position: 'absolute',
@@ -180,7 +182,7 @@ export const MapView: React.FC<MapViewProps> = ({
         </button>
       </div>
 
-      {/* C.7 — Bottom-left legend chip */}
+      {/* Bottom-left legend chip */}
       <div
         style={{
           position: 'absolute',

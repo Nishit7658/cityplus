@@ -1,68 +1,86 @@
 /* ============================================================
-   CityPulse Design Tokens — Part A of design spec
-   All values are exact per spec. Nothing is hardcoded elsewhere.
+   CityPulse Design Tokens — Civic Command & Control Design System
    ============================================================ */
 
 :root {
   /* ---- Surface & Background ---- */
-  --color-bg-app:        #FAF7F2;
-  --color-bg-app-alt:    #F3EEE4;
+  --color-bg-app:        #F8F6F0;
+  --color-bg-app-alt:    #F1EBE0;
   --color-surface:       #FFFFFF;
-  --color-surface-sunken:#F6F2EA;
-  --color-surface-hover: #FDFBF7;
+  --color-surface-sunken:#F5F0E6;
+  --color-surface-hover: #FCFAF6;
+  --color-surface-tactical: #1A2421;
 
   /* ---- Borders ---- */
-  --color-border:        #E8E2D6;
-  --color-border-strong: #D8CFBD;
+  --color-border:        #E5DDCF;
+  --color-border-strong: #D2C7B3;
+  --color-border-focus:  #0F6B5C;
 
   /* ---- Text ---- */
-  --color-ink:           #22221F;
-  --color-ink-muted:     #6B6659;
-  --color-ink-faint:     #A39D8E;
-  --color-ink-inverse:   #FAF7F2;
+  --color-ink:           #1C1E1D;
+  --color-ink-muted:     #5E605B;
+  --color-ink-faint:     #9A978E;
+  --color-ink-inverse:   #FAFAF7;
 
-  /* ---- Brand / Accent ---- */
-  --color-teal-900:      #0B4A40;
+  /* ---- Brand / Civic Palette ---- */
+  --color-teal-950:      #062D26;
+  --color-teal-900:      #0A4237;
+  --color-teal-800:      #0C5447;
   --color-teal-700:      #0F6B5C;
-  --color-teal-500:      #2E8C7B;
-  --color-teal-200:      #BFE0D6;
-  --color-teal-100:      #E3F1EC;
+  --color-teal-600:      #1A8774;
+  --color-teal-500:      #2A9E8A;
+  --color-teal-200:      #BBE2D7;
+  --color-teal-100:      #E0F2EC;
+  --color-teal-50:       #F0F8F5;
 
-  --color-terracotta-700:#C05B32;
-  --color-terracotta-500:#D97D53;
-  --color-terracotta-100:#F7E3D8;
+  --color-terracotta-800:#9E2B20;
+  --color-terracotta-700:#BD3C2E;
+  --color-terracotta-500:#DB5C4E;
+  --color-terracotta-100:#FAECE9;
+
+  --color-amber-700:     #B87A14;
+  --color-amber-500:     #D9941E;
+  --color-amber-100:     #FDF4E2;
+
+  --color-slate-800:     #1E2C38;
+  --color-slate-700:     #2D4152;
+  --color-slate-100:     #E8EFF5;
 
   /* ---- Severity / Status ---- */
-  --color-severity-low:      #6B9E7A;
-  --color-severity-medium:   #D89A2C;
-  --color-severity-critical: #B33B2E;
-  --color-status-pending:    #5C7A94;
+  --color-severity-low:      #2E8555;
+  --color-severity-medium:   #D9941E;
+  --color-severity-critical: #BD3C2E;
+  --color-status-pending:    #3A6485;
   --color-status-progress:   #C4832E;
-  --color-status-resolved:   #3E8E5B;
+  --color-status-resolved:   #2E8555;
 
-  --color-tint-low:      #EDF3EE;
-  --color-tint-medium:   #FBF1DF;
-  --color-tint-critical: #F8E7E4;
-  --color-tint-pending:  #EAF0F4;
+  --color-tint-low:      #EAF5EE;
+  --color-tint-medium:   #FDF4E2;
+  --color-tint-critical: #FAECE9;
+  --color-tint-pending:  #E8EFF5;
 
-  /* ---- Spacing scale (4px base) ---- */
+  /* ---- Spacing scale ---- */
   --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
   --space-4: 16px;  --space-5: 20px;  --space-6: 24px;
   --space-8: 32px;  --space-10: 40px; --space-12: 48px;
   --space-16: 64px; --space-20: 80px;
 
   /* ---- Radius scale ---- */
-  --radius-sm:   6px;
-  --radius-md:   10px;
-  --radius-lg:   12px;
-  --radius-xl:   16px;
-  --radius-pill: 999px;
+  --radius-xs:  4px;
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  18px;
+  --radius-2xl: 24px;
+  --radius-pill:999px;
 
-  /* ---- Elevation ---- */
+  /* ---- Elevation & Shadows ---- */
   --shadow-none:   none;
-  --shadow-rest:   0 1px 2px rgba(34,34,31,0.03);
-  --shadow-hover:  0 4px 14px rgba(34,34,31,0.06);
-  --shadow-drawer: -8px 0 24px rgba(34,34,31,0.08);
+  --shadow-rest:   0 1px 3px rgba(28,30,29,0.04), 0 1px 2px rgba(28,30,29,0.02);
+  --shadow-card:   0 3px 12px rgba(28,30,29,0.05), 0 1px 3px rgba(28,30,29,0.03);
+  --shadow-hover:  0 8px 24px rgba(28,30,29,0.08), 0 2px 6px rgba(28,30,29,0.04);
+  --shadow-tactical: 0 12px 36px rgba(6,45,38,0.12);
+  --shadow-drawer: -12px 0 32px rgba(28,30,29,0.1);
 
   /* ---- Typography ---- */
   --font-display: 'Fraunces', 'Source Serif 4', Georgia, serif;
@@ -70,8 +88,8 @@
   --font-mono:    'IBM Plex Mono', 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --fs-display-xl: 56px;  --lh-display-xl: 1.05;
-  --fs-display-lg: 40px;  --lh-display-lg: 1.1;
-  --fs-display-md: 28px;  --lh-display-md: 1.2;
+  --fs-display-lg: 38px;  --lh-display-lg: 1.1;
+  --fs-display-md: 26px;  --lh-display-md: 1.2;
   --fs-body-lg:    17px;  --lh-body-lg: 1.55;
   --fs-body-md:    15px;  --lh-body-md: 1.55;
   --fs-body-sm:    13px;  --lh-body-sm: 1.5;

@@ -1,8 +1,7 @@
 'use client';
 
 // F.3 — Complaint Queue Page
-// Card grid / table toggle, sort controls, sticky status summary
-// D.1 — new Socket.IO arrivals animate in with teal highlight wash
+// Civic Command Center — Active Dispatch Workflow & SLA Tracking
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -45,7 +44,7 @@ export default function QueuePage() {
       .catch(() => {});
   }, []);
 
-  // D.1 — new complaint arrival
+  // New complaint arrival
   useEffect(() => {
     if (lastEvent?.type === 'new_complaint') {
       const nc = lastEvent.data as Complaint;
@@ -69,78 +68,54 @@ export default function QueuePage() {
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-        style={{ maxWidth: 1440, margin: '0 auto', padding: '32px 40px' }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-[1480px] mx-auto px-6 py-8"
       >
-        {/* Page header */}
-        <div style={{ marginBottom: 24 }}>
-          <p
-            style={{
-              fontSize: 'var(--fs-eyebrow)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: 'var(--color-ink-muted)',
-              fontWeight: 600,
-              marginBottom: 8,
-            }}
-          >
-            VMC ACTIVE WORKFLOW
-          </p>
-          <h1
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'var(--fs-display-md)',
-              fontWeight: 700,
-              color: 'var(--color-ink)',
-              lineHeight: 1.2,
-              marginBottom: 6,
-            }}
-          >
-            Complaint Task Queue
-          </h1>
-          <div
-            style={{
-              display: 'flex',
-              gap: 24,
-              flexWrap: 'wrap',
-              fontSize: 'var(--fs-body-sm)',
-              color: 'var(--color-ink-muted)',
-            }}
-          >
-            <span>
-              <strong style={{ color: 'var(--color-status-pending)', fontFamily: 'var(--font-mono)' }}>
-                {pending}
-              </strong>{' '}
-              Pending
-            </span>
-            <span>·</span>
-            <span>
-              <strong style={{ color: 'var(--color-status-progress)', fontFamily: 'var(--font-mono)' }}>
-                {assigned}
-              </strong>{' '}
-              Assigned
-            </span>
-            <span>·</span>
-            <span>
-              <strong style={{ color: 'var(--color-status-progress)', fontFamily: 'var(--font-mono)' }}>
-                {inProgress}
-              </strong>{' '}
-              In Progress
-            </span>
-            <span>·</span>
-            <span>
-              <strong style={{ color: 'var(--color-status-resolved)', fontFamily: 'var(--font-mono)' }}>
-                {resolved}
-              </strong>{' '}
-              Resolved
-            </span>
+        {/* Top Header & Queue Telemetry */}
+        <div className="mb-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-cp-border">
+          <div>
+            <div className="flex items-center gap-2.5 mb-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse" />
+              <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
+                OPERATIONAL DISPATCH CONSOLE
+              </span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-cp-ink tracking-tight">
+              Complaint Task Queue
+            </h1>
+            <p className="text-sm text-cp-muted mt-1 max-w-2xl">
+              Live municipal task triage, priority re-scoring, and cross-departmental officer dispatch across Vadodara.
+            </p>
+          </div>
+
+          {/* Status Counts HUD */}
+          <div className="flex items-center gap-2 bg-cp-surface p-2 rounded-xl border border-cp-border shadow-rest flex-wrap">
+            <div className="px-3 py-1 border-r border-cp-border">
+              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Pending</div>
+              <div className="text-lg font-mono font-bold text-slate-700">{pending}</div>
+            </div>
+            <div className="px-3 py-1 border-r border-cp-border">
+              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Assigned</div>
+              <div className="text-lg font-mono font-bold text-sky-800">{assigned}</div>
+            </div>
+            <div className="px-3 py-1 border-r border-cp-border">
+              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">In Action</div>
+              <div className="text-lg font-mono font-bold text-amber-700">{inProgress}</div>
+            </div>
+            <div className="px-3 py-1">
+              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Resolved</div>
+              <div className="text-lg font-mono font-bold text-emerald-700">{resolved}</div>
+            </div>
           </div>
         </div>
 
         {/* Status filter chips */}
-        <div style={{ marginBottom: 24 }}>
+        <div className="mb-6 flex items-center gap-3">
+          <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
+            Filter Status:
+          </span>
           <FilterPillRow
             options={STATUS_FILTERS.map((f) => ({
               ...f,

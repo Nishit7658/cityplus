@@ -1,15 +1,14 @@
 'use client';
 
-// F.5 — Hotspots Page
-// Full-width heatmap (360px) + horizontally scrolling hotspot cards ranked by severity
+// F.5 — Hotspots Page (Spatial Defect & Urban Infrastructure Risk Console)
+// High-Density Thermal Radar + Ranked Infrastructure Risk Intelligence Matrix (Zero generic card clutter)
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapView } from '@/components/MapView';
 import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
-import { ConfirmationAvatarStack } from '@/components/ConfirmationAvatarStack';
-import { CategoryIcon, getCategoryColor, getSeverityColor } from '@/components/CategoryIcon';
 import { Complaint, Officer } from '@/types';
+import { getCategoryColor, getSeverityColor } from '@/components/CategoryIcon';
 import { MOCK_COMPLAINTS, MOCK_OFFICERS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -18,6 +17,8 @@ export default function HotspotsPage() {
   const [complaints, setComplaints] = useState<Complaint[]>(MOCK_COMPLAINTS);
   const [officers, setOfficers]     = useState<Officer[]>(MOCK_OFFICERS);
   const [selected, setSelected]     = useState<Complaint | null>(null);
+  const [filterSeverity, setFilterSeverity] = useState<'all' | 'critical' | 'recurring'>('all');
+  const [sortBy, setSortBy] = useState<'severity' | 'confirmations' | 'cycles'>('severity');
 
   useEffect(() => {
     fetch(`${API_URL}/api/complaints`)
@@ -36,239 +37,239 @@ export default function HotspotsPage() {
 
   const safe = Array.isArray(complaints) ? complaints : MOCK_COMPLAINTS;
 
-  // Build hotspot list: top complaints by severity score
-  const hotspots = [...safe]
-    .sort((a, b) => (b.severity_score || 0) - (a.severity_score || 0))
-    .slice(0, 12);
+  // Filter & sort hotspots
+  const filtered = safe.filter((c) => {
+    if (filterSeverity === 'critical') return (c.severity_score || 0) >= 80;
+    if (filterSeverity === 'recurring') return !!c.is_recurring;
+    return true;
+  });
+
+  const sortedHotspots = [...filtered].sort((a, b) => {
+    if (sortBy === 'confirmations') return (b.confirmation_count || 1) - (a.confirmation_count || 1);
+    if (sortBy === 'cycles') return (b.total_cycles || 1) - (a.total_cycles || 1);
+    return (b.severity_score || 0) - (a.severity_score || 0);
+  });
+
+  const criticalCount = safe.filter((c) => (c.severity_score || 0) >= 80).length;
+  const recurringCount = safe.filter((c) => c.is_recurring).length;
 
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-        style={{ maxWidth: 1440, margin: '0 auto', padding: '32px 40px' }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-[1480px] mx-auto px-6 py-8"
       >
-        {/* Page header */}
-        <div style={{ marginBottom: 24 }}>
-          <p
-            style={{
-              fontSize: 'var(--fs-eyebrow)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: 'var(--color-ink-muted)',
-              fontWeight: 600,
-              marginBottom: 8,
-            }}
-          >
-            CRITICAL DENSITY ANALYSIS
-          </p>
-          <h1
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'var(--fs-display-md)',
-              fontWeight: 700,
-              color: 'var(--color-ink)',
-              lineHeight: 1.2,
-            }}
-          >
-            City Problem Hotspots
-          </h1>
-          <p style={{ fontSize: 'var(--fs-body-sm)', color: 'var(--color-ink-muted)', marginTop: 4 }}>
-            Urban clusters ranked by citizen confirmation density, recurrence rate, and composite risk score
-          </p>
+        {/* Header & Spatial Telemetry Strip */}
+        <div className="mb-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-cp-border">
+          <div>
+            <div className="flex items-center gap-2.5 mb-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping" />
+              <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
+                SPATIAL DEFECT INTELLIGENCE • POSTGIS 18M
+              </span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-cp-ink tracking-tight">
+              Urban Problem Hotspots
+            </h1>
+            <p className="text-sm text-cp-muted mt-1 max-w-2xl">
+              Spatial density analysis ranking infrastructure failure clusters by citizen verification density, recurrence rate, and composite risk index.
+            </p>
+          </div>
+
+          {/* Quick HUD Metrics */}
+          <div className="flex items-center gap-3 bg-cp-surface p-2 rounded-xl border border-cp-border shadow-rest">
+            <div className="px-3.5 py-1 border-r border-cp-border">
+              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Critical Clusters</div>
+              <div className="text-xl font-mono font-bold text-red-700">{criticalCount} High Risk</div>
+            </div>
+            <div className="px-3.5 py-1">
+              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Chronic Recurring</div>
+              <div className="text-xl font-mono font-bold text-amber-800">{recurringCount} Spots</div>
+            </div>
+          </div>
         </div>
 
-        {/* Full-width heatmap */}
-        <div
-          style={{
-            width: '100%',
-            height: 380,
-            borderRadius: 'var(--radius-xl)',
-            overflow: 'hidden',
-            border: '1px solid var(--color-border)',
-            marginBottom: 32,
-            boxShadow: 'var(--shadow-rest)',
-          }}
-        >
-          <MapView complaints={safe} onSelectComplaint={setSelected} height={380} />
+        {/* Hero Thermal Density Map */}
+        <div className="w-full rounded-2xl overflow-hidden border border-cp-border shadow-rest mb-8 bg-cp-surface">
+          <div className="px-5 py-3 border-b border-cp-border bg-gradient-to-r from-cp-surface via-cp-surface to-cp-bg flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+              <span className="text-[11px] font-mono uppercase tracking-wider text-cp-ink font-bold">
+                CITYWIDE DENSITY HEATMAP RADAR
+              </span>
+            </div>
+            <span className="text-xs font-mono text-cp-muted">
+              Interpolated Spatial Density • Zoom to Inspect
+            </span>
+          </div>
+          <div className="h-[400px] w-full relative">
+            <MapView complaints={sortedHotspots} onSelectComplaint={setSelected} height={400} showHeatmap />
+          </div>
         </div>
 
-        {/* Ranked hotspot cards — horizontal scroll */}
-        <div style={{ marginBottom: 8 }}>
-          <p
-            style={{
-              fontSize: 'var(--fs-eyebrow)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: 'var(--color-ink-muted)',
-              fontWeight: 600,
-              marginBottom: 16,
-            }}
-          >
-            Top Ranked Spots — Highest Civic Urgency
-          </p>
-          <div
-            style={{
-              display: 'flex',
-              gap: 16,
-              overflowX: 'auto',
-              paddingBottom: 16,
-              scrollbarWidth: 'none',
-            }}
-          >
-            {hotspots.map((c, i) => {
-              const accentColor = getCategoryColor(c.category);
-              const sevColor = getSeverityColor(c.confirmation_count, c.status);
-              const isCritical = c.confirmation_count >= 8;
+        {/* Ranked Infrastructure Risk Intelligence Matrix (Zero repetitive cards) */}
+        <div>
+          {/* Controls Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div>
+              <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
+                RANKED INFRASTRUCTURE RISK INDEX
+              </span>
+              <h2 className="text-xl font-display font-bold text-cp-ink mt-0.5">
+                Top Chronic Civic Failure Points
+              </h2>
+            </div>
 
-              return (
-                <motion.div
-                  key={c.id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  whileHover={{ y: -4, boxShadow: '0 8px 24px rgba(34,34,31,0.08)' }}
-                  onClick={() => setSelected(c)}
-                  style={{
-                    minWidth: 260,
-                    maxWidth: 280,
-                    background: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: '20px 20px 20px 24px',
-                    boxShadow: 'var(--shadow-rest)',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    flexShrink: 0,
-                    transition: 'box-shadow 200ms cubic-bezier(0.22,1,0.36,1)',
-                  }}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Filter Buttons */}
+              <div className="flex items-center bg-cp-surface p-1 rounded-lg border border-cp-border text-xs font-semibold">
+                <button
+                  onClick={() => setFilterSeverity('all')}
+                  className={`px-3 py-1 rounded-md transition-all ${
+                    filterSeverity === 'all' ? 'bg-teal-700 text-white' : 'text-cp-muted hover:text-cp-ink'
+                  }`}
                 >
-                  {/* Rank badge */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 12,
-                      right: 12,
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      background: i < 3 ? 'var(--color-terracotta-700)' : 'var(--color-surface-sunken)',
-                      color: i < 3 ? '#FAF7F2' : 'var(--color-ink-muted)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      fontFamily: 'var(--font-mono)',
-                    }}
+                  All Spots ({safe.length})
+                </button>
+                <button
+                  onClick={() => setFilterSeverity('critical')}
+                  className={`px-3 py-1 rounded-md transition-all ${
+                    filterSeverity === 'critical' ? 'bg-red-700 text-white' : 'text-cp-muted hover:text-cp-ink'
+                  }`}
+                >
+                  Critical (80+)
+                </button>
+                <button
+                  onClick={() => setFilterSeverity('recurring')}
+                  className={`px-3 py-1 rounded-md transition-all ${
+                    filterSeverity === 'recurring' ? 'bg-amber-700 text-white' : 'text-cp-muted hover:text-cp-ink'
+                  }`}
+                >
+                  Recurring Spots
+                </button>
+              </div>
+
+              {/* Sort By Dropdown */}
+              <div className="flex items-center gap-2 text-xs font-mono text-cp-muted bg-cp-surface px-3 py-1.5 rounded-lg border border-cp-border">
+                <span>Sort by:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-transparent font-bold text-cp-ink focus:outline-none cursor-pointer"
+                >
+                  <option value="severity">Severity Score</option>
+                  <option value="confirmations">Citizen Density</option>
+                  <option value="cycles">Recurrence Cycles</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Tactical Intelligence Leaderboard Matrix */}
+          <div className="bg-cp-surface rounded-2xl border border-cp-border shadow-rest overflow-hidden">
+            <div className="divide-y divide-cp-border">
+              {sortedHotspots.map((c, i) => {
+                const score = c.severity_score || 0;
+                const isCritical = score >= 80;
+                const isMedium = score >= 60 && score < 80;
+                const accentColor = getCategoryColor(c.category);
+
+                return (
+                  <motion.div
+                    key={c.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.03, duration: 0.2 }}
+                    onClick={() => setSelected(c)}
+                    className="p-5 sm:px-7 flex flex-col lg:flex-row lg:items-center justify-between gap-5 hover:bg-cp-surface-hover cursor-pointer transition-all group"
                   >
-                    #{i + 1}
-                  </div>
+                    {/* Rank & Problem Spot Info */}
+                    <div className="flex items-start gap-4 min-w-[320px]">
+                      <div
+                        className={`w-9 h-9 rounded-xl font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-xs ${
+                          i < 3
+                            ? 'bg-red-700 text-white ring-2 ring-red-200'
+                            : isCritical
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-cp-bg text-cp-muted border border-cp-border'
+                        }`}
+                      >
+                        #{i + 1}
+                      </div>
 
-                  {/* Left accent bar */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: 4,
-                      background: isCritical ? 'var(--color-severity-critical)' : accentColor,
-                      borderRadius: '12px 0 0 12px',
-                    }}
-                  />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            style={{ backgroundColor: `${accentColor}15`, color: accentColor, borderColor: `${accentColor}40` }}
+                            className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border"
+                          >
+                            {(c.category || '').replace(/_/g, ' ')}
+                          </span>
+                          <span className="text-xs font-mono text-cp-faint">
+                            #{c.id}
+                          </span>
+                          {c.is_recurring && (
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                              ⚠️ {c.total_cycles || 2}× Recurring
+                            </span>
+                          )}
+                        </div>
 
-                  {/* Category icon */}
-                  <div style={{ marginBottom: 10 }}>
-                    <CategoryIcon category={c.category} size={24} color={accentColor} />
-                  </div>
+                        <h3 className="text-sm font-bold text-cp-ink group-hover:text-teal-800 transition-colors line-clamp-1">
+                          {c.description}
+                        </h3>
 
-                  {/* Title */}
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: 15,
-                      fontWeight: 600,
-                      color: 'var(--color-ink)',
-                      textTransform: 'capitalize',
-                      marginBottom: 4,
-                    }}
-                  >
-                    {(c.category || '').replace(/_/g, ' ')}
-                  </div>
-
-                  {/* Location */}
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: 'var(--color-ink-muted)',
-                      marginBottom: 12,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {c.ward_name || `Ward ${c.ward_id || 1}`}
-                  </div>
-
-                  {/* Priority score bar */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <div
-                      style={{
-                        height: 6,
-                        flex: 1,
-                        background: 'var(--color-surface-sunken)',
-                        borderRadius: 3,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min(100, ((c.severity_score || 0) / 100) * 100)}%` }}
-                        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: i * 0.05 + 0.1 }}
-                        style={{ height: '100%', background: sevColor, borderRadius: 3 }}
-                      />
+                        <div className="text-xs text-cp-muted font-mono mt-1 flex items-center gap-2">
+                          <span>📍 {c.ward_name || `Ward ${c.ward_id || 1}`}</span>
+                          <span>•</span>
+                          <span className="text-cp-faint">{c.latitude?.toFixed(4)}, {c.longitude?.toFixed(4)}</span>
+                        </div>
+                      </div>
                     </div>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontFamily: 'var(--font-mono)',
-                        color: 'var(--color-ink-muted)',
-                        flexShrink: 0,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {c.severity_score || 0}
-                    </span>
-                  </div>
 
-                  {/* Confirmation avatars */}
-                  <ConfirmationAvatarStack count={c.confirmation_count || 1} size={22} />
-
-                  {/* Recurring badge */}
-                  {c.is_recurring && (
-                    <div
-                      style={{
-                        marginTop: 10,
-                        padding: '4px 10px',
-                        borderRadius: 'var(--radius-pill)',
-                        background: 'var(--color-terracotta-100)',
-                        color: 'var(--color-terracotta-700)',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 5,
-                      }}
-                    >
-                      ↻ {c.total_cycles || 2}× in {c.months_span || 6}mo
+                    {/* Urgency Score & Multi-segment Meter */}
+                    <div className="flex-1 max-w-sm">
+                      <div className="flex justify-between text-xs font-mono mb-1.5">
+                        <span className="font-semibold text-cp-muted">Urgency Risk Rating</span>
+                        <span className={`font-bold ${isCritical ? 'text-red-700' : isMedium ? 'text-amber-700' : 'text-emerald-700'}`}>
+                          {score} / 100
+                        </span>
+                      </div>
+                      <div className="h-2.5 w-full bg-cp-bg rounded-full overflow-hidden p-0.5 border border-cp-border">
+                        <div
+                          style={{ width: `${Math.min(100, score)}%` }}
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isCritical ? 'bg-gradient-to-r from-amber-500 to-red-600' : 'bg-gradient-to-r from-teal-600 to-amber-500'
+                          }`}
+                        />
+                      </div>
                     </div>
-                  )}
-                </motion.div>
-              );
-            })}
+
+                    {/* Citizen Density & Actions */}
+                    <div className="flex items-center justify-between lg:justify-end gap-6 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-cp-border">
+                      <div className="text-left lg:text-right">
+                        <div className="text-xs font-mono uppercase text-cp-muted font-semibold">Verification Density</div>
+                        <div className="text-sm font-mono font-bold text-cp-ink flex items-center lg:justify-end gap-1.5 mt-0.5">
+                          <span>👥 {c.confirmation_count || 1} citizens</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelected(c);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-cp-bg group-hover:bg-teal-700 group-hover:text-white border border-cp-border group-hover:border-teal-700 text-xs font-semibold text-cp-ink transition-all shadow-xs"
+                      >
+                        Inspect Spot →
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </motion.div>

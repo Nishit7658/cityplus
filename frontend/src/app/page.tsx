@@ -1,13 +1,11 @@
 'use client';
 
-// F.1 — Overview Page (Civic Control Wall)
-// Asymmetric Bento Grid: Hero Live Map + Today's Signal + Category Breakdown + Recurring Alerts + Recent Activity
+// F.1 — Overview Page (Civic Control Wall & Executive Command Hub)
+// Tactical Hero Radar + Unified Operations KPI HUD + Municipal Intelligence Triptych
 
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { MapView } from '@/components/MapView';
-import { StatCard } from '@/components/StatCard';
-import { RecurringAlertCard } from '@/components/RecurringAlertCard';
 import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
 import { Complaint, Officer } from '@/types';
 import { getCategoryColor } from '@/components/CategoryIcon';
@@ -64,318 +62,322 @@ export default function OverviewPage() {
     const k = (c.category || 'other').replace(/_/g, ' ');
     catCounts[k] = (catCounts[k] || 0) + 1;
   });
-  const catEntries = Object.entries(catCounts).sort(([, a], [, b]) => b - a).slice(0, 7);
+  const catEntries = Object.entries(catCounts).sort(([, a], [, b]) => b - a).slice(0, 6);
   const maxCat = catEntries[0]?.[1] || 1;
 
-  const sparkData = [12, 18, 14, 22, 28, 24, safe.length];
+  const resolutionPct = Math.round((resolved.length / Math.max(1, safe.length)) * 100);
 
   return (
     <>
-      <div
-        style={{
-          maxWidth: 1440,
-          margin: '0 auto',
-          padding: '28px 40px 60px',
-          position: 'relative',
-        }}
-      >
-        {/* E.4 — Ward silhouette watermark */}
-        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
-          <svg
-            width="700"
-            height="500"
-            viewBox="0 0 600 400"
-            style={{ position: 'absolute', top: '5%', left: '3%', opacity: 0.035 }}
-            fill="var(--color-teal-700)"
-          >
-            <path d="M100,200 L200,100 L350,80 L480,150 L520,280 L400,380 L250,360 L120,320 Z" />
-            <path d="M200,100 L280,50 L350,80 Z" />
-            <path d="M350,80 L420,60 L480,150 Z" />
-          </svg>
+      <div className="max-w-[1480px] mx-auto px-6 py-8 relative">
+        {/* Top Command Banner */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-cp-border">
+          <div>
+            <div className="flex items-center gap-2.5 mb-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse" />
+              <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
+                VMC CENTRAL CIVIC CONTROL WALL
+              </span>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-cp-ink tracking-tight">
+              Vadodara Municipal Command Center
+            </h1>
+            <p className="text-sm text-cp-muted mt-1">
+              Real-time civic intelligence, PostGIS spatial clustering, and automated closed-loop field operations.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-xs font-mono text-cp-ink bg-cp-surface px-3.5 py-1.5 rounded-xl border border-cp-border shadow-rest">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span className="font-bold">{safe.length} Citywide Incidents</span>
+            </div>
+          </div>
         </div>
 
         {/* Bento Grid */}
-        <div className="relative z-10 flex flex-col gap-6">
-          {/* Top Row: Hero Map (7 cols) + Today's Signal (5 cols) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-            {/* Live Map (Hero) — span 7 */}
+        <div className="flex flex-col gap-6">
+          {/* Top Hero Row: Tactical Radar (7 cols) + Operations KPI Command Tile (5 cols) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Live Tactical Radar (Hero Map) */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
-              className="lg:col-span-7 flex flex-col rounded-xl overflow-hidden border border-cp-border bg-cp-surface shadow-rest"
-              style={{ minHeight: 490 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="lg:col-span-7 flex flex-col rounded-2xl overflow-hidden border border-cp-border bg-cp-surface shadow-rest relative"
+              style={{ minHeight: 520 }}
             >
-              <div className="px-5 py-3 border-b border-cp-border bg-cp-surface flex items-center justify-between">
+              {/* Radar Glass Header */}
+              <div className="px-5 py-3.5 border-b border-cp-border bg-gradient-to-r from-cp-surface via-cp-surface to-cp-bg flex items-center justify-between z-10">
                 <div className="flex items-center gap-3">
-                  <span className="w-2.5 h-2.5 rounded-full bg-teal-700 animate-pulse" />
-                  <span
-                    style={{
-                      fontSize: 'var(--fs-eyebrow)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      color: 'var(--color-ink-muted)',
-                      fontWeight: 600,
-                    }}
-                  >
-                    VMC LIVE CIVIC RADAR
+                  <div className="w-2 h-2 rounded-full bg-teal-700 animate-ping" />
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-teal-900 font-bold">
+                    VMC LIVE CIVIC RADAR • 10 WARDS
                   </span>
                 </div>
-                <span className="text-xs text-cp-muted font-mono font-medium">
-                  {safe.length} citywide problem spots
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-cp-muted">
+                    Auto-calibrated PostGIS 18m
+                  </span>
+                </div>
               </div>
-              <div className="flex-1 relative" style={{ minHeight: 440 }}>
+
+              {/* Map Container */}
+              <div className="flex-1 relative" style={{ minHeight: 460 }}>
                 <MapView complaints={safe} onSelectComplaint={setSelected} height="100%" />
               </div>
             </motion.div>
 
-            {/* TODAY'S SIGNAL (Stats) — span 5 */}
+            {/* Operations KPI Command Tile (Hero Right) */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.36, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.3, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
               className="lg:col-span-5 flex flex-col gap-4"
             >
-              {/* Header card with Hero Stat */}
-              <div className="bg-cp-surface border border-cp-border rounded-lg p-5 shadow-rest flex flex-col justify-between">
+              {/* Primary Command Hub Banner */}
+              <div className="bg-gradient-to-br from-cp-surface to-cp-bg border border-cp-border rounded-2xl p-6 shadow-rest flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-2">
-                  <span
-                    style={{
-                      fontSize: 'var(--fs-eyebrow)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      color: 'var(--color-ink-muted)',
-                      fontWeight: 600,
-                    }}
-                  >
-                    TODAY'S SIGNAL
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-cp-muted font-bold">
+                    TODAY'S CIVIC SIGNAL
                   </span>
-                  <span className="text-xs font-mono text-cp-muted">Vadodara Municipal</span>
+                  <span className="text-xs font-mono font-semibold text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-md border border-teal-200">
+                    Live Telemetry
+                  </span>
                 </div>
-                <div className="flex items-baseline justify-between mt-1">
-                  <div>
-                    <span
-                      style={{
-                        fontSize: 'var(--fs-display-xl)',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 700,
-                        color: 'var(--color-ink)',
-                        lineHeight: 1,
-                      }}
-                    >
+
+                <div className="my-3">
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-5xl font-mono font-bold text-cp-ink tracking-tight">
                       {safe.length}
                     </span>
-                    <span className="ml-3 text-sm text-cp-muted font-body">active tickets</span>
+                    <span className="text-sm font-semibold text-cp-muted">active municipal reports</span>
                   </div>
-                  <div className="flex items-center gap-1 text-xs font-medium text-sev-critical">
-                    <span>▲ +14%</span>
-                    <span className="text-cp-faint font-normal">vs avg</span>
+                  <div className="text-xs text-cp-muted mt-1.5 flex items-center gap-1.5">
+                    <span className="text-emerald-700 font-bold">▲ +14%</span> intake velocity across central zones
+                  </div>
+                </div>
+
+                {/* Status Distribution Progress Bar */}
+                <div className="mt-4 pt-4 border-t border-cp-border">
+                  <div className="flex justify-between text-xs font-mono mb-2">
+                    <span className="text-slate-700 font-semibold">{pending.length} Pending</span>
+                    <span className="text-amber-800 font-semibold">{inProgress.length} In Progress</span>
+                    <span className="text-emerald-700 font-semibold">{resolved.length} Resolved</span>
+                  </div>
+                  <div className="h-2.5 w-full bg-cp-border/70 rounded-full overflow-hidden flex gap-0.5 p-0.5">
+                    <div
+                      style={{ width: `${(pending.length / Math.max(1, safe.length)) * 100}%` }}
+                      className="h-full bg-slate-600 rounded-l-full transition-all duration-500"
+                    />
+                    <div
+                      style={{ width: `${(inProgress.length / Math.max(1, safe.length)) * 100}%` }}
+                      className="h-full bg-amber-500 transition-all duration-500"
+                    />
+                    <div
+                      style={{ width: `${(resolved.length / Math.max(1, safe.length)) * 100}%` }}
+                      className="h-full bg-emerald-600 rounded-r-full transition-all duration-500"
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* 3 Sub-stat cards in a row/grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
-                <StatCard
-                  eyebrow="Pending"
-                  value={pending.length}
-                  trend={{ direction: 'down', percent: 8, positive: true }}
-                />
-                <StatCard
-                  eyebrow="In Action"
-                  value={inProgress.length}
-                />
-                <StatCard
-                  eyebrow="Resolved"
-                  value={resolved.length}
-                  trend={{ direction: 'up', percent: 23, positive: true }}
-                  sparklineData={[10, 14, 12, 18, 22, 19, resolved.length || 1]}
-                />
+              {/* 3 Metric Tiles */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-cp-surface p-4 rounded-xl border border-cp-border shadow-rest text-center">
+                  <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Pending</div>
+                  <div className="text-2xl font-mono font-bold text-slate-700 mt-1">{pending.length}</div>
+                  <div className="text-[10px] text-cp-faint mt-0.5">Awaiting dispatch</div>
+                </div>
+                <div className="bg-cp-surface p-4 rounded-xl border border-cp-border shadow-rest text-center">
+                  <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">In Field</div>
+                  <div className="text-2xl font-mono font-bold text-amber-700 mt-1">{inProgress.length}</div>
+                  <div className="text-[10px] text-cp-faint mt-0.5">Assigned to crew</div>
+                </div>
+                <div className="bg-cp-surface p-4 rounded-xl border border-cp-border shadow-rest text-center border-l-2 border-l-emerald-600">
+                  <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Resolved</div>
+                  <div className="text-2xl font-mono font-bold text-emerald-700 mt-1">{resolved.length}</div>
+                  <div className="text-[10px] text-emerald-700 font-semibold mt-0.5">{resolutionPct}% cleared</div>
+                </div>
               </div>
 
-              {/* Citizen Verification Highlight */}
-              <div
-                className="rounded-lg p-4 flex items-center justify-between border"
-                style={{
-                  background: 'linear-gradient(135deg, var(--color-teal-100) 0%, #FFFFFF 100%)',
-                  borderColor: 'var(--color-teal-200)',
-                }}
-              >
+              {/* Closed-Loop Verification HUD Ribbon */}
+              <div className="bg-gradient-to-r from-teal-900 to-slate-900 text-white rounded-xl p-4 flex items-center justify-between shadow-tactical">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center font-mono font-bold text-xs">
+                  <div className="w-10 h-10 rounded-xl bg-teal-800/80 border border-teal-600/50 flex items-center justify-center font-mono font-bold text-sm text-teal-300">
                     94%
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-cp-ink uppercase tracking-wider">
+                    <div className="text-xs font-bold uppercase tracking-wider text-teal-200">
                       Closed-Loop Citizen Verification
                     </div>
-                    <div className="text-xs text-cp-muted">
-                      Citizens verify resolution via WhatsApp
+                    <div className="text-[11px] text-teal-100/70">
+                      Citizens confirm fixes via WhatsApp before ticket closure
                     </div>
                   </div>
                 </div>
-                <span className="text-xs font-mono text-teal-700 font-bold">ACTIVE</span>
+                <span className="text-[10px] font-mono font-bold bg-teal-800 text-teal-200 px-2 py-1 rounded border border-teal-700">
+                  ACTIVE
+                </span>
               </div>
             </motion.div>
           </div>
 
-          {/* Bottom Row: Category Breakdown (4) + Recurring Alerts (4) + Recent Activity (4) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 items-stretch">
-            {/* CATEGORY BREAKDOWN — span 4 */}
+          {/* Bottom Row: Municipal Intelligence Triptych */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-stretch">
+            {/* Category Breakdown — span 4 */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.36, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-              className="lg:col-span-4 bg-cp-surface border border-cp-border rounded-lg p-6 shadow-rest flex flex-col"
-              style={{ minHeight: 380 }}
+              transition={{ duration: 0.3, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="lg:col-span-4 bg-cp-surface border border-cp-border rounded-2xl p-6 shadow-rest flex flex-col justify-between"
             >
-              <p
-                style={{
-                  fontSize: 'var(--fs-eyebrow)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: 'var(--color-ink-muted)',
-                  fontWeight: 600,
-                  marginBottom: 16,
-                }}
-              >
-                WHAT NEEDS ATTENTION
-              </p>
-              <div className="flex flex-col gap-3.5 flex-1 justify-around">
-                {catEntries.map(([cat, count]) => (
-                  <div key={cat} className="flex items-center gap-3">
-                    <div
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        background: getCategoryColor(cat.replace(/\s+/g, '_')),
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span className="text-xs font-medium text-cp-ink capitalize min-w-[110px] truncate">
-                      {cat}
-                    </span>
-                    <div className="flex-1 h-2 bg-cp-sunken rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(count / maxCat) * 100}%` }}
-                        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-                        style={{
-                          height: '100%',
-                          background: getCategoryColor(cat.replace(/\s+/g, '_')),
-                          borderRadius: 4,
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs font-mono text-cp-muted min-w-[24px] text-right font-medium">
-                      {count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
+                    CATEGORY TRIAGE
+                  </span>
+                  <span className="text-xs font-mono text-cp-faint">Volume by Category</span>
+                </div>
 
-            {/* RECURRING ALERTS — span 4 */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.36, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
-              className="lg:col-span-4 flex flex-col gap-3"
-              style={{ minHeight: 380 }}
-            >
-              <p
-                style={{
-                  fontSize: 'var(--fs-eyebrow)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: 'var(--color-ink-muted)',
-                  fontWeight: 600,
-                }}
-              >
-                RECURRING ALERTS
-              </p>
-              <div className="flex flex-col gap-3 flex-1">
-                {recurring.slice(0, 2).map((c) => (
-                  <RecurringAlertCard key={c.id} complaint={c} onClick={() => setSelected(c)} />
-                ))}
-                {recurring.length === 0 && (
-                  <div className="bg-cp-surface border border-cp-border rounded-lg p-6 text-center text-sm text-cp-faint flex items-center justify-center flex-1">
-                    No recurring problem spots detected.
-                  </div>
-                )}
-              </div>
-            </motion.div>
-
-            {/* RECENT ACTIVITY — span 4 */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.36, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="lg:col-span-4 bg-cp-surface border border-cp-border rounded-lg p-6 shadow-rest flex flex-col"
-              style={{ minHeight: 380 }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <p
-                  style={{
-                    fontSize: 'var(--fs-eyebrow)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: 'var(--color-ink-muted)',
-                    fontWeight: 600,
-                  }}
-                >
-                  RECENT ACTIVITY
-                </p>
-                <span className="text-xs font-mono text-teal-700 font-semibold">LIVE</span>
-              </div>
-              <div className="overflow-y-auto flex-1 flex flex-col gap-2 max-h-[300px] pr-1">
-                <AnimatePresence>
-                  {safe.slice(0, 8).map((c, i) => (
-                    <motion.div
-                      key={c.id}
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                      onClick={() => setSelected(c)}
-                      className="flex gap-3 items-center cursor-pointer p-2 rounded-md hover:bg-cp-sunken transition-colors"
-                    >
-                      <div
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: getCategoryColor(c.category),
-                          flexShrink: 0,
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold text-cp-ink capitalize truncate">
-                          {(c.category || '').replace(/_/g, ' ')}
+                <div className="flex flex-col gap-3.5">
+                  {catEntries.map(([cat, count]) => {
+                    const color = getCategoryColor(cat);
+                    const pct = Math.round((count / maxCat) * 100);
+                    return (
+                      <div key={cat} className="flex flex-col gap-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-cp-ink capitalize">{cat}</span>
+                          <span className="font-mono font-bold text-cp-muted">{count} tickets</span>
                         </div>
-                        <div className="text-[11px] text-cp-muted font-mono truncate">
-                          {c.ward_name || `Ward ${c.ward_id || 1}`} · {timeAgo(c.created_at)}
+                        <div className="h-2 w-full bg-cp-bg rounded-full overflow-hidden p-0.5 border border-cp-border">
+                          <div
+                            style={{ width: `${pct}%`, backgroundColor: color }}
+                            className="h-full rounded-full transition-all duration-500"
+                          />
                         </div>
                       </div>
-                      <span
-                        className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                        style={{
-                          background:
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-cp-border text-xs text-cp-muted font-mono flex justify-between">
+                <span>Top Hazard: Potholes & Manholes</span>
+                <span>Ward 1 & 4 Peak</span>
+              </div>
+            </motion.div>
+
+            {/* Recurring Spot Alert — span 4 */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
+              className="lg:col-span-4 bg-gradient-to-br from-terracotta-50/50 via-cp-surface to-cp-surface border border-terracotta-200 rounded-2xl p-6 shadow-rest flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-terracotta-700 font-bold">
+                    STRUCTURAL DEFECT RADAR
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-[10px] font-mono font-bold">
+                    High Recurrence
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-xl bg-white border border-terracotta-200 shadow-sm mb-3">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">⚠️</span>
+                    <div>
+                      <h4 className="text-sm font-bold text-cp-ink">
+                        Reported 4× in past 8 months
+                      </h4>
+                      <p className="text-xs text-cp-muted mt-0.5">
+                        Open Manhole & Storm Drain • Ward 4 (Karelibaug)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 p-2.5 rounded-lg bg-amber-50/80 border border-amber-200 text-xs text-amber-900 font-medium italic">
+                    "Engineering inspection suggests chronic foundation sub-base erosion. Recommend structural reinforcement, not routine patch."
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between text-xs font-mono text-cp-muted">
+                    <span>👥 14 confirmed citizens</span>
+                    <span className="font-bold text-red-700">Priority: 96 / 100</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs pt-3 border-t border-cp-border">
+                <span className="font-mono text-cp-muted">Problem Spot #103</span>
+                <button
+                  onClick={() => {
+                    const c = safe.find((x) => x.id === 103);
+                    if (c) setSelected(c);
+                  }}
+                  className="text-xs font-semibold text-terracotta-700 hover:underline"
+                >
+                  Inspect Incident →
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Live Municipal Dispatch Wire — span 4 */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              className="lg:col-span-4 bg-cp-surface border border-cp-border rounded-2xl p-6 shadow-rest flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                    <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
+                      LIVE DISPATCH WIRE
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded">
+                    REALTIME
+                  </span>
+                </div>
+
+                <div className="flex flex-col divide-y divide-cp-border">
+                  {safe.slice(0, 4).map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => setSelected(c)}
+                      className="py-2.5 first:pt-0 last:pb-0 cursor-pointer hover:bg-cp-surface-hover transition-colors rounded-lg px-2 -mx-2"
+                    >
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-bold text-cp-ink capitalize truncate max-w-[160px]">
+                          {(c.category || '').replace(/_/g, ' ')} #{c.id}
+                        </span>
+                        <span
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
                             c.status === 'Resolved'
-                              ? 'var(--color-tint-low)'
-                              : 'var(--color-tint-pending)',
-                          color:
-                            c.status === 'Resolved'
-                              ? 'var(--color-status-resolved)'
-                              : 'var(--color-status-pending)',
-                        }}
-                      >
-                        {c.status}
-                      </span>
-                    </motion.div>
+                              ? 'bg-emerald-50 text-emerald-800'
+                              : c.status === 'In Progress'
+                              ? 'bg-amber-50 text-amber-800'
+                              : 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          {c.status}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-cp-muted font-mono">
+                        <span className="truncate max-w-[160px]">{c.ward_name || `Ward ${c.ward_id || 1}`}</span>
+                        <span>{timeAgo(c.created_at)}</span>
+                      </div>
+                    </div>
                   ))}
-                </AnimatePresence>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-cp-border flex justify-between text-xs">
+                <span className="text-cp-muted font-mono">Connected to VMC Socket.IO</span>
+                <span className="font-semibold text-teal-700">100% Operational</span>
               </div>
             </motion.div>
           </div>

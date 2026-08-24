@@ -1,12 +1,13 @@
 'use client';
 
 // F.3 — Task Queue Table/Grid
-// Card grid view + table toggle, sort controls, sticky status summary
+// Civic Operations Command — Dynamic Task Queue Table & Interactive Grid
+// Multi-segment priority meters + Forensic status transitions + Instant Dispatch trigger
 
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Complaint } from '@/types';
-import { ComplaintCard } from './ComplaintCard';
+import { getCategoryColor } from './CategoryIcon';
 
 interface TaskQueueTableProps {
   complaints: Complaint[];
@@ -17,10 +18,10 @@ interface TaskQueueTableProps {
 type SortKey = 'priority' | 'newest' | 'confirmed' | 'oldest';
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: 'priority', label: 'Priority Score ▾' },
-  { key: 'newest',   label: 'Newest' },
-  { key: 'confirmed',label: 'Most Confirmed' },
-  { key: 'oldest',   label: 'Oldest' },
+  { key: 'priority', label: '⚡ Priority Score ▾' },
+  { key: 'newest',   label: '🕒 Newest First' },
+  { key: 'confirmed',label: '👥 Most Confirmed' },
+  { key: 'oldest',   label: '⏳ Longest Pending' },
 ];
 
 function sortComplaints(complaints: Complaint[], key: SortKey): Complaint[] {
@@ -37,145 +38,267 @@ function sortComplaints(complaints: Complaint[], key: SortKey): Complaint[] {
 export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({ complaints, onSelect, newIds = [] }) => {
   const safe = Array.isArray(complaints) ? complaints : [];
   const [sort, setSort] = useState<SortKey>('priority');
-  const [view, setView] = useState<'grid' | 'table'>('grid');
-
-  const pending    = safe.filter(c => c.status === 'Pending').length;
-  const assigned   = safe.filter(c => c.status === 'Assigned').length;
-  const inProgress = safe.filter(c => c.status === 'In Progress').length;
-  const resolved   = safe.filter(c => c.status === 'Resolved').length;
+  const [view, setView] = useState<'table' | 'grid'>('table');
 
   const sorted = sortComplaints(safe, sort);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-      {/* Sort controls + view toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        {SORT_OPTIONS.map(opt => (
+    <div className="flex flex-col gap-4">
+      {/* Control Bar: Sort & View Toggle */}
+      <div className="flex items-center justify-between gap-4 flex-wrap pb-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-mono text-cp-muted uppercase font-bold mr-1">Sort:</span>
+          {SORT_OPTIONS.map((opt) => {
+            const isActive = sort === opt.key;
+            return (
+              <button
+                key={opt.key}
+                onClick={() => setSort(opt.key)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+                  isActive
+                    ? 'bg-teal-800 text-white shadow-xs'
+                    : 'bg-cp-surface text-cp-muted border border-cp-border hover:bg-cp-surface-hover hover:text-cp-ink'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* View Switcher */}
+        <div className="flex items-center bg-cp-surface p-1 rounded-lg border border-cp-border">
           <button
-            key={opt.key}
-            onClick={() => setSort(opt.key)}
-            style={{
-              height: 36, padding: '0 14px',
-              borderRadius: 'var(--radius-pill)',
-              border: sort === opt.key ? 'none' : '1px solid var(--color-border)',
-              background: sort === opt.key ? 'var(--color-teal-100)' : 'transparent',
-              color: sort === opt.key ? 'var(--color-teal-900)' : 'var(--color-ink-muted)',
-              cursor: 'pointer',
-              fontSize: 'var(--fs-body-sm)', fontWeight: 500,
-              fontFamily: 'var(--font-body)',
-              whiteSpace: 'nowrap',
-            }}
+            onClick={() => setView('table')}
+            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+              view === 'table' ? 'bg-teal-700 text-white shadow-xs' : 'text-cp-muted hover:text-cp-ink'
+            }`}
           >
-            {opt.label}
+            Table View
           </button>
-        ))}
-        <div style={{ flex: 1 }} />
-        {/* View toggle */}
-        {(['grid', 'table'] as const).map(v => (
           <button
-            key={v}
-            onClick={() => setView(v)}
-            title={v === 'grid' ? 'Card grid' : 'Table view'}
-            style={{
-              width: 36, height: 36,
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--color-border)',
-              background: view === v ? 'var(--color-teal-100)' : 'transparent',
-              color: view === v ? 'var(--color-teal-900)' : 'var(--color-ink-muted)',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
+            onClick={() => setView('grid')}
+            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+              view === 'grid' ? 'bg-teal-700 text-white shadow-xs' : 'text-cp-muted hover:text-cp-ink'
+            }`}
           >
-            {v === 'grid'
-              ? <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="0" y="0" width="6" height="6" rx="1"/><rect x="8" y="0" width="6" height="6" rx="1"/><rect x="0" y="8" width="6" height="6" rx="1"/><rect x="8" y="8" width="6" height="6" rx="1"/></svg>
-              : <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="0" y1="2" x2="14" y2="2"/><line x1="0" y1="7" x2="14" y2="7"/><line x1="0" y1="12" x2="14" y2="12"/></svg>
-            }
+            Tactical Cards
           </button>
-        ))}
+        </div>
       </div>
 
-      {/* Sticky status summary pill row */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
-        {[
-          { label: 'Pending', count: pending, color: 'var(--color-status-pending)' },
-          { label: 'Assigned', count: assigned, color: 'var(--color-status-progress)' },
-          { label: 'In Progress', count: inProgress, color: 'var(--color-status-progress)' },
-          { label: 'Resolved', count: resolved, color: 'var(--color-status-resolved)' },
-        ].map(s => (
-          <span key={s.label} style={{ fontSize: 'var(--fs-body-sm)', color: 'var(--color-ink-muted)' }}>
-            <span style={{ fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)', fontSize: 15 }}>{s.count}</span>{' '}
-            {s.label}
-            {s !== [pending, assigned, inProgress, resolved].map((c, i) => ({ label: ['Pending','Assigned','In Progress','Resolved'][i], count: c, color: '' }))[3] && (
-              <span style={{ marginLeft: 12, color: 'var(--color-border-strong)' }}>·</span>
-            )}
-          </span>
-        ))}
-      </div>
+      {/* Table View */}
+      {view === 'table' && (
+        <div className="bg-cp-surface rounded-2xl border border-cp-border shadow-rest overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs font-body">
+              <thead className="bg-cp-bg border-b border-cp-border text-[11px] font-mono uppercase tracking-wider text-cp-muted font-bold">
+                <tr>
+                  <th className="px-6 py-4">Ticket & Category</th>
+                  <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4">Priority Urgency</th>
+                  <th className="px-4 py-4">Jurisdiction Ward</th>
+                  <th className="px-4 py-4">Citizen Density</th>
+                  <th className="px-4 py-4">Reported</th>
+                  <th className="px-6 py-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-cp-border">
+                {sorted.map((c) => {
+                  const score = c.severity_score || 0;
+                  const isCritical = score >= 80;
+                  const isMedium = score >= 55 && score < 80;
+                  const accentColor = getCategoryColor(c.category);
+                  const isFresh = newIds.includes(c.id);
 
-      {/* Card grid */}
+                  return (
+                    <tr
+                      key={c.id}
+                      onClick={() => onSelect?.(c)}
+                      className={`hover:bg-cp-surface-hover cursor-pointer transition-all ${
+                        isFresh ? 'bg-teal-50/80 animate-pulse' : ''
+                      }`}
+                    >
+                      {/* ID & Category */}
+                      <td className="px-6 py-4">
+                        <div className="flex items-start gap-3">
+                          <span className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: accentColor }} />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-cp-ink capitalize text-sm">
+                                {(c.category || '').replace(/_/g, ' ')}
+                              </span>
+                              <span className="font-mono text-[11px] text-cp-faint font-semibold">
+                                #{c.id}
+                              </span>
+                              {c.is_recurring && (
+                                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">
+                                  ↻ Recurring ({c.total_cycles}×)
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-cp-muted line-clamp-1 max-w-md mt-0.5 font-normal">
+                              {c.description}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-bold border ${
+                            c.status === 'Resolved'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : c.status === 'In Progress'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : c.status === 'Assigned'
+                              ? 'bg-sky-50 text-sky-800 border-sky-200'
+                              : 'bg-slate-100 text-slate-700 border-slate-200'
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              c.status === 'Resolved'
+                                ? 'bg-emerald-600'
+                                : c.status === 'In Progress'
+                                ? 'bg-amber-500'
+                                : 'bg-slate-500'
+                            }`}
+                          />
+                          {c.status}
+                        </span>
+                      </td>
+
+                      {/* Priority Score Bar */}
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2 max-w-[130px]">
+                          <div className="flex-1 h-2 bg-cp-bg rounded-full overflow-hidden border border-cp-border">
+                            <div
+                              style={{ width: `${Math.min(100, score)}%` }}
+                              className={`h-full rounded-full ${
+                                isCritical ? 'bg-red-600' : isMedium ? 'bg-amber-500' : 'bg-teal-600'
+                              }`}
+                            />
+                          </div>
+                          <span
+                            className={`font-mono font-bold text-xs ${
+                              isCritical ? 'text-red-700' : 'text-cp-ink'
+                            }`}
+                          >
+                            {score}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Ward */}
+                      <td className="px-4 py-4">
+                        <span className="font-semibold text-cp-ink bg-cp-bg px-2.5 py-1 rounded-md border border-cp-border text-[11px]">
+                          📍 {c.ward_name || `Ward ${c.ward_id || 1}`}
+                        </span>
+                      </td>
+
+                      {/* Citizen Confirmations */}
+                      <td className="px-4 py-4">
+                        <span className="font-mono font-bold text-cp-ink text-xs bg-cp-bg px-2 py-0.5 rounded border border-cp-border">
+                          👥 {c.confirmation_count || 1} verified
+                        </span>
+                      </td>
+
+                      {/* Reported Date */}
+                      <td className="px-4 py-4 font-mono text-[11px] text-cp-muted">
+                        {new Date(c.created_at).toLocaleDateString('en-IN', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </td>
+
+                      {/* Action */}
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelect?.(c);
+                          }}
+                          className="px-3 py-1 rounded-md bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold hover:bg-teal-700 hover:text-white transition-all shadow-2xs"
+                        >
+                          Review →
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Grid View */}
       {view === 'grid' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>
-            {sorted.map(c => (
-              <ComplaintCard
-                key={c.id}
-                complaint={c}
-                isNew={newIds.includes(c.id)}
-                onClick={() => onSelect?.(c)}
-              />
-            ))}
+            {sorted.map((c) => {
+              const score = c.severity_score || 0;
+              const isCritical = score >= 80;
+              const accentColor = getCategoryColor(c.category);
+
+              return (
+                <motion.div
+                  key={c.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  onClick={() => onSelect?.(c)}
+                  className="bg-cp-surface p-5 rounded-2xl border border-cp-border shadow-rest hover:shadow-hover hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span
+                        style={{ backgroundColor: `${accentColor}15`, color: accentColor, borderColor: `${accentColor}30` }}
+                        className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded border"
+                      >
+                        {(c.category || '').replace(/_/g, ' ')}
+                      </span>
+                      <span className="font-mono text-xs font-bold text-cp-faint">
+                        #{c.id}
+                      </span>
+                    </div>
+
+                    <h3 className="text-sm font-bold text-cp-ink mb-1.5 line-clamp-2">
+                      {c.description}
+                    </h3>
+
+                    <div className="text-xs text-cp-muted font-mono mb-3">
+                      📍 {c.ward_name || `Ward ${c.ward_id || 1}`}
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-cp-border flex items-center justify-between text-xs">
+                    <span className="font-mono font-bold text-cp-ink">
+                      👥 {c.confirmation_count || 1} confirmed
+                    </span>
+                    <span
+                      className={`font-mono font-bold px-2 py-0.5 rounded text-[11px] ${
+                        isCritical ? 'bg-red-100 text-red-800' : 'bg-teal-50 text-teal-800'
+                      }`}
+                    >
+                      Score: {score}
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
         </div>
       )}
 
-      {/* Table view */}
-      {view === 'table' && (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-body)', fontSize: 'var(--fs-body-sm)' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid var(--color-border)', textAlign: 'left' }}>
-                {['ID', 'Category', 'Status', 'Confirmations', 'Score', 'Ward', 'Reported'].map(h => (
-                  <th key={h} style={{ padding: '10px 12px', color: 'var(--color-ink-muted)', fontWeight: 600, fontSize: 'var(--fs-eyebrow)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((c, i) => (
-                <tr
-                  key={c.id}
-                  onClick={() => onSelect?.(c)}
-                  style={{
-                    borderBottom: '1px solid var(--color-border)',
-                    cursor: 'pointer',
-                    background: i % 2 === 0 ? 'transparent' : 'var(--color-surface-sunken)',
-                    transition: 'background 120ms ease',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-surface-hover)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'var(--color-surface-sunken)')}
-                >
-                  <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-ink-faint)' }}>#{c.id}</td>
-                  <td style={{ padding: '10px 12px', textTransform: 'capitalize', color: 'var(--color-ink)' }}>{(c.category || '').replace(/_/g, ' ')}</td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-pill)', background: 'var(--color-surface-sunken)', color: 'var(--color-ink-muted)', fontSize: 11 }}>{c.status}</span>
-                  </td>
-                  <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', color: 'var(--color-ink)' }}>{c.confirmation_count}</td>
-                  <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', color: 'var(--color-ink-muted)' }}>{c.severity_score}</td>
-                  <td style={{ padding: '10px 12px', color: 'var(--color-ink-muted)' }}>{c.ward_name || `Ward ${c.ward_id}`}</td>
-                  <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-ink-faint)' }}>
-                    {new Date(c.created_at).toLocaleDateString('en-IN')}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
       {sorted.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--color-ink-faint)', fontFamily: 'var(--font-body)' }}>
-          No complaints in queue
+        <div className="text-center py-16 text-cp-faint font-body text-sm bg-cp-surface rounded-2xl border border-cp-border">
+          No complaints matching the active criteria.
         </div>
       )}
     </div>
