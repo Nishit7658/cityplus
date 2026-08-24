@@ -40,6 +40,7 @@ app.use('/api/wards', wardsRouter);
 app.use('/api/officers', officersRouter);
 app.use('/api/transparency', transparencyRouter);
 app.use('/webhook', webhookRouter);
+app.use('/api/webhook', webhookRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
