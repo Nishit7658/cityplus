@@ -1,54 +1,18 @@
 'use client';
 
-// C.1 — Top Identity Strip
-// 60px fixed, warm background, custom pulse-ring logo, live status pill, ward selector, officer avatar
+// C.1 — Official Government Top Identity Strip
+// Vadodara Municipal Corporation (VMC) / Government of Gujarat
+// National tricolor civic accent line, bilingual VMC seal, formal portal identification
 
 import React, { useEffect, useState } from 'react';
-import { useSocket } from './SocketProvider';
 import Link from 'next/link';
+import { useSocket } from './SocketProvider';
 import { MOCK_COMPLAINTS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-const LogoMark = () => (
-  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style={{ flexShrink: 0 }}>
-    <circle cx="14" cy="14" r="5" fill="#0F6B5C" />
-    <path
-      d="M 6 20 A 10 10 0 0 1 20 6"
-      stroke="#0F6B5C"
-      strokeWidth="2"
-      strokeLinecap="round"
-      fill="none"
-      opacity="0.6"
-    />
-    <path
-      d="M 3 23 A 14 14 0 0 1 23 3"
-      stroke="#2E8C7B"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      fill="none"
-      opacity="0.35"
-    />
-  </svg>
-);
-
-const PulseDot = () => (
-  <span style={{ position: 'relative', display: 'inline-flex', width: 8, height: 8, flexShrink: 0 }}>
-    <span
-      className="pulse-dot-ring"
-      style={{
-        position: 'absolute',
-        inset: -2,
-        borderRadius: '50%',
-        background: 'var(--color-teal-700)',
-      }}
-    />
-    <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-teal-700)', flexShrink: 0 }} />
-  </span>
-);
-
 export const TopIdentityStrip: React.FC = () => {
-  const { isConnected, lastEvent } = useSocket();
+  const { lastEvent } = useSocket();
   const [todayCount, setTodayCount] = useState<number>(MOCK_COMPLAINTS.length);
   const [ward, setWard] = useState('All Wards');
   
@@ -84,140 +48,79 @@ export const TopIdentityStrip: React.FC = () => {
   }, [lastEvent]);
 
   return (
-    <header
-      style={{
-        height: 60,
-        background: 'var(--color-bg-app)',
-        borderBottom: '1px solid var(--color-border)',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 40px',
-        gap: 16,
-        position: 'sticky',
-        top: 0,
-        zIndex: 30,
-        flexShrink: 0,
-      }}
-    >
-      {/* Logo mark + wordmark */}
-      <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-        <LogoMark />
-        <span
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 20,
-            fontWeight: 700,
-            color: 'var(--color-ink)',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          CityPulse
-        </span>
-      </Link>
-
-      <div className="hidden sm:block" style={{ width: 1, height: 20, background: 'var(--color-border-strong)', flexShrink: 0 }} />
-
-      <span
-        className="hidden sm:inline-block"
-        style={{
-          fontSize: 'var(--fs-body-sm)',
-          color: 'var(--color-ink-muted)',
-          fontFamily: 'var(--font-body)',
-          flexShrink: 0,
-          fontWeight: 500,
-        }}
-      >
-        VMC · Vadodara
-      </span>
-
-      <div style={{ flex: 1 }} />
-
-      {/* Live status pill */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          height: 32,
-          padding: '0 14px',
-          borderRadius: 'var(--radius-pill)',
-          background: 'var(--color-teal-100)',
-          color: 'var(--color-teal-900)',
-          fontSize: 'var(--fs-body-sm)',
-          fontWeight: 600,
-          flexShrink: 0,
-        }}
-      >
-        <PulseDot />
-        <span>{todayCount} active today</span>
+    <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs flex-shrink-0">
+      {/* Subtle National / State Government Accent Bar */}
+      <div className="h-[3px] w-full flex">
+        <div className="h-full w-1/3 bg-[#FF9933]" />
+        <div className="h-full w-1/3 bg-[#FFFFFF]" />
+        <div className="h-full w-1/3 bg-[#138808]" />
       </div>
 
-      <div className="hidden md:block" style={{ width: 1, height: 20, background: 'var(--color-border)', flexShrink: 0 }} />
+      <div className="max-w-[1520px] mx-auto px-6 h-[64px] flex items-center justify-between gap-4">
+        {/* Official VMC Emblem & Identity */}
+        <div className="flex items-center gap-3.5 shrink-0">
+          {/* Government Official Emblem Shield */}
+          <div className="w-10 h-10 rounded-lg bg-[#0B2545] text-white flex items-center justify-center font-bold text-xs shadow-xs border border-slate-300">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+          </div>
 
-      {/* Ward selector dropdown */}
-      <div className="hidden md:block" style={{ position: 'relative', flexShrink: 0 }}>
-        <select
-          value={ward}
-          onChange={(e) => setWard(e.target.value)}
-          style={{
-            height: 32,
-            padding: '0 28px 0 12px',
-            borderRadius: 'var(--radius-pill)',
-            border: '1px solid var(--color-border-strong)',
-            background: 'var(--color-surface)',
-            color: 'var(--color-ink)',
-            fontSize: 13,
-            fontWeight: 500,
-            fontFamily: 'var(--font-body)',
-            cursor: 'pointer',
-            appearance: 'none',
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236B6659' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right 10px center',
-          }}
-        >
-          {wards.map((w) => (
-            <option key={w} value={w} style={{ background: '#FFFFFF', color: '#22221F' }}>
-              {w}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div style={{ width: 1, height: 20, background: 'var(--color-border)', flexShrink: 0 }} />
-
-      {/* Officer avatar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            background: 'var(--color-terracotta-100)',
-            color: 'var(--color-terracotta-700)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 13,
-            fontWeight: 700,
-            flexShrink: 0,
-            border: '1px solid var(--color-terracotta-500)',
-          }}
-        >
-          VM
+          <Link href="/" className="no-underline">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-base text-[#0B2545] tracking-tight font-body">
+                  Vadodara Municipal Corporation
+                </span>
+                <span className="text-xs font-semibold text-slate-500 hidden md:inline">
+                  | વડોદરા મહાનગરપાલિકા
+                </span>
+              </div>
+              <span className="text-[11px] font-medium text-slate-500">
+                CityPulse • Civic Infrastructure & Public Grievance Redressal Control Room
+              </span>
+            </div>
+          </Link>
         </div>
-        <span
-          className="hidden sm:inline-block"
-          style={{
-            fontSize: 'var(--fs-body-sm)',
-            color: 'var(--color-ink)',
-            fontFamily: 'var(--font-body)',
-            fontWeight: 600,
-          }}
-        >
-          VMC Control
-        </span>
+
+        {/* Right Controls & Official Badge */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Portal Live Telemetry Badge */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#EFF6FF] border border-[#BFDBFE] text-xs font-semibold text-[#1E40AF]">
+            <span className="w-2 h-2 rounded-full bg-[#1D4ED8] animate-pulse" />
+            <span>CRMS Portal Active</span>
+            <span className="font-mono font-bold text-[#0B2545]">({todayCount} Active Issues)</span>
+          </div>
+
+          {/* Ward Selector */}
+          <div className="hidden lg:block">
+            <select
+              value={ward}
+              onChange={(e) => setWard(e.target.value)}
+              className="h-8 px-3 pr-8 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#133E87] cursor-pointer"
+            >
+              {wards.map((w) => (
+                <option key={w} value={w}>
+                  {w}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="h-5 w-px bg-slate-200 hidden sm:block" />
+
+          {/* Official Officer Badge */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-md bg-[#0B2545] text-white flex items-center justify-center font-mono font-bold text-xs border border-slate-400 shadow-2xs">
+              VMC
+            </div>
+            <div className="hidden sm:flex flex-col text-left">
+              <span className="text-xs font-bold text-slate-900 leading-tight">Control Officer</span>
+              <span className="text-[10px] font-mono text-slate-500">Vadodara Central</span>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
   );

@@ -1,11 +1,10 @@
 'use client';
 
-// F.6 — Officers Page
-// Civic Command Center — Municipal Field Personnel Operations Roster
-// Tactical Dossiers + Live Field Telemetry + Workload Capacity HUD + Interactive Dispatch Roster
+// F.6 — Officers Page (Official Municipal Personnel Directory)
+// Vadodara Municipal Corporation (VMC) / Government of Gujarat
+// Clean, dignified government directory with department cadres, zonal jurisdictions, and work order metrics
 
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Officer } from '@/types';
 import { MOCK_OFFICERS } from '@/data/mockData';
 
@@ -13,19 +12,19 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const DEPARTMENTS = [
   'All Departments',
-  'Road & Building',
+  'Road & Building Dept',
   'Drainage & Sewerage',
-  'Solid Waste',
+  'Solid Waste Management',
   'Electrical & Lighting',
-  'Water Supply',
-  'Sanitation',
+  'Water Supply Department',
+  'Health & Sanitation',
 ];
 
 export default function OfficersPage() {
   const [officers, setOfficers] = useState<Officer[]>(MOCK_OFFICERS);
   const [selectedDept, setSelectedDept] = useState('All Departments');
-  const [viewMode, setViewMode] = useState<'tactical' | 'table'>('tactical');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
   useEffect(() => {
     fetch(`${API_URL}/api/officers`)
@@ -50,69 +49,58 @@ export default function OfficersPage() {
     return matchesDept && matchesSearch;
   });
 
-  const totalActiveTasks = safe.reduce((acc, o) => acc + (o.active_complaints || 0), 0);
+  const totalActive = safe.reduce((acc, o) => acc + (o.active_complaints || 0), 0);
   const totalResolved = safe.reduce((acc, o) => acc + (o.resolved_complaints || 0), 0);
-  const avgLoad = (totalActiveTasks / (safe.length || 1)).toFixed(1);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-      className="max-w-[1480px] mx-auto px-6 py-8"
-    >
-      {/* Top Header & Telemetry HUD */}
-      <div className="mb-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-cp-border">
+    <div className="max-w-[1520px] mx-auto px-6 py-6 bg-slate-50 min-h-[calc(100vh-115px)]">
+      {/* Official Header */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <div className="flex items-center gap-2.5 mb-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping" />
-            <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
-              VMC FIELD OPERATIONS ROSTER
-            </span>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span>Vadodara Municipal Corporation</span>
+            <span>•</span>
+            <span>Engineering & Field Cadre Directory</span>
           </div>
-          <h1 className="text-3xl font-display font-bold text-cp-ink tracking-tight">
-            Municipal Field Officers
+          <h1 className="text-2xl font-bold text-[#0B2545] tracking-tight mt-1">
+            Zonal Field Engineers & Departmental Officers
           </h1>
-          <p className="text-sm text-cp-muted mt-1 max-w-2xl">
-            Live deployment radar, workload saturation metrics, and tactical jurisdiction dispatch for Vadodara Municipal Corporation.
+          <p className="text-xs text-slate-500 mt-1">
+            Official roster of designated ward engineers, active municipal work orders, and jurisdiction assignments.
           </p>
         </div>
 
-        {/* Global HUD Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-cp-surface p-3.5 rounded-xl border border-cp-border shadow-rest">
-          <div className="px-3 py-1 border-r border-cp-border">
-            <div className="text-[10px] font-mono uppercase text-cp-muted font-semibold">Active Force</div>
-            <div className="text-xl font-mono font-bold text-cp-ink">{safe.length} Officers</div>
+        {/* Cadre Metrics Summary */}
+        <div className="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
+          <div className="px-3 py-1 border-r border-slate-200 text-xs">
+            <span className="text-slate-500 block">Total Officers</span>
+            <span className="font-mono font-bold text-[#0B2545] text-base">{safe.length} Cadres</span>
           </div>
-          <div className="px-3 py-1 border-r border-cp-border">
-            <div className="text-[10px] font-mono uppercase text-cp-muted font-semibold">Active Load</div>
-            <div className="text-xl font-mono font-bold text-amber-700">{totalActiveTasks} Tasks</div>
+          <div className="px-3 py-1 border-r border-slate-200 text-xs">
+            <span className="text-slate-500 block">Active Work Orders</span>
+            <span className="font-mono font-bold text-[#B45309] text-base">{totalActive} Tasks</span>
           </div>
-          <div className="px-3 py-1 border-r border-cp-border">
-            <div className="text-[10px] font-mono uppercase text-cp-muted font-semibold">Avg Load / Off</div>
-            <div className="text-xl font-mono font-bold text-teal-800">{avgLoad}</div>
-          </div>
-          <div className="px-3 py-1">
-            <div className="text-[10px] font-mono uppercase text-cp-muted font-semibold">Total Cleared</div>
-            <div className="text-xl font-mono font-bold text-emerald-700">{totalResolved}</div>
+          <div className="px-3 py-1 text-xs">
+            <span className="text-slate-500 block">Total Resolved</span>
+            <span className="font-mono font-bold text-[#15803D] text-base">{totalResolved} Fixed</span>
           </div>
         </div>
       </div>
 
-      {/* Filter and View Controls Bar */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Department Pills */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none flex-wrap">
+      {/* Filter and Search Bar */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
+        {/* Department Filter Buttons */}
+        <div className="flex gap-1.5 flex-wrap">
           {DEPARTMENTS.map((dept) => {
             const isActive = selectedDept === dept;
             return (
               <button
                 key={dept}
                 onClick={() => setSelectedDept(dept)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all ${
+                className={`px-3 py-1.5 rounded text-xs font-semibold tracking-tight transition-colors ${
                   isActive
-                    ? 'bg-teal-800 text-white shadow-sm ring-2 ring-teal-800/20'
-                    : 'bg-cp-surface text-cp-muted border border-cp-border hover:bg-cp-surface-hover hover:text-cp-ink'
+                    ? 'bg-[#0B2545] text-white shadow-2xs'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
               >
                 {dept}
@@ -122,249 +110,168 @@ export default function OfficersPage() {
         </div>
 
         {/* Search & View Switcher */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search officer or ward..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-3 py-1.5 pl-8 text-xs rounded-lg border border-cp-border bg-cp-surface text-cp-ink placeholder:text-cp-faint focus:outline-none focus:border-teal-700 w-56 font-body"
-            />
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-cp-faint text-xs">🔍</span>
-          </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <input
+            type="text"
+            placeholder="Search by officer, ward, dept..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-8 px-3 text-xs rounded border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#133E87] w-64"
+          />
 
-          <div className="flex items-center bg-cp-surface p-1 rounded-lg border border-cp-border">
+          <div className="flex items-center bg-slate-100 p-0.5 rounded border border-slate-300">
             <button
-              onClick={() => setViewMode('tactical')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
-                viewMode === 'tactical'
-                  ? 'bg-teal-700 text-white shadow-xs'
-                  : 'text-cp-muted hover:text-cp-ink'
+              onClick={() => setViewMode('grid')}
+              className={`px-2.5 py-1 text-xs font-semibold rounded ${
+                viewMode === 'grid' ? 'bg-white text-[#0B2545] shadow-2xs' : 'text-slate-600'
               }`}
             >
-              Tactical Grid
+              Cards
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
-                viewMode === 'table'
-                  ? 'bg-teal-700 text-white shadow-xs'
-                  : 'text-cp-muted hover:text-cp-ink'
+              className={`px-2.5 py-1 text-xs font-semibold rounded ${
+                viewMode === 'table' ? 'bg-white text-[#0B2545] shadow-2xs' : 'text-slate-600'
               }`}
             >
-              Roster Table
+              Table
             </button>
           </div>
         </div>
       </div>
 
-      {/* Main Officers Display */}
-      {viewMode === 'tactical' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((officer, i) => {
-              const activeCount = officer.active_complaints || 0;
-              const maxLoad = 10;
-              const loadPercent = Math.min(100, Math.round((activeCount / maxLoad) * 100));
+      {/* Officers Display */}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {filtered.map((officer) => {
+            const activeCount = officer.active_complaints || 0;
+            const resolvedCount = officer.resolved_complaints || 0;
 
-              const isHeavy = activeCount >= 7;
-              const isModerate = activeCount >= 4 && activeCount < 7;
-              const statusColor = isHeavy
-                ? 'bg-red-50 text-red-700 border-red-200'
-                : isModerate
-                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                : 'bg-emerald-50 text-emerald-800 border-emerald-200';
-
-              const statusText = isHeavy ? 'High Saturation' : isModerate ? 'Moderate Load' : 'Optimal Capacity';
-
-              return (
-                <motion.div
-                  key={officer.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ delay: i * 0.03, duration: 0.22 }}
-                  className="bg-cp-surface rounded-xl border border-cp-border shadow-rest hover:shadow-hover hover:-translate-y-1 transition-all duration-200 flex flex-col overflow-hidden group"
-                >
-                  {/* Top Tactical Bar with Status Indicator */}
-                  <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-cp-border/60 bg-gradient-to-b from-cp-bg/50 to-transparent">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${isHeavy ? 'bg-red-600' : isModerate ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${statusColor}`}>
-                        {statusText}
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-mono text-cp-faint">
-                      OFF-{String(officer.id).padStart(3, '0')}
+            return (
+              <div
+                key={officer.id}
+                className="bg-white rounded-lg border border-slate-200 p-5 shadow-2xs hover:border-slate-300 transition-all flex flex-col justify-between"
+              >
+                <div>
+                  {/* Top Bar: Official ID */}
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3.5">
+                    <span className="text-[11px] font-mono font-bold text-slate-500">
+                      VMC-CADRE-0{officer.id}
+                    </span>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                      Executive Engineer
                     </span>
                   </div>
 
-                  {/* Officer Identity Banner */}
-                  <div className="p-5 pb-4">
-                    <div className="flex items-start gap-3.5 mb-4">
-                      {/* Avatar with Initials */}
-                      <div className="w-12 h-12 rounded-xl bg-teal-900 text-white font-mono font-bold flex items-center justify-center text-base shadow-sm shrink-0 border border-teal-700">
-                        {(officer.name || '?')
-                          .split(' ')
-                          .map((n: string) => n[0])
-                          .join('')
-                          .slice(0, 2)
-                          .toUpperCase()}
-                      </div>
-
-                      {/* Name & Dept */}
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-base font-bold text-cp-ink truncate group-hover:text-teal-800 transition-colors">
-                          {officer.name}
-                        </h3>
-                        <p className="text-xs text-cp-muted font-medium truncate mt-0.5">
-                          {officer.department}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-2">
-                          <span className="text-[11px] font-semibold text-cp-ink bg-cp-bg px-2 py-0.5 rounded border border-cp-border truncate">
-                            📍 {officer.ward_name || `Ward ${officer.ward_id || 1}`}
-                          </span>
-                        </div>
-                      </div>
+                  {/* Officer Info */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-10 h-10 rounded bg-[#0B2545] text-white font-bold flex items-center justify-center text-sm shrink-0">
+                      {(officer.name || '?')
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .slice(0, 2)}
                     </div>
-
-                    {/* Workload Capacity Meter */}
-                    <div className="bg-cp-bg/80 rounded-lg p-3 border border-cp-border mb-4">
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="font-semibold text-cp-muted">Active Workload</span>
-                        <span className="font-mono font-bold text-cp-ink">
-                          {activeCount} / 10 <span className="text-[10px] text-cp-muted font-normal">({loadPercent}%)</span>
-                        </span>
-                      </div>
-
-                      {/* Multi-segment load bar */}
-                      <div className="h-2 rounded-full bg-cp-border overflow-hidden flex">
-                        <div
-                          style={{ width: `${loadPercent}%` }}
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            isHeavy ? 'bg-red-600' : isModerate ? 'bg-amber-500' : 'bg-teal-600'
-                          }`}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Performance Indices */}
-                    <div className="grid grid-cols-2 gap-2 text-center pt-1 border-t border-cp-border">
-                      <div className="p-2 rounded bg-cp-surface">
-                        <div className="text-[10px] font-mono uppercase text-cp-muted font-semibold">Lifetime Resolved</div>
-                        <div className="text-sm font-mono font-bold text-emerald-700 mt-0.5">
-                          {officer.resolved_complaints || 0} issues
-                        </div>
-                      </div>
-                      <div className="p-2 rounded bg-cp-surface">
-                        <div className="text-[10px] font-mono uppercase text-cp-muted font-semibold">Avg Turnaround</div>
-                        <div className="text-sm font-mono font-bold text-cp-ink mt-0.5">
-                          {2.8 + (officer.id % 3) * 0.7} hrs
-                        </div>
-                      </div>
+                    <div>
+                      <h3 className="text-base font-bold text-[#0B2545]">
+                        {officer.name}
+                      </h3>
+                      <p className="text-xs font-semibold text-slate-600 mt-0.5">
+                        {officer.department}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Quick Action Footer */}
-                  <div className="mt-auto px-5 py-3 border-t border-cp-border bg-cp-bg/40 flex items-center justify-between">
-                    <span className="text-xs font-mono text-cp-muted">
-                      📞 {officer.phone || '+91 98250 00000'}
-                    </span>
-                    <a
-                      href={`tel:${officer.phone}`}
-                      className="px-2.5 py-1 rounded bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold hover:bg-teal-100 transition-colors"
-                    >
-                      Dispatch
-                    </a>
+                  {/* Official Jurisdiction */}
+                  <div className="bg-slate-50 p-2.5 rounded border border-slate-200 mb-4 space-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Assigned Ward:</span>
+                      <span className="font-bold text-slate-900">{officer.ward_name || `Ward ${officer.ward_id}`}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Official Contact:</span>
+                      <span className="font-mono font-semibold text-slate-800">{officer.phone || '+91 98250 12345'}</span>
+                    </div>
                   </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+
+                  {/* Work Order Stats */}
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
+                    <div className="p-2 bg-slate-50 rounded text-center">
+                      <span className="text-slate-500 block text-[11px]">Active Tasks</span>
+                      <span className="font-mono font-bold text-[#B45309] text-sm">{activeCount}</span>
+                    </div>
+                    <div className="p-2 bg-slate-50 rounded text-center">
+                      <span className="text-slate-500 block text-[11px]">Total Cleared</span>
+                      <span className="font-mono font-bold text-[#15803D] text-sm">{resolvedCount}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dispatch Trigger */}
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-slate-400 font-mono">Status: Active</span>
+                  <a
+                    href={`tel:${officer.phone}`}
+                    className="px-3 py-1 bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] font-semibold rounded hover:bg-[#DBEAFE] transition-colors"
+                  >
+                    Direct Contact
+                  </a>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
-        /* Executive Command Table View */
-        <div className="bg-cp-surface rounded-xl border border-cp-border shadow-rest overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-cp-bg border-b border-cp-border text-[11px] font-mono uppercase tracking-wider text-cp-muted font-semibold">
-                <tr>
-                  <th className="px-6 py-3.5">Officer & Designation</th>
-                  <th className="px-4 py-3.5">Department</th>
-                  <th className="px-4 py-3.5">Assigned Jurisdiction</th>
-                  <th className="px-4 py-3.5">Workload Capacity</th>
-                  <th className="px-4 py-3.5">Lifetime Resolved</th>
-                  <th className="px-4 py-3.5">Direct Contact</th>
-                  <th className="px-6 py-3.5 text-right">Action</th>
+        /* Official Table View */
+        <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+              <tr>
+                <th className="px-6 py-3.5">Cadre ID & Name</th>
+                <th className="px-4 py-3.5">Department</th>
+                <th className="px-4 py-3.5">Assigned Jurisdiction</th>
+                <th className="px-4 py-3.5">Active Workload</th>
+                <th className="px-4 py-3.5">Total Resolved</th>
+                <th className="px-4 py-3.5">Official Contact</th>
+                <th className="px-6 py-3.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filtered.map((officer) => (
+                <tr key={officer.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-3.5">
+                    <div className="font-bold text-[#0B2545]">{officer.name}</div>
+                    <div className="font-mono text-slate-400 text-[11px]">VMC-CADRE-0{officer.id}</div>
+                  </td>
+                  <td className="px-4 py-3.5 font-medium text-slate-700">{officer.department}</td>
+                  <td className="px-4 py-3.5">
+                    <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-800 font-semibold">
+                      {officer.ward_name || `Ward ${officer.ward_id}`}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5 font-mono font-bold text-[#B45309]">
+                    {officer.active_complaints || 0} tasks
+                  </td>
+                  <td className="px-4 py-3.5 font-mono font-bold text-[#15803D]">
+                    {officer.resolved_complaints || 0} cleared
+                  </td>
+                  <td className="px-4 py-3.5 font-mono text-slate-600">
+                    {officer.phone || '+91 98250 12345'}
+                  </td>
+                  <td className="px-6 py-3.5 text-right">
+                    <a
+                      href={`tel:${officer.phone}`}
+                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded transition-colors"
+                    >
+                      Contact
+                    </a>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-cp-border font-body">
-                {filtered.map((officer) => {
-                  const activeCount = officer.active_complaints || 0;
-                  const loadPercent = Math.min(100, Math.round((activeCount / 10) * 100));
-
-                  return (
-                    <tr key={officer.id} className="hover:bg-cp-surface-hover transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-teal-900 text-white font-mono font-bold text-xs flex items-center justify-center shrink-0">
-                            {(officer.name || '?')
-                              .split(' ')
-                              .map((n: string) => n[0])
-                              .join('')
-                              .slice(0, 2)}
-                          </div>
-                          <div>
-                            <div className="font-bold text-cp-ink">{officer.name}</div>
-                            <div className="text-[11px] text-cp-muted font-mono">OFF-{String(officer.id).padStart(3, '0')}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-cp-muted font-medium">{officer.department}</td>
-                      <td className="px-4 py-4">
-                        <span className="font-semibold text-cp-ink bg-cp-bg px-2 py-0.5 rounded border border-cp-border">
-                          {officer.ward_name || `Ward ${officer.ward_id}`}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2 max-w-[140px]">
-                          <div className="flex-1 h-1.5 rounded-full bg-cp-border overflow-hidden">
-                            <div
-                              style={{ width: `${loadPercent}%` }}
-                              className={`h-full rounded-full ${
-                                activeCount >= 7 ? 'bg-red-600' : activeCount >= 4 ? 'bg-amber-500' : 'bg-teal-600'
-                              }`}
-                            />
-                          </div>
-                          <span className="font-mono font-bold text-cp-ink text-[11px]">
-                            {activeCount}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 font-mono font-bold text-emerald-700">
-                        {officer.resolved_complaints || 0} issues
-                      </td>
-                      <td className="px-4 py-4 font-mono text-cp-muted">
-                        {officer.phone || '+91 98250 00000'}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <a
-                          href={`tel:${officer.phone}`}
-                          className="px-3 py-1.5 rounded-md bg-teal-700 text-white text-xs font-semibold hover:bg-teal-800 transition-colors"
-                        >
-                          Dispatch Task
-                        </a>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

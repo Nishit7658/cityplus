@@ -1,53 +1,40 @@
 'use client';
 
-// F.7 — Transparency Page (Public Audit & Performance Console)
-// Interactive Kinetic Pipeline + Executive Metric Command Strip + 10-Ward Comparative SLA Benchmark Table
+// F.7 — Transparency Page (Official Municipal Citizen Charter & Audit Record)
+// Vadodara Municipal Corporation (VMC) / Government of Gujarat
+// Clean, dignified government public audit terminal and 10-ward SLA compliance ledger
 
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { TransparencyStats } from '@/types';
 import { MOCK_TRANSPARENCY } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-const WORKFLOW_PIPELINE = [
+const WORKFLOW_STEPS = [
   {
-    step: '01',
-    phase: 'INTAKE',
-    title: 'Citizen WhatsApp Intake',
-    tag: 'Interactive AI Menu + GPS Pin',
-    desc: 'Citizen triggers WhatsApp helpline with zero app install, selects category, and attaches native GPS location.',
-    telemetry: 'Instant < 1.2s',
+    step: 'STAGE 1',
+    title: 'Citizen Grievance Intake',
+    desc: 'Citizens report civic defects via official VMC WhatsApp Helpline or web portal with photos and GPS geo-location.',
   },
   {
-    step: '02',
-    phase: 'PROCESSING',
-    title: 'PostGIS Spatial Engine',
-    tag: '18m Radius Deduplication',
-    desc: 'PostGIS scans active tickets within 18m. Duplicate reports increment confirmation count instead of creating clutter.',
-    telemetry: '0% Duplicate Clutter',
+    step: 'STAGE 2',
+    title: 'Spatial De-duplication',
+    desc: 'PostGIS spatial engine automatically clusters multi-citizen reports within 18m into a consolidated work order.',
   },
   {
-    step: '03',
-    phase: 'DISPATCH',
-    title: 'Dynamic Officer Dispatch',
-    tag: 'Severity Scoring + Ward Routing',
-    desc: 'Tickets scored with priority formula and automatically dispatched to designated ward engineers with live SLA counters.',
-    telemetry: '< 15min Routing',
+    step: 'STAGE 3',
+    title: 'Zonal Officer Dispatch',
+    desc: 'Tickets are dynamically prioritized and routed to designated ward executive engineers with strict turnaround SLAs.',
   },
   {
-    step: '04',
-    phase: 'AUDIT',
-    title: 'Closed-Loop Verification',
-    tag: 'Citizen WhatsApp Check',
-    desc: 'Automated WhatsApp prompt sent to citizen upon resolution. Citizen taps Yes (close) or No (reopens alert with top priority).',
-    telemetry: '94% Citizen Verified',
+    step: 'STAGE 4',
+    title: 'Citizen Verification',
+    desc: 'Automated verification message sent to citizen upon completion. Citizen confirms fix quality before final ticket closure.',
   },
 ];
 
 export default function TransparencyPage() {
   const [stats, setStats] = useState<TransparencyStats>(MOCK_TRANSPARENCY);
-  const [activeTab, setActiveTab] = useState<'all' | 'high' | 'pending'>('all');
 
   useEffect(() => {
     fetch(`${API_URL}/api/transparency`)
@@ -59,267 +46,197 @@ export default function TransparencyPage() {
   }, []);
 
   const safeStats = stats || MOCK_TRANSPARENCY;
-  const maxWardTotal = safeStats?.wards?.reduce((m, w) => Math.max(m, w.total), 1) || 1;
   const resolutionRate = Math.round(
     (safeStats.resolved_complaints / Math.max(1, safeStats.total_complaints)) * 100
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-      className="max-w-[1480px] mx-auto px-6 py-8"
-    >
-      {/* Top Header */}
-      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-cp-border">
+    <div className="max-w-[1520px] mx-auto px-6 py-6 bg-slate-50 min-h-[calc(100vh-115px)]">
+      {/* Official Header */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <div className="flex items-center gap-2.5 mb-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse" />
-            <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
-              PUBLIC CIVIC AUDIT TERMINAL
-            </span>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <span>Vadodara Municipal Corporation</span>
+            <span>•</span>
+            <span>Public Record & Citizen Charter Compliance</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-display font-bold text-cp-ink tracking-tight">
-            VMC Civic Transparency Portal
+          <h1 className="text-2xl font-bold text-[#0B2545] tracking-tight mt-1">
+            Transparency, Civic Performance & Ward Audit
           </h1>
-          <p className="text-sm text-cp-muted mt-1 max-w-2xl">
-            Real-time public record of all municipal complaints, resolution SLA compliance, and ward-level accountability for Vadodara Municipal Corporation.
+          <p className="text-xs text-slate-500 mt-1">
+            Real-time public record of civic complaints, resolution turnaround times, and departmental accountability under the Citizen Charter.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-xs text-cp-muted bg-cp-surface px-4 py-2 rounded-xl border border-cp-border shadow-rest">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span>Audit Log Synchronized</span>
-          <span className="text-cp-faint ml-2">• 100% Public Access</span>
+        <div className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-lg border border-slate-200 shadow-2xs text-xs font-semibold text-slate-700">
+          <span>Official Public Record: </span>
+          <span className="font-mono text-emerald-700">Verified Open Access</span>
         </div>
       </div>
 
-      {/* Hero Performance Command Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-        {/* Total Reports */}
-        <div className="bg-cp-surface p-6 rounded-2xl border border-cp-border shadow-rest hover:shadow-hover transition-all">
-          <div className="flex items-center justify-between text-xs font-mono uppercase text-cp-muted font-semibold mb-2">
-            <span>Total Intake</span>
-            <span className="text-teal-700 bg-teal-50 px-2 py-0.5 rounded">All Wards</span>
+      {/* 4 Official Civic Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
+          <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
+            Total Intake (All Wards)
           </div>
-          <div className="text-4xl font-mono font-bold text-cp-ink mb-1">
+          <div className="text-3xl font-mono font-bold text-[#0B2545]">
             {safeStats.total_complaints}
           </div>
-          <div className="text-xs text-cp-muted flex items-center gap-1.5">
-            <span className="text-emerald-700 font-bold">↑ 14%</span> vs previous month
+          <div className="text-xs text-slate-500 mt-2">
+            Complaints logged across all 10 VMC wards
           </div>
         </div>
 
-        {/* Resolved */}
-        <div className="bg-cp-surface p-6 rounded-2xl border border-cp-border shadow-rest hover:shadow-hover transition-all border-l-4 border-l-emerald-600">
-          <div className="flex items-center justify-between text-xs font-mono uppercase text-cp-muted font-semibold mb-2">
-            <span>Verified Resolved</span>
-            <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Closed-Loop</span>
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#15803D]">
+          <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
+            Resolved Grievances
           </div>
-          <div className="text-4xl font-mono font-bold text-emerald-800 mb-1">
+          <div className="text-3xl font-mono font-bold text-[#15803D]">
             {safeStats.resolved_complaints}
           </div>
-          <div className="text-xs text-cp-muted flex items-center gap-1.5">
-            <span className="text-emerald-700 font-bold">98.4%</span> citizen satisfaction
+          <div className="text-xs text-slate-500 mt-2">
+            Verified by reporting citizens via WhatsApp
           </div>
         </div>
 
-        {/* Resolution Rate */}
-        <div className="bg-cp-surface p-6 rounded-2xl border border-cp-border shadow-rest hover:shadow-hover transition-all">
-          <div className="flex items-center justify-between text-xs font-mono uppercase text-cp-muted font-semibold mb-2">
-            <span>Resolution Rate</span>
-            <span className="text-teal-700 bg-teal-50 px-2 py-0.5 rounded font-bold">{resolutionRate}%</span>
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#133E87]">
+          <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
+            Resolution Efficiency
           </div>
-          <div className="text-4xl font-mono font-bold text-teal-900 mb-1">
+          <div className="text-3xl font-mono font-bold text-[#133E87]">
             {resolutionRate}%
           </div>
-          <div className="w-full h-2 bg-cp-bg rounded-full overflow-hidden mt-2">
-            <div
-              style={{ width: `${resolutionRate}%` }}
-              className="h-full bg-gradient-to-r from-teal-600 to-emerald-500 rounded-full"
-            />
+          <div className="text-xs text-slate-500 mt-2">
+            SLA compliance across municipal departments
           </div>
         </div>
 
-        {/* Avg Resolution Hours */}
-        <div className="bg-cp-surface p-6 rounded-2xl border border-cp-border shadow-rest hover:shadow-hover transition-all">
-          <div className="flex items-center justify-between text-xs font-mono uppercase text-cp-muted font-semibold mb-2">
-            <span>Avg Turnaround</span>
-            <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded font-bold">Target &lt; 24h</span>
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#B45309]">
+          <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
+            Average Turnaround Time
           </div>
-          <div className="text-4xl font-mono font-bold text-cp-ink mb-1">
-            {Math.round(safeStats.avg_resolution_hours)} <span className="text-lg font-normal text-cp-muted">hours</span>
+          <div className="text-3xl font-mono font-bold text-slate-900">
+            {Math.round(safeStats.avg_resolution_hours)} <span className="text-base font-normal text-slate-500">hours</span>
           </div>
-          <div className="text-xs text-emerald-700 font-semibold flex items-center gap-1">
-            ✓ 6.2h ahead of SLA target
+          <div className="text-xs text-emerald-700 font-semibold mt-2">
+            Target SLA: &lt; 24.0 hours standard
           </div>
         </div>
       </div>
 
-      {/* Kinetic Workflow Pipeline (Replacing generic circles) */}
-      <div className="mb-14 bg-gradient-to-br from-teal-950 via-teal-900 to-slate-900 text-white rounded-2xl p-7 lg:p-9 shadow-tactical relative overflow-hidden">
-        {/* Background circuit glow */}
-        <div className="absolute -right-20 -top-20 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-teal-800/80">
-            <div>
-              <span className="text-[11px] font-mono uppercase tracking-widest text-teal-300 font-bold">
-                END-TO-END AUTOMATION LIFECYCLE
-              </span>
-              <h2 className="text-2xl font-display font-bold text-white mt-1">
-                How CityPulse Operates
-              </h2>
-            </div>
-            <span className="text-xs font-mono text-teal-200 bg-teal-800/60 px-3 py-1.5 rounded-lg border border-teal-700/60 self-start sm:self-auto">
-              ⚡ Fully Automated Verification Pipeline
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {WORKFLOW_PIPELINE.map((step, i) => (
-              <div
-                key={step.step}
-                className="bg-white/5 backdrop-blur-md rounded-xl p-5 border border-white/10 flex flex-col justify-between hover:bg-white/10 hover:border-teal-400/40 transition-all group"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-mono font-bold text-teal-400 bg-teal-950/80 px-2 py-0.5 rounded border border-teal-700/50">
-                      STEP {step.step} • {step.phase}
-                    </span>
-                    <span className="text-[11px] font-mono text-teal-200/70">
-                      {step.telemetry}
-                    </span>
-                  </div>
-                  <h3 className="text-base font-bold text-white mb-1.5 group-hover:text-teal-200 transition-colors">
-                    {step.title}
-                  </h3>
-                  <div className="text-[11px] font-mono font-semibold text-teal-300/90 mb-2.5">
-                    {step.tag}
-                  </div>
-                  <p className="text-xs text-teal-100/75 leading-relaxed">
-                    {step.desc}
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-teal-300/60">
-                  <span>VMC Automated System</span>
-                  <span>→</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 10-Ward Resolution Performance Benchmark Matrix */}
-      <div>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      {/* Official 4-Stage Redressal Protocol (Clean, crisp GovTech cards) */}
+      <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-2xs mb-6">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-5">
           <div>
-            <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
-              WARD-LEVEL EFFICIENCY BENCHMARKS
-            </span>
-            <h2 className="text-2xl font-display font-bold text-cp-ink mt-0.5">
-              10 VMC Administrative Wards
+            <h2 className="text-base font-bold text-[#0B2545]">
+              Standard Operating Procedure (SOP) — Citizen Grievance Redressal
             </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Automated 4-tier lifecycle ensuring spatial accuracy, rapid field dispatch, and citizen-verified closure.
+            </p>
           </div>
+          <span className="text-xs font-mono font-semibold bg-slate-100 text-slate-700 px-2.5 py-1 rounded">
+            VMC Circular 2026/04
+          </span>
+        </div>
 
-          <div className="flex items-center gap-2 bg-cp-surface p-1 rounded-lg border border-cp-border text-xs font-semibold">
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`px-3 py-1 rounded-md transition-all ${
-                activeTab === 'all' ? 'bg-teal-700 text-white' : 'text-cp-muted hover:text-cp-ink'
-              }`}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {WORKFLOW_STEPS.map((step) => (
+            <div
+              key={step.step}
+              className="p-4 rounded-lg bg-slate-50 border border-slate-200 flex flex-col justify-between"
             >
-              All 10 Wards
-            </button>
-            <button
-              onClick={() => setActiveTab('high')}
-              className={`px-3 py-1 rounded-md transition-all ${
-                activeTab === 'high' ? 'bg-teal-700 text-white' : 'text-cp-muted hover:text-cp-ink'
-              }`}
-            >
-              Top Performers (&gt;80%)
-            </button>
+              <div>
+                <span className="text-[11px] font-mono font-bold text-[#133E87] bg-blue-50 px-2 py-0.5 rounded border border-blue-200 inline-block mb-2.5">
+                  {step.step}
+                </span>
+                <h3 className="text-sm font-bold text-slate-900 mb-1.5">
+                  {step.title}
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  {step.desc}
+                </p>
+              </div>
+              <div className="mt-4 pt-2 border-t border-slate-200 text-[11px] text-slate-400 font-mono">
+                Automated System Check ✓
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 10-Ward Comparative SLA Resolution Table */}
+      <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
+        <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+          <div>
+            <h2 className="text-base font-bold text-[#0B2545]">
+              Ward-Level Resolution Performance Ledger (10 VMC Wards)
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Audited complaint volume, resolution count, and SLA performance across all administrative zones.
+            </p>
           </div>
         </div>
 
-        <div className="bg-cp-surface rounded-2xl border border-cp-border shadow-rest overflow-hidden">
-          <div className="divide-y divide-cp-border">
-            {safeStats.wards
-              .filter((w) => (activeTab === 'high' ? w.resolved / (w.total || 1) >= 0.8 : true))
-              .map((ward, i) => {
-                const resolvedPct = ward.total > 0 ? Math.round((ward.resolved / ward.total) * 100) : 0;
-                const isTopThree = i < 3 && activeTab === 'all';
+        <table className="w-full text-left text-xs">
+          <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+            <tr>
+              <th className="px-6 py-3.5">Administrative Ward</th>
+              <th className="px-4 py-3.5">Total Logged</th>
+              <th className="px-4 py-3.5">Resolved Fixed</th>
+              <th className="px-6 py-3.5">Resolution SLA Progress</th>
+              <th className="px-6 py-3.5 text-right">Status Compliance</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {safeStats.wards.map((ward) => {
+              const pct = ward.total > 0 ? Math.round((ward.resolved / ward.total) * 100) : 0;
+              const isCompliant = pct >= 75;
 
-                return (
-                  <div
-                    key={ward.ward_name}
-                    className="p-5 sm:px-7 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-cp-surface-hover transition-colors"
-                  >
-                    {/* Ward Info */}
-                    <div className="flex items-center gap-3.5 min-w-[260px]">
-                      <span
-                        className={`w-7 h-7 rounded-lg font-mono font-bold text-xs flex items-center justify-center shrink-0 ${
-                          isTopThree
-                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                            : 'bg-cp-bg text-cp-muted border border-cp-border'
-                        }`}
-                      >
-                        #{i + 1}
-                      </span>
-                      <div>
-                        <div className="text-base font-bold text-cp-ink">
-                          {ward.ward_name}
-                        </div>
-                        <div className="text-xs text-cp-muted font-mono">
-                          {isTopThree ? '🏆 Top Quartile Performance' : 'Standard Jurisdiction'}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Multi-layered Visual Resolution Bar */}
-                    <div className="flex-1 max-w-xl">
-                      <div className="flex justify-between text-xs font-mono text-cp-muted mb-1.5">
-                        <span>Resolution Progress</span>
-                        <span className="font-bold text-emerald-700">{resolvedPct}% Cleared</span>
-                      </div>
-                      <div className="h-3 w-full bg-cp-bg rounded-full overflow-hidden p-0.5 border border-cp-border">
+              return (
+                <tr key={ward.ward_name} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-3.5 font-bold text-slate-900">
+                    {ward.ward_name}
+                  </td>
+                  <td className="px-4 py-3.5 font-mono text-slate-700">
+                    {ward.total} tickets
+                  </td>
+                  <td className="px-4 py-3.5 font-mono font-bold text-[#15803D]">
+                    {ward.resolved} cleared
+                  </td>
+                  <td className="px-6 py-3.5">
+                    <div className="flex items-center gap-3 max-w-sm">
+                      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          style={{ width: `${resolvedPct}%` }}
-                          className={`h-full rounded-full transition-all duration-700 ${
-                            resolvedPct >= 85
-                              ? 'bg-gradient-to-r from-teal-600 to-emerald-500'
-                              : resolvedPct >= 70
-                              ? 'bg-gradient-to-r from-teal-600 to-amber-500'
-                              : 'bg-gradient-to-r from-amber-500 to-red-500'
+                          style={{ width: `${pct}%` }}
+                          className={`h-full rounded-full ${
+                            pct >= 80 ? 'bg-[#15803D]' : pct >= 65 ? 'bg-[#133E87]' : 'bg-[#B45309]'
                           }`}
                         />
                       </div>
+                      <span className="font-mono font-bold text-slate-800 text-[11px]">
+                        {pct}%
+                      </span>
                     </div>
-
-                    {/* Numerical Stats */}
-                    <div className="flex items-center gap-6 text-right shrink-0">
-                      <div className="text-left sm:text-right">
-                        <div className="text-xs font-mono uppercase text-cp-muted font-semibold">Volume</div>
-                        <div className="text-sm font-mono font-bold text-cp-ink">
-                          {ward.total} tickets
-                        </div>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <div className="text-xs font-mono uppercase text-cp-muted font-semibold">Resolved</div>
-                        <div className="text-sm font-mono font-bold text-emerald-700">
-                          {ward.resolved} closed
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-        </div>
+                  </td>
+                  <td className="px-6 py-3.5 text-right">
+                    <span
+                      className={`inline-block px-2.5 py-0.5 rounded text-[11px] font-semibold ${
+                        isCompliant
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                    >
+                      {isCompliant ? 'SLA Compliant' : 'Under Review'}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-    </motion.div>
+    </div>
   );
 }

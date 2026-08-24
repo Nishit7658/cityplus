@@ -1,14 +1,13 @@
 'use client';
 
-// F.5 — Hotspots Page (Spatial Defect & Urban Infrastructure Risk Console)
-// High-Density Thermal Radar + Ranked Infrastructure Risk Intelligence Matrix (Zero generic card clutter)
+// F.5 — Hotspots Page (Official Infrastructure Vulnerability Index)
+// Vadodara Municipal Corporation (VMC) / Government of Gujarat
+// Clean, dignified government engineering ledger for chronic civic defect clusters
 
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { MapView } from '@/components/MapView';
 import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
 import { Complaint, Officer } from '@/types';
-import { getCategoryColor, getSeverityColor } from '@/components/CategoryIcon';
 import { MOCK_COMPLAINTS, MOCK_OFFICERS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -17,8 +16,7 @@ export default function HotspotsPage() {
   const [complaints, setComplaints] = useState<Complaint[]>(MOCK_COMPLAINTS);
   const [officers, setOfficers]     = useState<Officer[]>(MOCK_OFFICERS);
   const [selected, setSelected]     = useState<Complaint | null>(null);
-  const [filterSeverity, setFilterSeverity] = useState<'all' | 'critical' | 'recurring'>('all');
-  const [sortBy, setSortBy] = useState<'severity' | 'confirmations' | 'cycles'>('severity');
+  const [filterType, setFilterType] = useState<'all' | 'critical' | 'recurring'>('all');
 
   useEffect(() => {
     fetch(`${API_URL}/api/complaints`)
@@ -37,242 +35,199 @@ export default function HotspotsPage() {
 
   const safe = Array.isArray(complaints) ? complaints : MOCK_COMPLAINTS;
 
-  // Filter & sort hotspots
   const filtered = safe.filter((c) => {
-    if (filterSeverity === 'critical') return (c.severity_score || 0) >= 80;
-    if (filterSeverity === 'recurring') return !!c.is_recurring;
+    if (filterType === 'critical') return (c.severity_score || 0) >= 80;
+    if (filterType === 'recurring') return !!c.is_recurring;
     return true;
   });
 
-  const sortedHotspots = [...filtered].sort((a, b) => {
-    if (sortBy === 'confirmations') return (b.confirmation_count || 1) - (a.confirmation_count || 1);
-    if (sortBy === 'cycles') return (b.total_cycles || 1) - (a.total_cycles || 1);
-    return (b.severity_score || 0) - (a.severity_score || 0);
-  });
+  const sortedHotspots = [...filtered].sort((a, b) => (b.severity_score || 0) - (a.severity_score || 0));
 
   const criticalCount = safe.filter((c) => (c.severity_score || 0) >= 80).length;
   const recurringCount = safe.filter((c) => c.is_recurring).length;
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-[1480px] mx-auto px-6 py-8"
-      >
-        {/* Header & Spatial Telemetry Strip */}
-        <div className="mb-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-cp-border">
+      <div className="max-w-[1520px] mx-auto px-6 py-6 bg-slate-50 min-h-[calc(100vh-115px)]">
+        {/* Official Header */}
+        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
-            <div className="flex items-center gap-2.5 mb-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping" />
-              <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
-                SPATIAL DEFECT INTELLIGENCE • POSTGIS 18M
-              </span>
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <span>Vadodara Municipal Corporation</span>
+              <span>•</span>
+              <span>Engineering & Capital Works Division</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-cp-ink tracking-tight">
-              Urban Problem Hotspots
+            <h1 className="text-2xl font-bold text-[#0B2545] tracking-tight mt-1">
+              Urban Infrastructure Vulnerability & Failure Hotspots
             </h1>
-            <p className="text-sm text-cp-muted mt-1 max-w-2xl">
-              Spatial density analysis ranking infrastructure failure clusters by citizen verification density, recurrence rate, and composite risk index.
+            <p className="text-xs text-slate-500 mt-1">
+              GIS spatial density analysis identifying chronic civic failure clusters requiring capital engineering intervention.
             </p>
           </div>
 
-          {/* Quick HUD Metrics */}
-          <div className="flex items-center gap-3 bg-cp-surface p-2 rounded-xl border border-cp-border shadow-rest">
-            <div className="px-3.5 py-1 border-r border-cp-border">
-              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Critical Clusters</div>
-              <div className="text-xl font-mono font-bold text-red-700">{criticalCount} High Risk</div>
+          <div className="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-200 shadow-2xs">
+            <div className="px-3 py-1 border-r border-slate-200 text-xs">
+              <span className="text-slate-500 block">Critical Risk Spots</span>
+              <span className="font-mono font-bold text-[#B91C1C] text-base">{criticalCount} Locations</span>
             </div>
-            <div className="px-3.5 py-1">
-              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Chronic Recurring</div>
-              <div className="text-xl font-mono font-bold text-amber-800">{recurringCount} Spots</div>
+            <div className="px-3 py-1 text-xs">
+              <span className="text-slate-500 block">Chronic Recurring</span>
+              <span className="font-mono font-bold text-[#B45309] text-base">{recurringCount} Spots</span>
             </div>
           </div>
         </div>
 
-        {/* Hero Thermal Density Map */}
-        <div className="w-full rounded-2xl overflow-hidden border border-cp-border shadow-rest mb-8 bg-cp-surface">
-          <div className="px-5 py-3 border-b border-cp-border bg-gradient-to-r from-cp-surface via-cp-surface to-cp-bg flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-              <span className="text-[11px] font-mono uppercase tracking-wider text-cp-ink font-bold">
-                CITYWIDE DENSITY HEATMAP RADAR
-              </span>
-            </div>
-            <span className="text-xs font-mono text-cp-muted">
-              Interpolated Spatial Density • Zoom to Inspect
+        {/* GIS Thermal Heatmap Container */}
+        <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden mb-6">
+          <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+            <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider">
+              Citywide Infrastructure Density & Risk Heatmap
+            </span>
+            <span className="text-xs font-mono text-slate-500">
+              Spatial PostGIS Interpolation (Vadodara Metro)
             </span>
           </div>
-          <div className="h-[400px] w-full relative">
-            <MapView complaints={sortedHotspots} onSelectComplaint={setSelected} height={400} showHeatmap />
+          <div className="h-[380px] w-full relative">
+            <MapView complaints={sortedHotspots} onSelectComplaint={setSelected} height={380} showHeatmap />
           </div>
         </div>
 
-        {/* Ranked Infrastructure Risk Intelligence Matrix (Zero repetitive cards) */}
-        <div>
-          {/* Controls Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        {/* Ranked Infrastructure Risk Table */}
+        <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
+          <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50">
             <div>
-              <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
-                RANKED INFRASTRUCTURE RISK INDEX
-              </span>
-              <h2 className="text-xl font-display font-bold text-cp-ink mt-0.5">
-                Top Chronic Civic Failure Points
+              <h2 className="text-base font-bold text-[#0B2545]">
+                Ranked Infrastructure Defect Ledger
               </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Priority order based on citizen report density, failure recurrence frequency, and severity risk index.
+              </p>
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Filter Buttons */}
-              <div className="flex items-center bg-cp-surface p-1 rounded-lg border border-cp-border text-xs font-semibold">
-                <button
-                  onClick={() => setFilterSeverity('all')}
-                  className={`px-3 py-1 rounded-md transition-all ${
-                    filterSeverity === 'all' ? 'bg-teal-700 text-white' : 'text-cp-muted hover:text-cp-ink'
-                  }`}
-                >
-                  All Spots ({safe.length})
-                </button>
-                <button
-                  onClick={() => setFilterSeverity('critical')}
-                  className={`px-3 py-1 rounded-md transition-all ${
-                    filterSeverity === 'critical' ? 'bg-red-700 text-white' : 'text-cp-muted hover:text-cp-ink'
-                  }`}
-                >
-                  Critical (80+)
-                </button>
-                <button
-                  onClick={() => setFilterSeverity('recurring')}
-                  className={`px-3 py-1 rounded-md transition-all ${
-                    filterSeverity === 'recurring' ? 'bg-amber-700 text-white' : 'text-cp-muted hover:text-cp-ink'
-                  }`}
-                >
-                  Recurring Spots
-                </button>
-              </div>
-
-              {/* Sort By Dropdown */}
-              <div className="flex items-center gap-2 text-xs font-mono text-cp-muted bg-cp-surface px-3 py-1.5 rounded-lg border border-cp-border">
-                <span>Sort by:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="bg-transparent font-bold text-cp-ink focus:outline-none cursor-pointer"
-                >
-                  <option value="severity">Severity Score</option>
-                  <option value="confirmations">Citizen Density</option>
-                  <option value="cycles">Recurrence Cycles</option>
-                </select>
-              </div>
+            {/* Filter Buttons */}
+            <div className="flex items-center gap-2 bg-white p-1 rounded border border-slate-300">
+              <button
+                onClick={() => setFilterType('all')}
+                className={`px-3 py-1 text-xs font-semibold rounded ${
+                  filterType === 'all' ? 'bg-[#0B2545] text-white' : 'text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                All Spots ({safe.length})
+              </button>
+              <button
+                onClick={() => setFilterType('critical')}
+                className={`px-3 py-1 text-xs font-semibold rounded ${
+                  filterType === 'critical' ? 'bg-[#B91C1C] text-white' : 'text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                High Risk (80+)
+              </button>
+              <button
+                onClick={() => setFilterType('recurring')}
+                className={`px-3 py-1 text-xs font-semibold rounded ${
+                  filterType === 'recurring' ? 'bg-[#B45309] text-white' : 'text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Recurring Spots
+              </button>
             </div>
           </div>
 
-          {/* Tactical Intelligence Leaderboard Matrix */}
-          <div className="bg-cp-surface rounded-2xl border border-cp-border shadow-rest overflow-hidden">
-            <div className="divide-y divide-cp-border">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+              <tr>
+                <th className="px-6 py-3.5">Priority Rank & ID</th>
+                <th className="px-4 py-3.5">Defect Description</th>
+                <th className="px-4 py-3.5">Jurisdiction Ward</th>
+                <th className="px-4 py-3.5">Engineering Risk Score</th>
+                <th className="px-4 py-3.5">Citizen Confirmations</th>
+                <th className="px-4 py-3.5">Recurrence Tag</th>
+                <th className="px-6 py-3.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
               {sortedHotspots.map((c, i) => {
                 const score = c.severity_score || 0;
                 const isCritical = score >= 80;
-                const isMedium = score >= 60 && score < 80;
-                const accentColor = getCategoryColor(c.category);
 
                 return (
-                  <motion.div
+                  <tr
                     key={c.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.03, duration: 0.2 }}
                     onClick={() => setSelected(c)}
-                    className="p-5 sm:px-7 flex flex-col lg:flex-row lg:items-center justify-between gap-5 hover:bg-cp-surface-hover cursor-pointer transition-all group"
+                    className="hover:bg-slate-50 cursor-pointer transition-colors"
                   >
-                    {/* Rank & Problem Spot Info */}
-                    <div className="flex items-start gap-4 min-w-[320px]">
-                      <div
-                        className={`w-9 h-9 rounded-xl font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-xs ${
-                          i < 3
-                            ? 'bg-red-700 text-white ring-2 ring-red-200'
-                            : isCritical
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-cp-bg text-cp-muted border border-cp-border'
-                        }`}
-                      >
-                        #{i + 1}
+                    <td className="px-6 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`w-6 h-6 rounded flex items-center justify-center font-mono font-bold text-[11px] ${
+                            i < 3
+                              ? 'bg-[#0B2545] text-white'
+                              : 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          #{i + 1}
+                        </span>
+                        <span className="font-mono text-slate-500 font-semibold">#{c.id}</span>
                       </div>
-
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span
-                            style={{ backgroundColor: `${accentColor}15`, color: accentColor, borderColor: `${accentColor}40` }}
-                            className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border"
-                          >
-                            {(c.category || '').replace(/_/g, ' ')}
-                          </span>
-                          <span className="text-xs font-mono text-cp-faint">
-                            #{c.id}
-                          </span>
-                          {c.is_recurring && (
-                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
-                              ⚠️ {c.total_cycles || 2}× Recurring
-                            </span>
-                          )}
-                        </div>
-
-                        <h3 className="text-sm font-bold text-cp-ink group-hover:text-teal-800 transition-colors line-clamp-1">
-                          {c.description}
-                        </h3>
-
-                        <div className="text-xs text-cp-muted font-mono mt-1 flex items-center gap-2">
-                          <span>📍 {c.ward_name || `Ward ${c.ward_id || 1}`}</span>
-                          <span>•</span>
-                          <span className="text-cp-faint">{c.latitude?.toFixed(4)}, {c.longitude?.toFixed(4)}</span>
-                        </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="font-bold text-slate-900 capitalize">
+                        {(c.category || '').replace(/_/g, ' ')}
                       </div>
-                    </div>
-
-                    {/* Urgency Score & Multi-segment Meter */}
-                    <div className="flex-1 max-w-sm">
-                      <div className="flex justify-between text-xs font-mono mb-1.5">
-                        <span className="font-semibold text-cp-muted">Urgency Risk Rating</span>
-                        <span className={`font-bold ${isCritical ? 'text-red-700' : isMedium ? 'text-amber-700' : 'text-emerald-700'}`}>
-                          {score} / 100
+                      <div className="text-slate-500 text-[11px] max-w-sm truncate">
+                        {c.description}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-800 font-semibold text-[11px]">
+                        📍 {c.ward_name || `Ward ${c.ward_id}`}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2 max-w-[120px]">
+                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            style={{ width: `${score}%` }}
+                            className={`h-full rounded-full ${
+                              isCritical ? 'bg-[#B91C1C]' : 'bg-[#133E87]'
+                            }`}
+                          />
+                        </div>
+                        <span className="font-mono font-bold text-slate-800 text-[11px]">
+                          {score}
                         </span>
                       </div>
-                      <div className="h-2.5 w-full bg-cp-bg rounded-full overflow-hidden p-0.5 border border-cp-border">
-                        <div
-                          style={{ width: `${Math.min(100, score)}%` }}
-                          className={`h-full rounded-full transition-all duration-500 ${
-                            isCritical ? 'bg-gradient-to-r from-amber-500 to-red-600' : 'bg-gradient-to-r from-teal-600 to-amber-500'
-                          }`}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Citizen Density & Actions */}
-                    <div className="flex items-center justify-between lg:justify-end gap-6 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-cp-border">
-                      <div className="text-left lg:text-right">
-                        <div className="text-xs font-mono uppercase text-cp-muted font-semibold">Verification Density</div>
-                        <div className="text-sm font-mono font-bold text-cp-ink flex items-center lg:justify-end gap-1.5 mt-0.5">
-                          <span>👥 {c.confirmation_count || 1} citizens</span>
-                        </div>
-                      </div>
-
+                    </td>
+                    <td className="px-4 py-3.5 font-mono text-slate-800 font-semibold">
+                      👥 {c.confirmation_count || 1} verified
+                    </td>
+                    <td className="px-4 py-3.5">
+                      {c.is_recurring ? (
+                        <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded text-[10px] font-bold">
+                          ⚠️ {c.total_cycles || 2}× Cycles ({c.months_span || 6}mo)
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-[11px] font-mono">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-3.5 text-right">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelected(c);
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-cp-bg group-hover:bg-teal-700 group-hover:text-white border border-cp-border group-hover:border-teal-700 text-xs font-semibold text-cp-ink transition-all shadow-xs"
+                        className="px-3 py-1 bg-slate-100 hover:bg-[#0B2545] hover:text-white text-slate-800 font-semibold rounded text-xs transition-colors"
                       >
-                        Inspect Spot →
+                        Inspect
                       </button>
-                    </div>
-                  </motion.div>
+                    </td>
+                  </tr>
                 );
               })}
-            </div>
-          </div>
+            </tbody>
+          </table>
         </div>
-      </motion.div>
+      </div>
 
       <ComplaintDetailDrawer
         complaint={selected}
