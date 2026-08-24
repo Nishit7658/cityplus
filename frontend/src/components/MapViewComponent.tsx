@@ -3,7 +3,8 @@
 // E.2 / C.7 — Map View Component
 // High-visibility civic badge markers visible at ALL zoom levels (zoomed in & zoomed out)
 // CARTO Positron tiles + CSS warm filter sepia(8%) saturate(85%) hue-rotate(-6deg)
-// Ground anchor beacons + High-contrast SVG badges + Critical pulse halos
+// Pixel-accurate iconAnchor prevents position drift during zoom in/out
+// Auto fit-bounds frames all municipal areas and problem spots
 
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
@@ -27,75 +28,79 @@ function buildCustomMarkerHtml(complaint: Complaint): string {
   const borderColor = isResolved ? '#3E8E5B' : isCritical ? '#B33B2E' : catColor;
   const badgeBg = isResolved ? '#F0F9F4' : '#FFFFFF';
 
+  // Crisp category icons centered at (16, 16)
   const iconSvgs: Record<string, string> = {
-    pothole: `<circle cx="12" cy="13" r="5" stroke="${borderColor}" stroke-width="2" fill="none"/><path d="M9 13 Q10 10 12 9 Q14 10 15 13" stroke="${borderColor}" stroke-width="2" fill="none"/>`,
-    water_leak: `<path d="M12 3 Q16 8 16 12 A4 4 0 0 1 8 12 Q8 8 12 3Z" stroke="${borderColor}" stroke-width="1.8" fill="${borderColor}30"/>`,
-    broken_streetlight: `<line x1="12" y1="21" x2="12" y2="7" stroke="${borderColor}" stroke-width="2"/><ellipse cx="17" cy="4" rx="2.5" ry="1.5" stroke="${borderColor}" stroke-width="1.8" fill="${borderColor}40"/>`,
-    garbage_overflow: `<path d="M5 8 L6.5 20 H17.5 L19 8Z" stroke="${borderColor}" stroke-width="1.8" fill="${borderColor}25"/><line x1="3" y1="8" x2="21" y2="8" stroke="${borderColor}" stroke-width="2"/>`,
-    open_manhole: `<ellipse cx="12" cy="12" rx="8" ry="4.5" stroke="${borderColor}" stroke-width="2" fill="${borderColor}30"/>`,
-    exposed_wiring: `<path d="M4 18 L10 12 Q12 10 14 8 L20 4" stroke="${borderColor}" stroke-width="2" stroke-dasharray="3 2"/>`,
-    gas_leak: `<path d="M12 20 A6 6 0 0 1 6 14 C6 10 12 4 12 4 C12 4 18 10 18 14 A6 6 0 0 1 12 20Z" stroke="${borderColor}" stroke-width="1.8" fill="${borderColor}25"/>`,
-    drainage: `<path d="M4 6 H20 V10 H4 Z" stroke="${borderColor}" stroke-width="1.8" fill="${borderColor}30"/><line x1="8" y1="10" x2="8" y2="18" stroke="${borderColor}" stroke-width="2"/><line x1="16" y1="10" x2="16" y2="18" stroke="${borderColor}" stroke-width="2"/>`,
-    road_damage: `<rect x="3" y="8" width="18" height="8" rx="1" stroke="${borderColor}" stroke-width="1.8" fill="${borderColor}25"/><line x1="3" y1="12" x2="21" y2="12" stroke="${borderColor}" stroke-dasharray="3 2" stroke-width="1.5"/>`,
-    traffic_signal: `<rect x="8" y="3" width="8" height="14" rx="2" stroke="${borderColor}" stroke-width="1.8" fill="${borderColor}25"/><circle cx="12" cy="7" r="1.5" fill="#B33B2E"/><circle cx="12" cy="11" r="1.5" fill="#D89A2C"/><circle cx="12" cy="15" r="1.5" fill="#3E8E5B"/>`,
+    pothole: `
+      <ellipse cx="16" cy="16" rx="6" ry="4" stroke="${borderColor}" stroke-width="1.75" fill="none"/>
+      <path d="M13 16 Q14.5 13.5 16 13 Q17.5 13.5 19 16" stroke="${borderColor}" stroke-width="1.75" fill="none"/>
+    `,
+    water_leak: `
+      <path d="M16 8 Q19.5 13 19.5 16.5 A3.5 3.5 0 0 1 12.5 16.5 Q12.5 13 16 8Z" stroke="${borderColor}" stroke-width="1.75" fill="${borderColor}30"/>
+    `,
+    broken_streetlight: `
+      <line x1="16" y1="23" x2="16" y2="10" stroke="${borderColor}" stroke-width="1.75"/>
+      <path d="M16 10 Q16 7 20 7" stroke="${borderColor}" stroke-width="1.75" fill="none"/>
+      <ellipse cx="20" cy="7" rx="2" ry="1.2" stroke="${borderColor}" stroke-width="1.5" fill="${borderColor}40"/>
+    `,
+    garbage_overflow: `
+      <path d="M10 11 L11.5 21 H20.5 L22 11Z" stroke="${borderColor}" stroke-width="1.75" fill="${borderColor}25"/>
+      <line x1="8.5" y1="11" x2="23.5" y2="11" stroke="${borderColor}" stroke-width="1.75"/>
+      <path d="M13 11 V9.5 Q13 8.5 16 8.5 Q19 8.5 19 9.5 V11" stroke="${borderColor}" stroke-width="1.5"/>
+    `,
+    open_manhole: `
+      <ellipse cx="16" cy="16" rx="7" ry="4" stroke="${borderColor}" stroke-width="1.75" fill="${borderColor}30"/>
+      <ellipse cx="16" cy="14.5" rx="4" ry="2" stroke="${borderColor}" stroke-width="1.5" fill="none"/>
+    `,
+    exposed_wiring: `
+      <path d="M10 21 L14 16" stroke="${borderColor}" stroke-width="1.75"/>
+      <path d="M18 13 L22 9" stroke="${borderColor}" stroke-width="1.75"/>
+      <circle cx="15" cy="15" r="1.5" stroke="${borderColor}" fill="${borderColor}40"/>
+      <path d="M14 11 L17 8" stroke="${borderColor}" stroke-width="1.5"/>
+    `,
+    gas_leak: `
+      <path d="M16 22 A5 5 0 0 1 11 17 C11 14 16 9 16 9 C16 9 21 14 21 17 A5 5 0 0 1 16 22Z" stroke="${borderColor}" stroke-width="1.75" fill="${borderColor}25"/>
+    `,
+    drainage: `
+      <path d="M9 10 H23 V13 H9 Z" stroke="${borderColor}" stroke-width="1.5" fill="${borderColor}30"/>
+      <line x1="12" y1="13" x2="12" y2="21" stroke="${borderColor}" stroke-width="1.75"/>
+      <line x1="16" y1="13" x2="16" y2="21" stroke="${borderColor}" stroke-width="1.75"/>
+      <line x1="20" y1="13" x2="20" y2="21" stroke="${borderColor}" stroke-width="1.75"/>
+    `,
+    road_damage: `
+      <rect x="9" y="11" width="14" height="8" rx="1.5" stroke="${borderColor}" stroke-width="1.75" fill="${borderColor}25"/>
+      <line x1="9" y1="15" x2="23" y2="15" stroke="${borderColor}" stroke-dasharray="2.5 1.5" stroke-width="1.2"/>
+    `,
+    traffic_signal: `
+      <rect x="13" y="8" width="6" height="13" rx="1.5" stroke="${borderColor}" stroke-width="1.5" fill="${borderColor}25"/>
+      <circle cx="16" cy="10.5" r="1.2" fill="#B33B2E"/>
+      <circle cx="16" cy="14.5" r="1.2" fill="#D89A2C"/>
+      <circle cx="16" cy="18.5" r="1.2" fill="#3E8E5B"/>
+    `,
   };
 
   const normKey = (complaint.category || '').toLowerCase().replace(/\s+/g, '_');
   const iconInner = iconSvgs[normKey] || iconSvgs['pothole'];
 
-  // Critical pulse sonar aura
+  // Sonar pulse halo around badge for critical complaints
   const pulseHtml = isCritical
-    ? `<div style="position:absolute;inset:-10px;border-radius:12px;border:3px solid #B33B2E;animation:pulse-dot 1800ms ease-in-out infinite;opacity:0.6;pointer-events:none;"></div>`
+    ? `<div style="position:absolute;top:-4px;left:-4px;width:40px;height:40px;border-radius:12px;border:2.5px solid #B33B2E;animation:pulse-dot 1800ms ease-in-out infinite;opacity:0.6;pointer-events:none;"></div>`
     : '';
 
-  // Ground beacon dot below the marker tail for high visibility when zoomed out
-  const groundBeacon = `
-    <div style="
-      position:absolute;
-      bottom:-14px;
-      left:50%;
-      transform:translateX(-50%);
-      width:10px;
-      height:10px;
-      border-radius:50%;
-      background:${borderColor};
-      border:2px solid #FFFFFF;
-      box-shadow:0 0 8px ${borderColor};
-    "></div>
-  `;
-
+  // Standalone SVG pin: Total dimensions 32px wide by 42px tall
+  // Needle anchor tip is exactly at (16, 41)
   return `
-    <div style="
-      position:relative;
-      width:32px;
-      height:32px;
-      border-radius:10px;
-      background:${badgeBg};
-      border:2.5px solid ${borderColor};
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      box-shadow:0 4px 14px rgba(0,0,0,0.3), 0 2px 5px rgba(0,0,0,0.15);
-      cursor:pointer;
-      transition:transform 150ms ease;
-    ">
+    <div class="marker-inner-drop" style="position:relative;width:32px;height:42px;cursor:pointer;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.28));">
       ${pulseHtml}
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display:block;">
+      <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible;">
+        <!-- Downward triangle tail pointing to (16, 41) -->
+        <path d="M10 27 L16 41 L22 27 Z" fill="${borderColor}"/>
+        <!-- Rounded square badge -->
+        <rect x="1.5" y="1.5" width="29" height="28" rx="8" fill="${badgeBg}" stroke="${borderColor}" stroke-width="2.5"/>
+        <!-- Inner Category Icon -->
         ${iconInner}
+        <!-- Needle contact dot at anchor (16, 41) -->
+        <circle cx="16" cy="41" r="2" fill="${borderColor}" stroke="#FFFFFF" stroke-width="1"/>
       </svg>
-      <!-- Downward pointing badge tail -->
-      <div style="
-        position:absolute;
-        bottom:-8px;
-        left:50%;
-        transform:translateX(-50%);
-        width:0;
-        height:0;
-        border-left:6px solid transparent;
-        border-right:6px solid transparent;
-        border-top:8px solid ${borderColor};
-      "></div>
-      ${groundBeacon}
     </div>
   `;
 }
@@ -114,7 +119,7 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
 
   const safeComplaints = Array.isArray(complaints) ? complaints : [];
 
-  // Initialize map safely
+  // Initialize map instance
   useEffect(() => {
     if (typeof window === 'undefined' || !containerRef.current) return;
 
@@ -140,18 +145,6 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
         subdomains: 'abcd',
       }).addTo(map);
 
-      // Auto fit bounds to encompass all Vadodara complaint markers
-      if (safeComplaints.length > 0) {
-        const validCoords = safeComplaints
-          .filter((c) => typeof c.latitude === 'number' && typeof c.longitude === 'number')
-          .map((c) => [c.latitude, c.longitude] as [number, number]);
-
-        if (validCoords.length > 0) {
-          const bounds = L.latLngBounds(validCoords);
-          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-        }
-      }
-
       mapRef.current = map;
       setIsMapReady(true);
     } catch (err) {
@@ -172,7 +165,7 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
     };
   }, []);
 
-  // Update markers
+  // Update markers & auto fit-bounds
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !isMapReady) return;
@@ -180,22 +173,27 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
     timeoutsRef.current.forEach(clearTimeout);
     timeoutsRef.current = [];
 
-    // Remove existing markers
+    // Remove existing markers & layers
     map.eachLayer((layer) => {
       if (layer instanceof L.Marker || layer instanceof L.CircleMarker || (layer as any)._heat) {
         map.removeLayer(layer);
       }
     });
 
-    safeComplaints.forEach((c, i) => {
-      if (!c || typeof c.latitude !== 'number' || typeof c.longitude !== 'number') return;
+    const validCoordinates: [number, number][] = [];
 
+    safeComplaints.forEach((c, i) => {
+      if (!c || typeof c.latitude !== 'number' || typeof c.longitude !== 'number' || isNaN(c.latitude) || isNaN(c.longitude)) return;
+
+      validCoordinates.push([c.latitude, c.longitude]);
+
+      // Pixel-perfect anchor: tip is at x: 16 (half width), y: 41 (bottom point)
       const customIcon = L.divIcon({
         html: buildCustomMarkerHtml(c),
         className: 'leaflet-custom-marker',
-        iconSize: [32, 44],
-        iconAnchor: [16, 44],
-        popupAnchor: [0, -44],
+        iconSize: [32, 42],
+        iconAnchor: [16, 41],
+        popupAnchor: [0, -41],
       });
 
       const marker = L.marker([c.latitude, c.longitude], {
@@ -243,12 +241,22 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
           if (mapRef.current) {
             marker.addTo(mapRef.current);
           }
-        }, i * 15);
+        }, i * 12);
         timeoutsRef.current.push(t);
       } else {
         marker.addTo(map);
       }
     });
+
+    // Auto fit map viewport to encompass ALL complaints across the city
+    if (validCoordinates.length > 0) {
+      try {
+        const bounds = L.latLngBounds(validCoordinates);
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+      } catch (err) {
+        console.warn('[MapView] Fit bounds error:', err);
+      }
+    }
 
     // Heatmap layer
     if (showHeatmap && safeComplaints.length > 0) {

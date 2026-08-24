@@ -122,15 +122,30 @@ body {
 }
 
 /* ============================================================
-   Custom Map Marker Animations
+   Custom Map Marker Styles & Reset
+   Leaflet icon wrapper must have transparent background & no top-level CSS transform
+   so Leaflet's zoom matrix math never drifts!
    ============================================================ */
-@keyframes marker-drop {
-  from { transform: translateY(-12px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
+.leaflet-custom-marker {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-.leaflet-custom-marker {
-  animation: marker-drop 280ms var(--ease-standard) both;
+.marker-inner-drop {
+  animation: marker-drop-anim 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: 50% 100%;
+}
+
+@keyframes marker-drop-anim {
+  from {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ============================================================
