@@ -1,10 +1,10 @@
 'use client';
 
-// F.3 — Complaint Queue Page
-// Civic Command Center — Active Dispatch Workflow & SLA Tracking
+// F.3 — Complaint Queue Page (Official Municipal Grievance Queue)
+// Vadodara Municipal Corporation (VMC) / Government of Gujarat
+// High-contrast status filters, formal queue ledger, and direct officer dispatch
 
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { TaskQueueTable } from '@/components/TaskQueueTable';
 import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
 import { FilterPillRow, FilterOption } from '@/components/FilterPillRow';
@@ -25,7 +25,7 @@ export default function QueuePage() {
   const [complaints, setComplaints] = useState<Complaint[]>(MOCK_COMPLAINTS);
   const [officers, setOfficers]     = useState<Officer[]>(MOCK_OFFICERS);
   const [selected, setSelected]     = useState<Complaint | null>(null);
-  const [activeStatuses, setActiveStatuses] = useState<string[]>(['Pending', 'Assigned', 'In Progress']);
+  const [activeStatuses, setActiveStatuses] = useState<string[]>(['Pending', 'Assigned', 'In Progress', 'Resolved']);
   const [newIds, setNewIds]         = useState<number[]>([]);
   const { lastEvent } = useSocket();
 
@@ -67,72 +67,84 @@ export default function QueuePage() {
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-[1480px] mx-auto px-6 py-8"
-      >
-        {/* Top Header & Queue Telemetry */}
-        <div className="mb-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-cp-border">
+      <div className="max-w-[1520px] mx-auto px-6 py-6 bg-slate-50 min-h-[calc(100vh-115px)]">
+        {/* Official Header */}
+        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div>
-            <div className="flex items-center gap-2.5 mb-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse" />
-              <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
-                OPERATIONAL DISPATCH CONSOLE
-              </span>
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <span>Vadodara Municipal Corporation</span>
+              <span>•</span>
+              <span>Central Grievance Redressal Queue</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-cp-ink tracking-tight">
-              Complaint Task Queue
+            <h1 className="text-2xl font-bold text-[#0B2545] tracking-tight mt-1">
+              Municipal Work Orders & Citizen Task Queue
             </h1>
-            <p className="text-sm text-cp-muted mt-1 max-w-2xl">
-              Live municipal task triage, priority re-scoring, and cross-departmental officer dispatch across Vadodara.
+            <p className="text-xs text-slate-500 mt-1">
+              Active intake queue for zonal triage, priority escalation, and field engineering dispatch.
             </p>
           </div>
 
           {/* Status Counts HUD */}
-          <div className="flex items-center gap-2 bg-cp-surface p-2 rounded-xl border border-cp-border shadow-rest flex-wrap">
-            <div className="px-3 py-1 border-r border-cp-border">
-              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Pending</div>
-              <div className="text-lg font-mono font-bold text-slate-700">{pending}</div>
+          <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-2xs flex-wrap">
+            <div className="px-3 py-1 border-r border-slate-200 text-xs">
+              <span className="text-slate-500 block">Pending</span>
+              <span className="font-mono font-bold text-slate-900 text-base">{pending}</span>
             </div>
-            <div className="px-3 py-1 border-r border-cp-border">
-              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Assigned</div>
-              <div className="text-lg font-mono font-bold text-sky-800">{assigned}</div>
+            <div className="px-3 py-1 border-r border-slate-200 text-xs">
+              <span className="text-slate-500 block">Assigned</span>
+              <span className="font-mono font-bold text-[#1E40AF] text-base">{assigned}</span>
             </div>
-            <div className="px-3 py-1 border-r border-cp-border">
-              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">In Action</div>
-              <div className="text-lg font-mono font-bold text-amber-700">{inProgress}</div>
+            <div className="px-3 py-1 border-r border-slate-200 text-xs">
+              <span className="text-slate-500 block">In Progress</span>
+              <span className="font-mono font-bold text-[#B45309] text-base">{inProgress}</span>
             </div>
-            <div className="px-3 py-1">
-              <div className="text-[10px] font-mono uppercase text-cp-muted font-bold">Resolved</div>
-              <div className="text-lg font-mono font-bold text-emerald-700">{resolved}</div>
+            <div className="px-3 py-1 text-xs">
+              <span className="text-slate-500 block">Resolved</span>
+              <span className="font-mono font-bold text-[#15803D] text-base">{resolved}</span>
             </div>
           </div>
         </div>
 
-        {/* Status filter chips */}
-        <div className="mb-6 flex items-center gap-3">
-          <span className="text-[11px] font-mono uppercase tracking-widest text-cp-muted font-bold">
-            Filter Status:
-          </span>
-          <FilterPillRow
-            options={STATUS_FILTERS.map((f) => ({
-              ...f,
-              count: safe.filter((c) => c.status === f.key).length,
-            }))}
-            active={activeStatuses}
-            onToggle={(k) =>
-              setActiveStatuses((prev) =>
-                prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]
-              )
-            }
-          />
+        {/* High-Visibility Status Filter Bar */}
+        <div className="mb-6 bg-white p-4 rounded-lg border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider">
+              Filter by Status:
+            </span>
+            <FilterPillRow
+              options={STATUS_FILTERS.map((f) => ({
+                ...f,
+                count: safe.filter((c) => c.status === f.key).length,
+              }))}
+              active={activeStatuses}
+              onToggle={(k) =>
+                setActiveStatuses((prev) =>
+                  prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]
+                )
+              }
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveStatuses(['Pending', 'Assigned', 'In Progress', 'Resolved'])}
+              className="text-xs font-semibold text-[#133E87] hover:underline"
+            >
+              Select All
+            </button>
+            <span className="text-slate-300">|</span>
+            <button
+              onClick={() => setActiveStatuses([])}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-800"
+            >
+              Clear Filters
+            </button>
+          </div>
         </div>
 
-        {/* Queue table/grid */}
+        {/* Queue Table */}
         <TaskQueueTable complaints={filtered} onSelect={setSelected} newIds={newIds} />
-      </motion.div>
+      </div>
 
       <ComplaintDetailDrawer
         complaint={selected}

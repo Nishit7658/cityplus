@@ -1,8 +1,8 @@
 'use client';
 
-// C.10 — Filter Pill Row
-// High-visibility interactive filter chips with smooth toggle and clear active state
-// Zero clipping or fading masks
+// C.10 — Official Government Filter Pill Row
+// High-contrast, high-visibility status filter chips
+// Crystal-clear visibility for both selected and unselected states
 
 import React from 'react';
 import { motion } from 'framer-motion';
@@ -22,83 +22,61 @@ interface FilterPillRowProps {
 
 export const FilterPillRow: React.FC<FilterPillRowProps> = ({ options, active, onToggle, className = '' }) => {
   return (
-    <div
-      className={`flex items-center gap-1.5 flex-wrap ${className}`}
-      style={{
-        overflow: 'visible',
-      }}
-    >
+    <div className={`flex items-center gap-2 flex-wrap ${className}`}>
       {options.map((opt) => {
         const isActive = active.includes(opt.key);
         return (
           <motion.button
             key={opt.key}
             type="button"
-            whileTap={{ scale: 0.96 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => onToggle(opt.key)}
-            style={{
-              height: 32,
-              padding: '0 12px',
-              borderRadius: 'var(--radius-pill)',
-              border: isActive ? '1.5px solid var(--color-teal-700)' : '1px solid var(--color-border)',
-              background: isActive ? 'var(--color-teal-700)' : 'var(--color-surface)',
-              color: isActive ? '#FAF7F2' : 'var(--color-ink)',
-              cursor: 'pointer',
-              fontSize: 'var(--fs-body-sm)',
-              fontWeight: isActive ? 600 : 500,
-              fontFamily: 'var(--font-body)',
-              whiteSpace: 'nowrap',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              boxShadow: isActive ? '0 1px 4px rgba(27, 107, 89, 0.25)' : 'var(--shadow-rest)',
-              transition: 'all 150ms cubic-bezier(0.22, 1, 0.36, 1)',
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.borderColor = 'var(--color-border-strong)';
-                e.currentTarget.style.background = 'var(--color-surface-hover)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.borderColor = 'var(--color-border)';
-                e.currentTarget.style.background = 'var(--color-surface)';
-              }
-            }}
+            className={`h-9 px-3.5 rounded-md text-xs font-bold tracking-tight inline-flex items-center gap-2 transition-all cursor-pointer shadow-2xs border ${
+              isActive
+                ? 'bg-[#0B2545] border-[#0B2545] text-white ring-2 ring-[#0B2545]/20 shadow-xs'
+                : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-100 hover:border-slate-400'
+            }`}
           >
-            {opt.label}
+            {/* Status dot */}
+            <span
+              className={`w-2 h-2 rounded-full shrink-0 ${
+                isActive
+                  ? 'bg-amber-400'
+                  : opt.key === 'Resolved'
+                  ? 'bg-emerald-600'
+                  : opt.key === 'In Progress'
+                  ? 'bg-amber-500'
+                  : opt.key === 'Assigned'
+                  ? 'bg-blue-600'
+                  : 'bg-slate-500'
+              }`}
+            />
+
+            <span>{opt.label}</span>
+
+            {/* Count Badge */}
             {opt.count !== undefined && (
               <span
-                style={{
-                  background: isActive ? 'rgba(255, 255, 255, 0.25)' : 'var(--color-border-strong)',
-                  color: isActive ? '#FAF7F2' : 'var(--color-ink-muted)',
-                  borderRadius: 'var(--radius-pill)',
-                  padding: '1px 6px',
-                  fontSize: 11,
-                  fontFamily: 'var(--font-mono)',
-                  fontWeight: 600,
-                }}
+                className={`font-mono text-[11px] font-bold px-2 py-0.5 rounded ${
+                  isActive
+                    ? 'bg-white/20 text-white'
+                    : 'bg-slate-200 text-slate-800'
+                }`}
               >
                 {opt.count}
               </span>
             )}
+
+            {/* Active Dismiss Indicator */}
             {isActive && (
               <span
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggle(opt.key);
                 }}
-                style={{
-                  marginLeft: 1,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  opacity: 0.85,
-                }}
+                className="text-xs font-bold text-white/80 hover:text-white ml-0.5"
               >
-                ×
+                ✕
               </span>
             )}
           </motion.button>
