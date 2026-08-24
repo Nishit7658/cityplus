@@ -1,6 +1,6 @@
 'use client';
 
-// F.3 — Task Queue Table/Grid with Bilingual i18n
+// F.3 — Task Queue Table/Grid with Trilingual i18n
 // Vadodara Municipal Corporation (VMC)
 
 import React, { useState } from 'react';
@@ -32,10 +32,42 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({ complaints, onSe
   const { language, t } = useLanguage();
 
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-    { key: 'priority', label: language === 'gu' ? '⚡ અગ્રતા સ્કોર ▾' : '⚡ Priority Score ▾' },
-    { key: 'newest',   label: language === 'gu' ? '🕒 નવીનતમ પ્રથમ' : '🕒 Newest First' },
-    { key: 'confirmed',label: language === 'gu' ? '👥 સૌથી વધુ પુષ્ટિ' : '👥 Most Confirmed' },
-    { key: 'oldest',   label: language === 'gu' ? '⏳ સૌથી જૂની પેન્ડિંગ' : '⏳ Longest Pending' },
+    {
+      key: 'priority',
+      label:
+        language === 'gu'
+          ? '⚡ અગ્રતા સ્કોર ▾'
+          : language === 'hi'
+          ? '⚡ प्राथमिकता स्कोर ▾'
+          : '⚡ Priority Score ▾',
+    },
+    {
+      key: 'newest',
+      label:
+        language === 'gu'
+          ? '🕒 નવીનતમ પ્રથમ'
+          : language === 'hi'
+          ? '🕒 नवीनतम पहले'
+          : '🕒 Newest First',
+    },
+    {
+      key: 'confirmed',
+      label:
+        language === 'gu'
+          ? '👥 સૌથી વધુ પુષ્ટિ'
+          : language === 'hi'
+          ? '👥 सर्वाधिक पुष्टि'
+          : '👥 Most Confirmed',
+    },
+    {
+      key: 'oldest',
+      label:
+        language === 'gu'
+          ? '⏳ સૌથી જૂની પેન્ડિંગ'
+          : language === 'hi'
+          ? '⏳ सबसे पुरानी लंबित'
+          : '⏳ Longest Pending',
+    },
   ];
 
   const sorted = sortComplaints(safe, sort);
@@ -46,7 +78,7 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({ complaints, onSe
       <div className="flex items-center justify-between gap-4 flex-wrap pb-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">
-            {language === 'gu' ? 'ક્રમ:' : 'Sort:'}
+            {language === 'gu' ? 'ક્રમ:' : language === 'hi' ? 'क्रम:' : 'Sort:'}
           </span>
           {SORT_OPTIONS.map((opt) => {
             const isActive = sort === opt.key;
@@ -113,7 +145,7 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({ complaints, onSe
                           </span>
                           {c.is_recurring && (
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">
-                              ↻ {language === 'gu' ? `પુનરાવર્તન (${c.total_cycles}×)` : `Recurring (${c.total_cycles}×)`}
+                              ↻ {language === 'gu' ? `પુનરાવર્તન (${c.total_cycles}×)` : language === 'hi' ? `पुनरावृत्ति (${c.total_cycles}×)` : `Recurring (${c.total_cycles}×)`}
                             </span>
                           )}
                         </div>
@@ -171,13 +203,13 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({ complaints, onSe
                     {/* Citizen Confirmations */}
                     <td className="px-4 py-3.5">
                       <span className="font-mono font-bold text-slate-800 text-xs">
-                        👥 {c.confirmation_count || 1} {language === 'gu' ? 'ચકાસાયેલ' : 'verified'}
+                        👥 {c.confirmation_count || 1} {language === 'gu' ? 'ચકાસાયેલ' : language === 'hi' ? 'सत्यापित' : 'verified'}
                       </span>
                     </td>
 
                     {/* Reported Date */}
                     <td className="px-4 py-3.5 font-mono text-[11px] text-slate-500">
-                      {new Date(c.created_at).toLocaleDateString(language === 'gu' ? 'gu-IN' : 'en-IN', {
+                      {new Date(c.created_at).toLocaleDateString(language === 'gu' ? 'gu-IN' : language === 'hi' ? 'hi-IN' : 'en-IN', {
                         month: 'short',
                         day: 'numeric',
                         hour: '2-digit',
@@ -207,7 +239,7 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({ complaints, onSe
 
       {sorted.length === 0 && (
         <div className="text-center py-16 text-slate-400 font-body text-sm bg-white rounded-lg border border-slate-200">
-          {language === 'gu' ? 'પસંદ કરેલ માપદંડ મુજબ કોઈ ફરિયાદ નથી.' : 'No complaints matching the active criteria.'}
+          {t('common.no_data')}
         </div>
       )}
     </div>

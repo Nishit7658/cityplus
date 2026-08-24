@@ -1,6 +1,6 @@
 'use client';
 
-// Settings Page with Full Bilingual Gujarati & English Support
+// Settings Page with Trilingual (English / ગુજરાતી / हिन्दी) Support
 // WhatsApp simulator + backend configuration
 
 import React, { useState } from 'react';
@@ -35,11 +35,51 @@ export default function SettingsPage() {
   };
 
   const scenarios = [
-    { label: language === 'gu' ? 'નવી ફરિયાદ શરૂ કરો' : 'Start new complaint', value: 'Hi' },
-    { label: language === 'gu' ? 'ખાડા પસંદ કરો (૧)' : 'Select Pothole',      value: '1' },
-    { label: language === 'gu' ? 'પુષ્ટિ કરો (હા)' : 'Confirm Yes',         value: 'Yes' },
-    { label: language === 'gu' ? 'અસ્વીકાર (ના)' : 'Reject (No)',         value: 'No' },
-    { label: language === 'gu' ? 'લોકેશન મોકલો' : 'Send location',       value: 'loc:22.3072,73.1812' },
+    {
+      label:
+        language === 'gu'
+          ? 'નવી ફરિયાદ શરૂ કરો'
+          : language === 'hi'
+          ? 'नई शिकायत शुरू करें'
+          : 'Start new complaint',
+      value: 'Hi',
+    },
+    {
+      label:
+        language === 'gu'
+          ? 'ખાડા પસંદ કરો (૧)'
+          : language === 'hi'
+          ? 'गड्ढा चुनें (१)'
+          : 'Select Pothole',
+      value: '1',
+    },
+    {
+      label:
+        language === 'gu'
+          ? 'પુષ્ટિ કરો (હા)'
+          : language === 'hi'
+          ? 'पुष्टि करें (हाँ)'
+          : 'Confirm Yes',
+      value: 'Yes',
+    },
+    {
+      label:
+        language === 'gu'
+          ? 'અસ્વીકાર (ના)'
+          : language === 'hi'
+          ? 'अस्वीकार (नहीं)'
+          : 'Reject (No)',
+      value: 'No',
+    },
+    {
+      label:
+        language === 'gu'
+          ? 'લોકેશન મોકલો'
+          : language === 'hi'
+          ? 'लोकेशन भेजें'
+          : 'Send location',
+      value: 'loc:22.3072,73.1812',
+    },
   ];
 
   return (

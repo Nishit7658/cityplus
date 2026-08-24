@@ -1,6 +1,6 @@
 'use client';
 
-// F.4 / D.6 — Complaint Detail Drawer with Full Bilingual i18n
+// F.4 / D.6 — Complaint Detail Drawer with Full Trilingual i18n
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
 
 import React, { useEffect, useState } from 'react';
@@ -150,12 +150,15 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
 
               {/* Location & Reported date */}
               <p className="text-xs text-slate-500 mb-1 font-mono">
-                📍 {wardLabel} • {language === 'gu' ? 'નોંધણી તારીખ: ' : 'Reported: '}
-                {new Date(complaint.created_at).toLocaleDateString(language === 'gu' ? 'gu-IN' : 'en-IN', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
+                📍 {wardLabel} • {language === 'gu' ? 'નોંધણી તારીખ: ' : language === 'hi' ? 'दर्ज तारीख: ' : 'Reported: '}
+                {new Date(complaint.created_at).toLocaleDateString(
+                  language === 'gu' ? 'gu-IN' : language === 'hi' ? 'hi-IN' : 'en-IN',
+                  {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  }
+                )}
               </p>
 
               {typeof complaint.latitude === 'number' && (
@@ -166,7 +169,12 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
 
               {/* Description */}
               <div className="p-3.5 rounded bg-slate-50 border border-slate-200 text-xs text-slate-800 leading-relaxed mb-5">
-                {complaint.description || (language === 'gu' ? 'નાગરિક દ્વારા નોંધાયેલ ફરિયાદ.' : 'Civic infrastructure report submitted by citizen.')}
+                {complaint.description ||
+                  (language === 'gu'
+                    ? 'નાગરિક દ્વારા નોંધાયેલ ફરિયાદ.'
+                    : language === 'hi'
+                    ? 'नागरिक द्वारा दर्ज शिकायत।'
+                    : 'Civic infrastructure report submitted by citizen.')}
               </div>
 
               {/* Citizen Confirmations */}
@@ -253,6 +261,8 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
                 <div className="mt-4 p-3 rounded bg-red-50 border border-red-200 text-red-800 text-xs font-bold">
                   {language === 'gu'
                     ? `↩ નાગરિક ચકાસણી દ્વારા ${complaint.reopened_count}× વખત ફરી ખોલવામાં આવેલ છે`
+                    : language === 'hi'
+                    ? `↩ नागरिक सत्यापन द्वारा ${complaint.reopened_count}× बार पुनः खोला गया`
                     : `↩ Reopened ${complaint.reopened_count}× by citizen verification`}
                 </div>
               )}

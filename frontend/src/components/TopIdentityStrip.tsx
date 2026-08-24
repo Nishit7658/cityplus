@@ -2,15 +2,21 @@
 
 // C.1 — Official Government Top Identity Strip
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
-// Bilingual Language Switcher (English | ગુજરાતી) + National tricolor civic accent line
+// Trilingual Language Dropdown (English / ગુજરાતી / हिन्दी) + National tricolor accent line
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSocket } from './SocketProvider';
-import { useLanguage } from '@/context/LanguageContext';
+import { useLanguage, Language } from '@/context/LanguageContext';
 import { MOCK_COMPLAINTS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+const LANGUAGE_OPTIONS: { code: Language; label: string; native: string }[] = [
+  { code: 'en', label: 'English', native: 'English' },
+  { code: 'gu', label: 'Gujarati', native: 'ગુજરાતી' },
+  { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
+];
 
 export const TopIdentityStrip: React.FC = () => {
   const { lastEvent } = useSocket();
@@ -79,6 +85,11 @@ export const TopIdentityStrip: React.FC = () => {
                     | વડોદરા મહાનગરપાલિકા
                   </span>
                 )}
+                {language === 'hi' && (
+                  <span className="text-xs font-semibold text-slate-500 hidden md:inline">
+                    | वडोदरा महानगर पालिका
+                  </span>
+                )}
               </div>
               <span className="text-[11px] font-medium text-slate-500">
                 {t('vmc.subtitle')}
@@ -87,30 +98,26 @@ export const TopIdentityStrip: React.FC = () => {
           </Link>
         </div>
 
-        {/* Right Controls: Language Switcher + CRMS Badge + Ward + Officer */}
+        {/* Right Controls: Trilingual Dropdown + CRMS Badge + Ward + Officer */}
         <div className="flex items-center gap-3 shrink-0">
-          {/* Bilingual Language Switcher (English | ગુજરાતી) */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-md border border-slate-300">
-            <button
-              onClick={() => setLanguage('en')}
-              className={`px-2.5 py-1 text-xs font-bold rounded transition-all cursor-pointer ${
-                language === 'en'
-                  ? 'bg-[#0B2545] text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+          {/* Trilingual Language Dropdown Selector (English / ગુજરાતી / हिन्दी) */}
+          <div className="relative flex items-center bg-white rounded-md border border-slate-300 shadow-2xs hover:border-slate-400 transition-colors">
+            <span className="pl-2.5 pr-1 text-slate-400 text-xs">🌐</span>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as Language)}
+              aria-label="Select Language"
+              className="h-8 pl-1 pr-7 bg-transparent text-xs font-bold text-[#0B2545] focus:outline-none cursor-pointer appearance-none"
             >
-              English
-            </button>
-            <button
-              onClick={() => setLanguage('gu')}
-              className={`px-2.5 py-1 text-xs font-bold rounded transition-all cursor-pointer ${
-                language === 'gu'
-                  ? 'bg-[#0B2545] text-white shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              ગુજરાતી
-            </button>
+              {LANGUAGE_OPTIONS.map((opt) => (
+                <option key={opt.code} value={opt.code} className="text-slate-800 font-semibold">
+                  {opt.native} ({opt.label})
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]">
+              ▼
+            </div>
           </div>
 
           {/* Portal Live Telemetry Badge */}

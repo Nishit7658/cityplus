@@ -1,6 +1,6 @@
 'use client';
 
-// F.6 — Officers Page (Official Municipal Personnel Directory) with Bilingual i18n
+// F.6 — Officers Page (Official Municipal Personnel Directory) with Trilingual i18n
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
 
 import React, { useEffect, useState } from 'react';
@@ -161,7 +161,7 @@ export default function OfficersPage() {
                       VMC-CADRE-0{officer.id}
                     </span>
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                      {language === 'gu' ? 'કાર્યપાલક ઇજનેર' : 'Executive Engineer'}
+                      {t('officers.executive_engineer')}
                     </span>
                   </div>
 
@@ -212,7 +212,7 @@ export default function OfficersPage() {
                 {/* Dispatch Trigger */}
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                   <span className="text-slate-400 font-mono">
-                    {language === 'gu' ? 'સ્થિતિ: સક્રિય' : 'Status: Active'}
+                    {language === 'gu' ? 'સ્થિતિ: સક્રિય' : language === 'hi' ? 'स्थिति: सक्रिय' : 'Status: Active'}
                   </span>
                   <a
                     href={`tel:${officer.phone}`}
@@ -231,9 +231,15 @@ export default function OfficersPage() {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
               <tr>
-                <th className="px-6 py-3.5">{language === 'gu' ? 'કેડર ID અને નામ' : 'Cadre ID & Name'}</th>
-                <th className="px-4 py-3.5">{language === 'gu' ? 'વિભાગ' : 'Department'}</th>
-                <th className="px-4 py-3.5">{language === 'gu' ? 'સોંપાયેલ અધિકારક્ષેત્ર' : 'Assigned Jurisdiction'}</th>
+                <th className="px-6 py-3.5">
+                  {language === 'gu' ? 'કેડર ID અને નામ' : language === 'hi' ? 'संवर्ग ID एवं नाम' : 'Cadre ID & Name'}
+                </th>
+                <th className="px-4 py-3.5">
+                  {language === 'gu' ? 'વિભાગ' : language === 'hi' ? 'विभाग' : 'Department'}
+                </th>
+                <th className="px-4 py-3.5">
+                  {language === 'gu' ? 'સોંપાયેલ અધિકારક્ષેત્ર' : language === 'hi' ? 'आवंटित अधिकार क्षेत्र' : 'Assigned Jurisdiction'}
+                </th>
                 <th className="px-4 py-3.5">{t('officers.active_tasks')}</th>
                 <th className="px-4 py-3.5">{t('officers.total_cleared')}</th>
                 <th className="px-4 py-3.5">{t('officers.official_contact')}</th>

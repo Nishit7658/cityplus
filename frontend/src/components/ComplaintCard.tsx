@@ -1,6 +1,6 @@
 'use client';
 
-// C.5 — Complaint Card with Bilingual i18n
+// C.5 — Complaint Card with Trilingual i18n
 // Vadodara Municipal Corporation (VMC)
 
 import React from 'react';
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { Complaint } from '@/types';
 import { CategoryIcon, getCategoryColor, getSeverityColor } from './CategoryIcon';
 import { ConfirmationAvatarStack } from './ConfirmationAvatarStack';
-import { useLanguage } from '@/context/LanguageContext';
+import { useLanguage, Language } from '@/context/LanguageContext';
 
 interface ComplaintCardProps {
   complaint: Complaint;
@@ -23,7 +23,7 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; border: string 
   Resolved:   { bg: '#F0FDF4', color: '#15803D', border: '#BBF7D0' },
 };
 
-function timeAgo(dateStr: string, lang: 'en' | 'gu'): string {
+function timeAgo(dateStr: string, lang: Language): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const h = Math.floor(diff / 3600000);
   const m = Math.floor(diff / 60000);
@@ -31,6 +31,11 @@ function timeAgo(dateStr: string, lang: 'en' | 'gu'): string {
     if (h > 24) return `${Math.floor(h / 24)} દિવસ પહેલા`;
     if (h > 0) return `${h} કલાક પહેલા`;
     return `${m} મિનિટ પહેલા`;
+  }
+  if (lang === 'hi') {
+    if (h > 24) return `${Math.floor(h / 24)} दिन पहले`;
+    if (h > 0) return `${h} घंटे पहले`;
+    return `${m} मिनट पहले`;
   }
   if (h > 24) return `${Math.floor(h / 24)}d ago`;
   if (h > 0) return `${h}h ago`;
@@ -42,7 +47,6 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint: c, isNe
   const accentColor = getCategoryColor(c.category);
   const severityColor = getSeverityColor(c.confirmation_count, c.status);
   const statusStyle = STATUS_STYLES[c.status] || STATUS_STYLES.Pending;
-  const isCritical = c.confirmation_count >= 8 && c.status !== 'Resolved';
 
   const catLabel = t(`cat.${c.category}`, (c.category || '').replace(/_/g, ' '));
   const statusKey = (c.status || '').toLowerCase().replace(/ /g, '_');
@@ -95,7 +99,7 @@ export const ComplaintCard: React.FC<ComplaintCardProps> = ({ complaint: c, isNe
         </div>
 
         <p className="text-xs text-slate-600 mb-2 line-clamp-1">
-          {c.description || (language === 'gu' ? 'નાગરિક દ્વારા નોંધાયેલ ફરિયાદ.' : 'Civic infrastructure report submitted by citizen.')}
+          {c.description || (language === 'gu' ? 'નાગરિક દ્વારા નોંધાયેલ ફરિયાદ.' : language === 'hi' ? 'नागरिक द्वारा दर्ज शिकायत।' : 'Civic infrastructure report submitted by citizen.')}
         </p>
 
         <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono">

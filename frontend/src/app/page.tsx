@@ -1,6 +1,6 @@
 'use client';
 
-// F.1 — Overview Page (Executive Municipal Control Room) with Bilingual i18n
+// F.1 — Overview Page (Executive Municipal Control Room) with Trilingual i18n
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
 
 import React, { useEffect, useState } from 'react';
@@ -8,12 +8,12 @@ import { MapView } from '@/components/MapView';
 import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
 import { Complaint, Officer } from '@/types';
 import { useSocket } from '@/components/SocketProvider';
-import { useLanguage } from '@/context/LanguageContext';
+import { useLanguage, Language } from '@/context/LanguageContext';
 import { MOCK_COMPLAINTS, MOCK_OFFICERS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-function timeAgo(d: string, lang: 'en' | 'gu') {
+function timeAgo(d: string, lang: Language) {
   const diff = Date.now() - new Date(d).getTime();
   const h = Math.floor(diff / 3600000);
   const m = Math.floor(diff / 60000);
@@ -21,6 +21,11 @@ function timeAgo(d: string, lang: 'en' | 'gu') {
     if (h > 24) return `${Math.floor(h / 24)} દિવસ પહેલા`;
     if (h > 0) return `${h} કલાક પહેલા`;
     return `${m} મિનિટ પહેલા`;
+  }
+  if (lang === 'hi') {
+    if (h > 24) return `${Math.floor(h / 24)} दिन पहले`;
+    if (h > 0) return `${h} घंटे पहले`;
+    return `${m} मिनट पहले`;
   }
   if (h > 24) return `${Math.floor(h / 24)}d ago`;
   if (h > 0) return `${h}h ago`;
@@ -245,19 +250,31 @@ export default function OverviewPage() {
               <div className="flex justify-between">
                 <span className="text-slate-500">{t('overview.location')}</span>
                 <span className="font-bold text-slate-900">
-                  {language === 'gu' ? 'મુક્તાનંદ સર્કલ • વોર્ડ ૪ (કારેલીબાગ)' : 'Muktanand Circle • Ward 4 (Karelibaug)'}
+                  {language === 'gu'
+                    ? 'મુક્તાનંદ સર્કલ • વોર્ડ ૪ (કારેલીબાગ)'
+                    : language === 'hi'
+                    ? 'मुक्तानंद सर्कल • वार्ड ४ (कारेलीबाग)'
+                    : 'Muktanand Circle • Ward 4 (Karelibaug)'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">{t('overview.defect_category')}</span>
                 <span className="font-bold text-slate-900">
-                  {language === 'gu' ? 'ખુલ્લી ગટર અને સ્ટ્રોમ ડ્રેનેજ નુકસાન' : 'Open Manhole & Storm Drain Collapse'}
+                  {language === 'gu'
+                    ? 'ખુલ્લી ગટર અને સ્ટ્રોમ ડ્રેનેજ નુકસાન'
+                    : language === 'hi'
+                    ? 'खुला मैनहोल एवं स्टॉर्म ड्रेन क्षति'
+                    : 'Open Manhole & Storm Drain Collapse'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">{t('overview.failure_recurrence')}</span>
                 <span className="font-bold text-red-700">
-                  {language === 'gu' ? '૮ મહિનામાં ૪ વખત પુનરાવર્તન (માળખાકીય ખામી)' : 'Reported 4× in 8 months (Structural Defect)'}
+                  {language === 'gu'
+                    ? '૮ મહિનામાં ૪ વખત પુનરાવર્તન (માળખાકીય ખામી)'
+                    : language === 'hi'
+                    ? '८ महीनों में ४ बार पुनरावृत्ति (संरचनात्मक दोष)'
+                    : 'Reported 4× in 8 months (Structural Defect)'}
                 </span>
               </div>
               <div className="p-3 bg-slate-50 rounded border border-slate-200 mt-2 text-slate-700 leading-relaxed">

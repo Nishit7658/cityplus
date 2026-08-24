@@ -1,12 +1,11 @@
 'use client';
 
-// Language Context & Flawless Bilingual Gujarati & English Dictionary
+// Language Context & Trilingual (English / ગુજરાતી / हिन्दी) Dictionary
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
-// Grammatically verified official Gujarati terminology
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type Language = 'en' | 'gu';
+export type Language = 'en' | 'gu' | 'hi';
 
 interface LanguageContextType {
   language: Language;
@@ -56,6 +55,7 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'common.tickets': 'Tickets',
     'common.loading': 'Loading...',
     'common.no_data': 'No records found matching the active criteria.',
+    'common.language': 'Language',
 
     // Categories
     'cat.all': 'All Categories',
@@ -270,6 +270,7 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'common.tickets': 'ફરિયાદો',
     'common.loading': 'લોડ થઈ રહ્યું છે...',
     'common.no_data': 'પસંદ કરેલ માપદંડ મુજબ કોઈ રેકોર્ડ મળેલ નથી.',
+    'common.language': 'ભાષા',
 
     // Categories
     'cat.all': 'બધી શ્રેણીઓ',
@@ -442,6 +443,221 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'settings.response': 'API પ્રતિસાદ (Response)',
     'settings.environment': 'સિસ્ટમ એન્વાયર્નમેન્ટ રૂપરેખાંકન',
   },
+
+  hi: {
+    // Top Bar & Branding
+    'vmc.title': 'वडोदरा नगर निगम',
+    'vmc.subtitle': 'सिटीपल्स • नागरिक बुनियादी ढांचा एवं सार्वजनिक शिकायत निवारण नियंत्रण कक्ष',
+    'vmc.crms_active': 'CRMS पोर्टल सक्रिय',
+    'vmc.active_issues': 'सक्रिय शिकायतें',
+    'vmc.control_officer': 'नियंत्रण अधिकारी',
+    'vmc.vadodara_central': 'वडोदरा सेंट्रल',
+    'vmc.all_wards': 'सभी वार्ड (वडोदरा)',
+    'vmc.jurisdiction': 'अधिकार क्षेत्र',
+    'vmc.system_status': 'सिस्टम स्थिति',
+    'vmc.operational': '१००% क्रियाशील',
+    'vmc.gov_gujarat': 'गुजरात सरकार',
+    'vmc.dept_name': 'शहरी विकास एवं शहरी आवास विभाग',
+
+    // Navigation Tabs
+    'nav.overview': 'अवलोकन',
+    'nav.map': 'लाइव GIS नक्शा',
+    'nav.queue': 'शिकायत कतार',
+    'nav.hotspots': 'हॉटस्पॉट्स',
+    'nav.officers': 'वार्ड अभियंता',
+    'nav.transparency': 'सार्वजनिक पारदर्शिता',
+    'nav.settings': 'सिस्टम सेटिंग्स',
+
+    // Common Actions & Labels
+    'common.select_all': 'सभी चुनें',
+    'common.clear_filters': 'फ़िल्टर हटाएं',
+    'common.search': 'खोजें',
+    'common.action': 'कार्रवाई',
+    'common.status': 'स्थिति',
+    'common.category': 'श्रेणी',
+    'common.severity': 'प्राथमिकता',
+    'common.ward': 'वार्ड',
+    'common.location': 'स्थान',
+    'common.date': 'तारीख',
+    'common.close': 'बंद करें',
+    'common.inspect': 'जांचें',
+    'common.verified': 'सत्यापित',
+    'common.tickets': 'शिकायतें',
+    'common.loading': 'लोड हो रहा है...',
+    'common.no_data': 'सक्रिय मापदंड के अनुसार कोई रिकॉर्ड नहीं मिला।',
+    'common.language': 'भाषा',
+
+    // Categories
+    'cat.all': 'सभी श्रेणियां',
+    'cat.pothole': 'सड़क के गड्ढे',
+    'cat.water_leak': 'पानी की पाइपलाइन लीकेज',
+    'cat.broken_streetlight': 'स्ट्रीटलाइट खराबी',
+    'cat.garbage_overflow': 'कचरे का ढेर / गंदगी',
+    'cat.open_manhole': 'खुला मैनहोल / नाला',
+    'cat.exposed_wiring': 'बिजली के खुले तार',
+    'cat.drainage_overflow': 'सीवर / नाला ओवरफ्लो',
+    'cat.drainage': 'सीवर / नाला ओवरफ्लो',
+    'cat.gas_leak': 'गैस पाइपलाइन लीकेज',
+    'cat.traffic_signal': 'ट्रैफिक सिग्नल खराबी',
+    'cat.road_damage': 'सड़क संरचनात्मक क्षति',
+    'cat.other': 'अन्य नागरिक शिकायत',
+
+    // Status
+    'status.pending': 'लंबित',
+    'status.assigned': 'असाइन किया गया',
+    'status.in_progress': 'प्रगति पर',
+    'status.resolved': 'निवारित',
+
+    // Severities
+    'sev.low': 'सामान्य प्राथमिकता',
+    'sev.medium': 'मध्यम प्राथमिकता',
+    'sev.critical': 'अति गंभीर प्राथमिकता',
+
+    // Wards
+    'ward.1': 'वार्ड १ — सयाजीगंज',
+    'ward.2': 'वार्ड २ — अकोटा',
+    'ward.3': 'वार्ड ३ — रावपुरा',
+    'ward.4': 'वार्ड ४ — कारेलीबाग',
+    'ward.5': 'वार्ड ५ — फतेहगंज',
+    'ward.6': 'वार्ड ६ — मांजलपुर',
+    'ward.7': 'वार्ड ७ — गोत्री',
+    'ward.8': 'वार्ड ८ — मकरपुरा',
+    'ward.9': 'वार्ड ९ — गोरवा',
+    'ward.10': 'वार्ड १० — निज़ामपुरा',
+
+    // Departments
+    'dept.all': 'सभी विभाग',
+    'dept.road': 'सड़क एवं भवन निर्माण विभाग',
+    'dept.drainage': 'जल निकासी एवं सीवरेज विभाग',
+    'dept.waste': 'ठोस अपशिष्ट प्रबंधन शाखा',
+    'dept.electric': 'विद्युत एवं प्रकाश व्यवस्था विभाग',
+    'dept.water': 'जल आपूर्ति विभाग',
+    'dept.health': 'स्वास्थ्य एवं स्वच्छता विभाग',
+
+    // Overview Page
+    'overview.title': 'नगर निगम संचालन एवं नागरिक शिकायत निवारण डैशबोर्ड',
+    'overview.total_logged': 'कुल दर्ज शिकायतें',
+    'overview.total_logged_sub': 'WhatsApp और वेब पोर्टल के माध्यम से नागरिक पंजीकरण',
+    'overview.pending_dispatch': 'लंबित जोनल प्रेषण',
+    'overview.pending_dispatch_sub': 'अधिकारी आवंटन एवं स्थल निरीक्षण प्रतीक्षित',
+    'overview.active_progress': 'सक्रिय प्रगति पर कार्य',
+    'overview.active_progress_sub': 'फील्ड मरम्मत दल और इंजीनियरिंग टीम स्थल पर तैनात',
+    'overview.closed_verified': 'निवारित एवं सत्यापित',
+    'overview.closed_verified_sub': 'नागरिक WhatsApp पुष्टि द्वारा ऑडिट किया गया',
+    'overview.gis_map_title': 'VMC GIS भौगोलिक घटना मानचित्र',
+    'overview.gis_map_sub': '१८ मीटर स्थानिक क्लस्टरिंग सक्षम',
+    'overview.closed_loop_title': 'नागरिक क्लोज्ड-लूप सत्यापन प्रोटोकॉल',
+    'overview.closed_loop_mandatory': 'अनिवार्य',
+    'overview.closed_loop_desc': 'VMC सिटीजन चार्टर के अनुसार, जब तक शिकायतकर्ता नागरिक WhatsApp के माध्यम से मरम्मत गुणवत्ता की पुष्टि नहीं करता, तब तक कोई शिकायत स्थायी रूप से बंद नहीं होती।',
+    'overview.verification_rate': 'सत्यापन दर',
+    'overview.auto_reopen': '\'नहीं\' पर स्वतः री-ओपन',
+    'overview.dept_dist_title': 'विभागवार कार्यभार वितरण',
+    'overview.active_tickets': 'सक्रिय शिकायतें',
+    'overview.high_priority_alert': '⚠️ उच्च प्राथमिकता नगर निगम अलर्ट',
+    'overview.chronic_spot': 'बारंबार खराबी स्पॉट #१०३',
+    'overview.location': 'स्थान:',
+    'overview.defect_category': 'दोष श्रेणी:',
+    'overview.failure_recurrence': 'खराबी की पुनरावृत्ति:',
+    'overview.exec_note': 'कार्यपालक अभियंता टिप्पणी: सब-बेस क्षरण पाया गया है। केवल डामर पैच पर्याप्त नहीं है। जल निकासी विभाग द्वारा संरचनात्मक सुदृढ़ीकरण आवश्यक है।',
+    'overview.recent_inbound': 'हाल ही में प्राप्त नागरिक शिकायतें',
+    'overview.live_stream': 'लाइव स्ट्रीम',
+
+    // Queue Page
+    'queue.title': 'नगर निगम कार्य आदेश एवं नागरिक शिकायत कतार',
+    'queue.desc': 'जोनल वर्गीकरण, प्राथमिकता वृद्धि और फील्ड इंजीनियरिंग प्रेषण के लिए सक्रिय कतार।',
+    'queue.filter_status': 'स्थिति अनुसार फ़िल्टर:',
+    'queue.select_all': 'सभी चुनें',
+    'queue.clear_filters': 'फ़िल्टर हटाएं',
+    'queue.th_ticket': 'टिकट एवं श्रेणी',
+    'queue.th_status': 'स्थिति',
+    'queue.th_priority': 'प्राथमिकता स्तर',
+    'queue.th_ward': 'अधिकार क्षेत्र वार्ड',
+    'queue.th_density': 'नागरिक पुष्टि',
+    'queue.th_reported': 'दर्ज करने की तारीख',
+    'queue.th_action': 'कार्रवाई',
+    'queue.review': 'समीक्षा करें →',
+
+    // Map Page
+    'map.pinned_issues': 'मानचित्र पर दर्ज शिकायतें',
+    'map.live_feed': 'लाइव VMC GIS फ़ीड',
+    'map.spots_count': '{total} में से {filtered} स्पॉट',
+    'map.toggle_pins': 'मार्कर चालू/बंद',
+    'map.toggle_heatmap': 'हीटमैप चालू/बंद',
+    'map.toggle_wards': 'वार्ड सीमाएं चालू/बंद',
+
+    // Officers Page
+    'officers.title': 'जोनल फील्ड इंजीनियर्स एवं विभागीय अधिकारी',
+    'officers.desc': 'नामित वार्ड अभियंताओं, सक्रिय नगर निगम कार्य आदेशों और अधिकार क्षेत्र की आधिकारिक सूची।',
+    'officers.total_officers': 'कुल अधिकारी',
+    'officers.active_orders': 'सक्रिय कार्य आदेश',
+    'officers.total_resolved': 'कुल निवारित',
+    'officers.search_placeholder': 'अधिकारी, वार्ड, विभाग द्वारा खोजें...',
+    'officers.cards_view': 'कार्ड्स दृश्य',
+    'officers.table_view': 'तालिका दृश्य',
+    'officers.assigned_ward': 'आवंटित वार्ड:',
+    'officers.official_contact': 'आधिकारिक संपर्क:',
+    'officers.active_tasks': 'सक्रिय कार्य',
+    'officers.total_cleared': 'कुल पूर्ण किए गए',
+    'officers.direct_contact': 'सीधा संपर्क',
+    'officers.executive_engineer': 'कार्यपालक अभियंता',
+
+    // Transparency Page
+    'transparency.title': 'पारदर्शिता, नागरिक प्रदर्शन एवं वार्ड ऑडिट',
+    'transparency.desc': 'सिटीजन चार्टर के तहत नागरिक शिकायतों, निवारण समय और विभागीय जवाबदेही का आधिकारिक सार्वजनिक रिकॉर्ड।',
+    'transparency.open_access': 'आधिकारिक ओपन एक्सेस',
+    'transparency.sop_title': 'मानक संचालन प्रक्रिया (SOP) — शिकायत निवारण',
+    'transparency.sop_sub': 'स्थानिक सटीकता, त्वरित फील्ड प्रेषण और नागरिक सत्यापन का ४-स्तरीय जीवन चक्र।',
+    'transparency.circular': 'VMC परिपत्र २०२६/०४',
+    'transparency.stage1_title': 'नागरिक शिकायत पंजीकरण',
+    'transparency.stage1_desc': 'नागरिक आधिकारिक VMC WhatsApp हेल्पलाइन या वेब पोर्टल पर फोटो और GPS लोकेशन के साथ शिकायत दर्ज करते हैं।',
+    'transparency.stage2_title': 'स्थानिक डी-डुप्लीकेशन',
+    'transparency.stage2_desc': 'PostGIS स्थानिक इंजन १८ मीटर के भीतर की कई शिकायतों को स्वतः एक समेकित कार्य आदेश में बदल देता है।',
+    'transparency.stage3_title': 'जोनल अधिकारी प्रेषण',
+    'transparency.stage3_desc': 'शिकायतों को प्राथमिकता देकर कड़े SLA के साथ नामित वार्ड कार्यपालक अभियंताओं को सौंपा जाता है।',
+    'transparency.stage4_title': 'नागरिक सत्यापन',
+    'transparency.stage4_desc': 'कार्य पूर्ण होने पर नागरिक को WhatsApp संदेश भेजा जाता है। नागरिक द्वारा गुणवत्ता अनुमोदित करने पर ही अंतिम क्लोजर होता है।',
+    'transparency.ward_ledger_title': 'वार्ड-स्तरीय निवारण प्रदर्शन खाता (१० VMC वार्ड)',
+    'transparency.ward_ledger_sub': 'सभी प्रशासनिक क्षेत्रों में ऑडिट की गई शिकायत संख्या, समाधान संख्या और SLA अनुपालन।',
+    'transparency.sla_compliant': 'SLA अनुपालित',
+    'transparency.under_review': 'समीक्षाधीन',
+
+    // Hotspots Page
+    'hotspots.title': 'शहरी बुनियादी ढांचा सुभेद्यता एवं हॉटस्पॉट्स',
+    'hotspots.desc': 'स्थायी इंजीनियरिंग सुधार की आवश्यकता वाले दीर्घकालिक खराबी क्लस्टरों का GIS स्थानिक घनत्व विश्लेषण।',
+    'hotspots.critical_spots': 'गंभीर जोखिम स्पॉट',
+    'hotspots.chronic_recurring': 'बारंबार खराबी',
+    'hotspots.heatmap_title': 'शहरव्यापी बुनियादी ढांचा घनत्व एवं जोखिम हीटमैप',
+    'hotspots.heatmap_sub': 'स्थानिक PostGIS इंटरपोलेशन (वडोदरा मेट्रो)',
+    'hotspots.ledger_title': 'रैंक किया गया बुनियादी ढांचा दोष लेजर',
+    'hotspots.ledger_sub': 'नागरिक घनत्व, पुनरावृत्ति आवृत्ति और जोखिम सूचकांक के आधार पर प्राथमिकता क्रम।',
+    'hotspots.all_spots': 'सभी स्पॉट',
+    'hotspots.high_risk': 'उच्च जोखिम (८०+)',
+    'hotspots.recurring_spots': 'बारंबार खराबी वाले स्पॉट',
+    'hotspots.inspect': 'जांचें',
+
+    // Drawer Component
+    'drawer.location_coords': 'स्थान के भौगोलिक निर्देशांक (GPS)',
+    'drawer.confirmations': 'नागरिक पुष्टि एवं समर्थन',
+    'drawer.timeline': 'निवारण समयरेखा (Timeline)',
+    'drawer.assign_officer': 'फील्ड अधिकारी नियुक्त करें',
+    'drawer.choose_officer': 'अधिकारी चुनें…',
+    'drawer.assign_button': 'असाइन करें',
+    'drawer.in_progress_button': 'कार्य प्रारंभ करें',
+    'drawer.mark_resolved_button': 'निवारित चिह्नित करें',
+    'drawer.reopened_notice': '↩ नागरिक सत्यापन द्वारा {count}× बार पुनः खोला गया',
+
+    // Settings Page
+    'settings.title': 'सिस्टम सेटिंग्स एवं डेवलपर कंसोल',
+    'settings.dev_tools': 'डेवलपर टूल्स',
+    'settings.simulator_title': 'WhatsApp चैटबॉट सिम्युलेटर',
+    'settings.simulator_desc': 'आने वाले WhatsApp नागरिक संदेशों का अनुकरण करें, स्टेट मशीन का परीक्षण करें और PostGIS डी-डुप्लीकेशन जांचें।',
+    'settings.phone_label': 'नागरिक मोबाइल नंबर',
+    'settings.message_label': 'नागरिक संदेश / पेलोड',
+    'settings.send_button': '↗ सिम्युलेटेड संदेश भेजें',
+    'settings.sending': 'भेजा जा रहा है...',
+    'settings.response': 'API प्रतिक्रिया (Response)',
+    'settings.environment': 'सिस्टम वातावरण विन्यास',
+  },
 };
 
 const LanguageContext = createContext<LanguageContextType>({
@@ -456,7 +672,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     try {
       const saved = localStorage.getItem('vmc_language') as Language;
-      if (saved === 'en' || saved === 'gu') {
+      if (saved === 'en' || saved === 'gu' || saved === 'hi') {
         setLanguageState(saved);
       }
     } catch {

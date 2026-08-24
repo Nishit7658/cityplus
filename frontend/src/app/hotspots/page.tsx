@@ -1,6 +1,6 @@
 'use client';
 
-// F.5 — Hotspots Page (Official Infrastructure Vulnerability Index) with Bilingual i18n
+// F.5 — Hotspots Page (Official Infrastructure Vulnerability Index) with Trilingual i18n
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
 
 import React, { useEffect, useState } from 'react';
@@ -137,12 +137,22 @@ export default function HotspotsPage() {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
               <tr>
-                <th className="px-6 py-3.5">{language === 'gu' ? 'અગ્રતા ક્રમ અને ID' : 'Priority Rank & ID'}</th>
-                <th className="px-4 py-3.5">{language === 'gu' ? 'ખામી વર્ણન' : 'Defect Description'}</th>
+                <th className="px-6 py-3.5">
+                  {language === 'gu' ? 'અગ્રતા ક્રમ અને ID' : language === 'hi' ? 'प्राथमिकता क्रम एवं ID' : 'Priority Rank & ID'}
+                </th>
+                <th className="px-4 py-3.5">
+                  {language === 'gu' ? 'ખામી વર્ણન' : language === 'hi' ? 'खराबी का विवरण' : 'Defect Description'}
+                </th>
                 <th className="px-4 py-3.5">{t('queue.th_ward')}</th>
-                <th className="px-4 py-3.5">{language === 'gu' ? 'ઇજનેરી જોખમ સ્કોર' : 'Engineering Risk Score'}</th>
-                <th className="px-4 py-3.5">{language === 'gu' ? 'નાગરિક પુષ્ટિ' : 'Citizen Confirmations'}</th>
-                <th className="px-4 py-3.5">{language === 'gu' ? 'પુનરાવર્તન' : 'Recurrence Tag'}</th>
+                <th className="px-4 py-3.5">
+                  {language === 'gu' ? 'ઇજનેરી જોખમ સ્કોર' : language === 'hi' ? 'इंजीनियरिंग जोखिम स्कोर' : 'Engineering Risk Score'}
+                </th>
+                <th className="px-4 py-3.5">
+                  {language === 'gu' ? 'નાગરિક પુષ્ટિ' : language === 'hi' ? 'नागरिक पुष्टि' : 'Citizen Confirmations'}
+                </th>
+                <th className="px-4 py-3.5">
+                  {language === 'gu' ? 'પુનરાવર્તન' : language === 'hi' ? 'पुनरावृत्ति' : 'Recurrence Tag'}
+                </th>
                 <th className="px-6 py-3.5 text-right">{t('queue.th_action')}</th>
               </tr>
             </thead>
@@ -202,12 +212,12 @@ export default function HotspotsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3.5 font-mono text-slate-800 font-semibold">
-                      👥 {c.confirmation_count || 1} {language === 'gu' ? 'ચકાસાયેલ' : 'verified'}
+                      👥 {c.confirmation_count || 1} {language === 'gu' ? 'ચકાસાયેલ' : language === 'hi' ? 'सत्यापित' : 'verified'}
                     </td>
                     <td className="px-4 py-3.5">
                       {c.is_recurring ? (
                         <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded text-[10px] font-bold">
-                          ⚠️ {c.total_cycles || 2}× {language === 'gu' ? `વખત (${c.months_span || 6} મહિના)` : `Cycles (${c.months_span || 6}mo)`}
+                          ⚠️ {c.total_cycles || 2}× {language === 'gu' ? `વખત (${c.months_span || 6} મહિના)` : language === 'hi' ? `बार (${c.months_span || 6} माह)` : `Cycles (${c.months_span || 6}mo)`}
                         </span>
                       ) : (
                         <span className="text-slate-400 text-[11px] font-mono">—</span>

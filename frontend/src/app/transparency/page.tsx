@@ -1,6 +1,6 @@
 'use client';
 
-// F.7 — Transparency Page (Official Municipal Citizen Charter & Audit Record) with Bilingual i18n
+// F.7 — Transparency Page (Official Municipal Citizen Charter & Audit Record) with Trilingual i18n
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
 
 import React, { useEffect, useState } from 'react';
@@ -16,22 +16,22 @@ export default function TransparencyPage() {
 
   const WORKFLOW_STEPS = [
     {
-      step: language === 'gu' ? 'તબક્કો ૧' : 'STAGE 1',
+      step: language === 'gu' ? 'તબક્કો ૧' : language === 'hi' ? 'चरण १' : 'STAGE 1',
       title: t('transparency.stage1_title'),
       desc: t('transparency.stage1_desc'),
     },
     {
-      step: language === 'gu' ? 'તબક્કો ૨' : 'STAGE 2',
+      step: language === 'gu' ? 'તબક્કો ૨' : language === 'hi' ? 'चरण २' : 'STAGE 2',
       title: t('transparency.stage2_title'),
       desc: t('transparency.stage2_desc'),
     },
     {
-      step: language === 'gu' ? 'તબક્કો ૩' : 'STAGE 3',
+      step: language === 'gu' ? 'તબક્કો ૩' : language === 'hi' ? 'चरण ३' : 'STAGE 3',
       title: t('transparency.stage3_title'),
       desc: t('transparency.stage3_desc'),
     },
     {
-      step: language === 'gu' ? 'તબક્કો ૪' : 'STAGE 4',
+      step: language === 'gu' ? 'તબક્કો ૪' : language === 'hi' ? 'चरण ४' : 'STAGE 4',
       title: t('transparency.stage4_title'),
       desc: t('transparency.stage4_desc'),
     },
@@ -70,7 +70,13 @@ export default function TransparencyPage() {
         </div>
 
         <div className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-lg border border-slate-200 shadow-2xs text-xs font-semibold text-slate-700">
-          <span>{language === 'gu' ? 'સત્તાવાર જાહેર રેકોર્ડ: ' : 'Official Public Record: '}</span>
+          <span>
+            {language === 'gu'
+              ? 'સત્તાવાર જાહેર રેકોર્ડ: '
+              : language === 'hi'
+              ? 'आधिकारिक सार्वजनिक रिकॉर्ड: '
+              : 'Official Public Record: '}
+          </span>
           <span className="font-mono text-emerald-700">{t('transparency.open_access')}</span>
         </div>
       </div>
@@ -79,49 +85,68 @@ export default function TransparencyPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-            {language === 'gu' ? 'કુલ નોંધણી (બધા વોર્ડ)' : 'Total Intake (All Wards)'}
+            {language === 'gu' ? 'કુલ નોંધણી (બધા વોર્ડ)' : language === 'hi' ? 'कुल पंजीकरण (सभी वार्ड)' : 'Total Intake (All Wards)'}
           </div>
           <div className="text-3xl font-mono font-bold text-[#0B2545]">
             {safeStats.total_complaints}
           </div>
           <div className="text-xs text-slate-500 mt-2">
-            {language === 'gu' ? 'તમામ ૧૦ VMC વોર્ડમાં નોંધાયેલ ફરિયાદો' : 'Complaints logged across all 10 VMC wards'}
+            {language === 'gu'
+              ? 'તમામ ૧૦ VMC વોર્ડમાં નોંધાયેલ ફરિયાદો'
+              : language === 'hi'
+              ? 'सभी १० VMC वार्डों में दर्ज शिकायतें'
+              : 'Complaints logged across all 10 VMC wards'}
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#15803D]">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-            {language === 'gu' ? 'ઉકેલાયેલ ફરિયાદો' : 'Resolved Grievances'}
+            {language === 'gu' ? 'ઉકેલાયેલ ફરિયાદો' : language === 'hi' ? 'निवारित शिकायतें' : 'Resolved Grievances'}
           </div>
           <div className="text-3xl font-mono font-bold text-[#15803D]">
             {safeStats.resolved_complaints}
           </div>
           <div className="text-xs text-slate-500 mt-2">
-            {language === 'gu' ? 'નાગરિકો દ્વારા WhatsApp પર ચકાસાયેલ' : 'Verified by reporting citizens via WhatsApp'}
+            {language === 'gu'
+              ? 'નાગરિકો દ્વારા WhatsApp પર ચકાસાયેલ'
+              : language === 'hi'
+              ? 'नागरिकों द्वारा WhatsApp पर सत्यापित'
+              : 'Verified by reporting citizens via WhatsApp'}
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#133E87]">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-            {language === 'gu' ? 'નિવારણ ક્ષમતા' : 'Resolution Efficiency'}
+            {language === 'gu' ? 'નિવારણ ક્ષમતા' : language === 'hi' ? 'निवारण दक्षता' : 'Resolution Efficiency'}
           </div>
           <div className="text-3xl font-mono font-bold text-[#133E87]">
             {resolutionRate}%
           </div>
           <div className="text-xs text-slate-500 mt-2">
-            {language === 'gu' ? 'વિભાગો વચ્ચે SLA પાલન દર' : 'SLA compliance across municipal departments'}
+            {language === 'gu'
+              ? 'વિભાગો વચ્ચે SLA પાલન દર'
+              : language === 'hi'
+              ? 'विभागों में SLA अनुपालन दर'
+              : 'SLA compliance across municipal departments'}
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#B45309]">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-            {language === 'gu' ? 'સરેરાશ નિવારણ સમય' : 'Average Turnaround Time'}
+            {language === 'gu' ? 'સરેરાશ નિવારણ સમય' : language === 'hi' ? 'औसत निवारण समय' : 'Average Turnaround Time'}
           </div>
           <div className="text-3xl font-mono font-bold text-slate-900">
-            {Math.round(safeStats.avg_resolution_hours)} <span className="text-base font-normal text-slate-500">{language === 'gu' ? 'કલાક' : 'hours'}</span>
+            {Math.round(safeStats.avg_resolution_hours)}{' '}
+            <span className="text-base font-normal text-slate-500">
+              {language === 'gu' ? 'કલાક' : language === 'hi' ? 'घंटे' : 'hours'}
+            </span>
           </div>
           <div className="text-xs text-emerald-700 font-semibold mt-2">
-            {language === 'gu' ? 'લક્ષ્ય SLA: < ૨૪.૦ કલાક પ્રમાણભૂત' : 'Target SLA: < 24.0 hours standard'}
+            {language === 'gu'
+              ? 'લક્ષ્ય SLA: < ૨૪.૦ કલાક પ્રમાણભૂત'
+              : language === 'hi'
+              ? 'लक्ष्य SLA: < २४.० घंटे मानक'
+              : 'Target SLA: < 24.0 hours standard'}
           </div>
         </div>
       </div>
@@ -160,7 +185,7 @@ export default function TransparencyPage() {
                 </p>
               </div>
               <div className="mt-4 pt-2 border-t border-slate-200 text-[11px] text-slate-400 font-mono">
-                {language === 'gu' ? 'ઓટોમેટેડ સિસ્ટમ ચેક ✓' : 'Automated System Check ✓'}
+                {language === 'gu' ? 'ઓટોમેટેડ સિસ્ટમ ચેક ✓' : language === 'hi' ? 'स्वचालित सिस्टम जांच ✓' : 'Automated System Check ✓'}
               </div>
             </div>
           ))}
@@ -183,11 +208,11 @@ export default function TransparencyPage() {
         <table className="w-full text-left text-xs">
           <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
             <tr>
-              <th className="px-6 py-3.5">{language === 'gu' ? 'વહીવટી વોર્ડ' : 'Administrative Ward'}</th>
-              <th className="px-4 py-3.5">{language === 'gu' ? 'કુલ નોંધાયેલ' : 'Total Logged'}</th>
-              <th className="px-4 py-3.5">{language === 'gu' ? 'ઉકેલાયેલ' : 'Resolved Fixed'}</th>
-              <th className="px-6 py-3.5">{language === 'gu' ? 'SLA પ્રગતિ' : 'Resolution SLA Progress'}</th>
-              <th className="px-6 py-3.5 text-right">{language === 'gu' ? 'સ્થિતિ પાલન' : 'Status Compliance'}</th>
+              <th className="px-6 py-3.5">{language === 'gu' ? 'વહીવટી વોર્ડ' : language === 'hi' ? 'प्रशासनिक वार्ड' : 'Administrative Ward'}</th>
+              <th className="px-4 py-3.5">{language === 'gu' ? 'કુલ નોંધાયેલ' : language === 'hi' ? 'कुल दर्ज' : 'Total Logged'}</th>
+              <th className="px-4 py-3.5">{language === 'gu' ? 'ઉકેલાયેલ' : language === 'hi' ? 'निवारित' : 'Resolved Fixed'}</th>
+              <th className="px-6 py-3.5">{language === 'gu' ? 'SLA પ્રગતિ' : language === 'hi' ? 'SLA प्रगति' : 'Resolution SLA Progress'}</th>
+              <th className="px-6 py-3.5 text-right">{language === 'gu' ? 'સ્થિતિ પાલન' : language === 'hi' ? 'स्थिति अनुपालन' : 'Status Compliance'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -202,10 +227,10 @@ export default function TransparencyPage() {
                     {wardLabel}
                   </td>
                   <td className="px-4 py-3.5 font-mono text-slate-700">
-                    {ward.total} {language === 'gu' ? 'ફરિયાદો' : 'tickets'}
+                    {ward.total} {language === 'gu' ? 'ફરિયાદો' : language === 'hi' ? 'शिकायतें' : 'tickets'}
                   </td>
                   <td className="px-4 py-3.5 font-mono font-bold text-[#15803D]">
-                    {ward.resolved} {language === 'gu' ? 'પૂર્ણ' : 'cleared'}
+                    {ward.resolved} {language === 'gu' ? 'પૂર્ણ' : language === 'hi' ? 'पूर्ण' : 'cleared'}
                   </td>
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-3 max-w-sm">
