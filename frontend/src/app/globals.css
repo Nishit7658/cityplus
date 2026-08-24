@@ -1,0 +1,199 @@
+@import '../styles/tokens.css';
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Global Base Styles
+   ============================================================ */
+html {
+  background: var(--color-bg-app);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-md);
+  line-height: var(--lh-body-md);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--color-bg-app);
+  color: var(--color-ink);
+  min-height: 100vh;
+}
+
+/* ============================================================
+   Pill Tab Navigation Styles (C.2)
+   Prevents hover/click color clash and disappearing text
+   ============================================================ */
+.pill-tab-item {
+  transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pill-tab-inactive {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-ink-muted);
+}
+
+.pill-tab-inactive:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
+  color: var(--color-ink);
+  transform: translateY(-1px);
+}
+
+.pill-tab-active {
+  background: var(--color-teal-700) !important;
+  border: 1px solid var(--color-teal-700) !important;
+  color: #FAF7F2 !important;
+}
+
+.pill-tab-active:hover {
+  background: var(--color-teal-900) !important;
+  border-color: var(--color-teal-900) !important;
+  color: #FAF7F2 !important;
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   D.3 — Pulse Dot Animation (sonar ping)
+   Used ONLY on: live status pill, Critical severity dots, current stepper step
+   ============================================================ */
+@keyframes pulse-dot {
+  0%   { transform: scale(1); opacity: 0.5; }
+  70%  { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.pulse-dot-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  animation: pulse-dot 2000ms ease-in-out infinite;
+}
+
+/* ============================================================
+   D.9 — Recurring Alert Stitch Reveal (top-to-bottom bar draw)
+   ============================================================ */
+@keyframes stitch-draw {
+  from { height: 0; }
+  to   { height: 100%; }
+}
+
+.stitch-bar {
+  animation: stitch-draw 400ms var(--ease-standard) forwards;
+}
+
+/* ============================================================
+   C.11 — Skeleton Loading: single diagonal sweep across grid
+   ============================================================ */
+@keyframes skeleton-sweep {
+  0%   { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(400%) skewX(-15deg); }
+}
+
+.skeleton-sweep::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(163, 208, 194, 0.18) 50%,
+    transparent 100%
+  );
+  animation: skeleton-sweep 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ============================================================
+   D.1 — New complaint arrival highlight wash
+   ============================================================ */
+@keyframes arrival-wash {
+  0%   { background-color: var(--color-teal-100); }
+  100% { background-color: transparent; }
+}
+
+.complaint-arrival {
+  animation: arrival-wash 1400ms linear forwards;
+}
+
+/* ============================================================
+   Custom Map Marker Animations
+   ============================================================ */
+@keyframes marker-drop {
+  from { transform: translateY(-12px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.leaflet-custom-marker {
+  animation: marker-drop 280ms var(--ease-standard) both;
+}
+
+/* ============================================================
+   Map tile warm filter — applied to the map container
+   ============================================================ */
+.leaflet-tile-pane {
+  filter: sepia(8%) saturate(85%) hue-rotate(-6deg);
+}
+
+/* ============================================================
+   Leaflet popup custom styling
+   ============================================================ */
+.leaflet-popup-content-wrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-hover);
+  padding: 0;
+  overflow: hidden;
+}
+
+.leaflet-popup-tip {
+  background: var(--color-surface);
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  font-family: var(--font-body);
+}
+
+/* ============================================================
+   Focus ring — accessibility, on every interactive element
+   ============================================================ */
+*:focus-visible {
+  outline: 2px solid var(--color-teal-500);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+   Scrollbar — subtle, warm-toned
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-ink-faint); }
+
+/* ============================================================
+   Utility classes for design tokens
+   ============================================================ */
+.font-display { font-family: var(--font-display); }
+.font-body    { font-family: var(--font-body); }
+.font-mono    { font-family: var(--font-mono); }
+
+.text-ink        { color: var(--color-ink); }
+.text-ink-muted  { color: var(--color-ink-muted); }
+.text-ink-faint  { color: var(--color-ink-faint); }
+
+.bg-surface      { background: var(--color-surface); }
+.bg-app          { background: var(--color-bg-app); }
+
+/* Edge fade mask for horizontal scroll */
+.edge-fade-right {
+  -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+  mask-image: linear-gradient(to right, black 80%, transparent 100%);
+}

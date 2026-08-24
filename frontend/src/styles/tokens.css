@@ -1,0 +1,87 @@
+/* ============================================================
+   CityPulse Design Tokens — Part A of design spec
+   All values are exact per spec. Nothing is hardcoded elsewhere.
+   ============================================================ */
+
+:root {
+  /* ---- Surface & Background ---- */
+  --color-bg-app:        #FAF7F2;
+  --color-bg-app-alt:    #F3EEE4;
+  --color-surface:       #FFFFFF;
+  --color-surface-sunken:#F6F2EA;
+  --color-surface-hover: #FDFBF7;
+
+  /* ---- Borders ---- */
+  --color-border:        #E8E2D6;
+  --color-border-strong: #D8CFBD;
+
+  /* ---- Text ---- */
+  --color-ink:           #22221F;
+  --color-ink-muted:     #6B6659;
+  --color-ink-faint:     #A39D8E;
+  --color-ink-inverse:   #FAF7F2;
+
+  /* ---- Brand / Accent ---- */
+  --color-teal-900:      #0B4A40;
+  --color-teal-700:      #0F6B5C;
+  --color-teal-500:      #2E8C7B;
+  --color-teal-200:      #BFE0D6;
+  --color-teal-100:      #E3F1EC;
+
+  --color-terracotta-700:#C05B32;
+  --color-terracotta-500:#D97D53;
+  --color-terracotta-100:#F7E3D8;
+
+  /* ---- Severity / Status ---- */
+  --color-severity-low:      #6B9E7A;
+  --color-severity-medium:   #D89A2C;
+  --color-severity-critical: #B33B2E;
+  --color-status-pending:    #5C7A94;
+  --color-status-progress:   #C4832E;
+  --color-status-resolved:   #3E8E5B;
+
+  --color-tint-low:      #EDF3EE;
+  --color-tint-medium:   #FBF1DF;
+  --color-tint-critical: #F8E7E4;
+  --color-tint-pending:  #EAF0F4;
+
+  /* ---- Spacing scale (4px base) ---- */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
+  --space-4: 16px;  --space-5: 20px;  --space-6: 24px;
+  --space-8: 32px;  --space-10: 40px; --space-12: 48px;
+  --space-16: 64px; --space-20: 80px;
+
+  /* ---- Radius scale ---- */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-pill: 999px;
+
+  /* ---- Elevation ---- */
+  --shadow-none:   none;
+  --shadow-rest:   0 1px 2px rgba(34,34,31,0.03);
+  --shadow-hover:  0 4px 14px rgba(34,34,31,0.06);
+  --shadow-drawer: -8px 0 24px rgba(34,34,31,0.08);
+
+  /* ---- Typography ---- */
+  --font-display: 'Fraunces', 'Source Serif 4', Georgia, serif;
+  --font-body:    'Public Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'JetBrains Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --fs-display-xl: 56px;  --lh-display-xl: 1.05;
+  --fs-display-lg: 40px;  --lh-display-lg: 1.1;
+  --fs-display-md: 28px;  --lh-display-md: 1.2;
+  --fs-body-lg:    17px;  --lh-body-lg: 1.55;
+  --fs-body-md:    15px;  --lh-body-md: 1.55;
+  --fs-body-sm:    13px;  --lh-body-sm: 1.5;
+  --fs-eyebrow:    11px;
+
+  /* ---- Motion ---- */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out:   cubic-bezier(0.45, 0, 0.55, 1);
+  --dur-fast:   120ms;
+  --dur-base:   200ms;
+  --dur-slow:   360ms;
+  --dur-drawer: 320ms;
+}

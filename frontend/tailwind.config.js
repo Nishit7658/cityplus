@@ -1,0 +1,83 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        // Map CSS tokens to Tailwind utilities
+        'cp-bg':         '#FAF7F2',
+        'cp-bg-alt':     '#F3EEE4',
+        'cp-surface':    '#FFFFFF',
+        'cp-sunken':     '#F6F2EA',
+        'cp-hover':      '#FDFBF7',
+        'cp-border':     '#E8E2D6',
+        'cp-border-strong': '#D8CFBD',
+        'cp-ink':        '#22221F',
+        'cp-muted':      '#6B6659',
+        'cp-faint':      '#A39D8E',
+        'cp-inverse':    '#FAF7F2',
+        'teal-900':      '#0B4A40',
+        'teal-700':      '#0F6B5C',
+        'teal-500':      '#2E8C7B',
+        'teal-200':      '#BFE0D6',
+        'teal-100':      '#E3F1EC',
+        'terra-700':     '#C05B32',
+        'terra-500':     '#D97D53',
+        'terra-100':     '#F7E3D8',
+        'sev-low':       '#6B9E7A',
+        'sev-medium':    '#D89A2C',
+        'sev-critical':  '#B33B2E',
+        'stat-pending':  '#5C7A94',
+        'stat-progress': '#C4832E',
+        'stat-resolved': '#3E8E5B',
+        'tint-low':      '#EDF3EE',
+        'tint-medium':   '#FBF1DF',
+        'tint-critical': '#F8E7E4',
+        'tint-pending':  '#EAF0F4',
+      },
+      fontFamily: {
+        display: ['var(--font-fraunces)', 'Source Serif 4', 'Georgia', 'serif'],
+        body:    ['var(--font-public-sans)', 'Inter', 'sans-serif'],
+        mono:    ['var(--font-ibm-plex-mono)', 'JetBrains Mono', 'monospace'],
+      },
+      fontSize: {
+        'display-xl': ['56px', { lineHeight: '1.05' }],
+        'display-lg': ['40px', { lineHeight: '1.1'  }],
+        'display-md': ['28px', { lineHeight: '1.2'  }],
+        'body-lg':    ['17px', { lineHeight: '1.55' }],
+        'body-md':    ['15px', { lineHeight: '1.55' }],
+        'body-sm':    ['13px', { lineHeight: '1.5'  }],
+        'eyebrow':    ['11px', { lineHeight: '1.4', letterSpacing: '0.08em' }],
+      },
+      borderRadius: {
+        sm:   '6px',
+        md:   '10px',
+        lg:   '12px',
+        xl:   '16px',
+        pill: '999px',
+      },
+      boxShadow: {
+        rest:   '0 1px 2px rgba(34,34,31,0.03)',
+        hover:  '0 4px 14px rgba(34,34,31,0.06)',
+        drawer: '-8px 0 24px rgba(34,34,31,0.08)',
+      },
+      transitionTimingFunction: {
+        standard: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      },
+      transitionDuration: {
+        fast:   '120ms',
+        base:   '200ms',
+        slow:   '360ms',
+        drawer: '320ms',
+      },
+      gridTemplateColumns: {
+        '12': 'repeat(12, 1fr)',
+      },
+    },
+  },
+  plugins: [],
+};
