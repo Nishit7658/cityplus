@@ -1,12 +1,12 @@
 'use client';
 
-// C.7 — Map Card (Hero centerpiece)
-// Light CARTO Positron basemap with CSS warm filter
-// Floating control cluster (Pins / Heat / Wards) + floating legend chip
+// C.7 — Map Card with Bilingual Tooltips & Legend
+// Vadodara Municipal Corporation (VMC)
 
 import dynamic from 'next/dynamic';
 import React, { useState } from 'react';
 import { Complaint } from '@/types';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface MapViewProps {
   complaints?: Complaint[];
@@ -22,23 +22,7 @@ const DynamicMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          minHeight: 400,
-          background: 'var(--color-surface-sunken)',
-          borderRadius: 'inherit',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: 12,
-          color: 'var(--color-ink-faint)',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 13,
-        }}
-      >
+      <div className="w-full h-full min-h-[400px] bg-slate-100 rounded-inherit flex items-center justify-center flex-col gap-3 text-slate-400 font-mono text-xs">
         <svg
           width="32"
           height="32"
@@ -48,7 +32,7 @@ const DynamicMap = dynamic(
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          opacity={0.4}
+          className="opacity-40"
         >
           <circle cx="12" cy="12" r="10" />
           <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
@@ -71,6 +55,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const [showPins, setShowPins] = useState(true);
   const [showWards, setShowWards] = useState(false);
   const safeComplaints = Array.isArray(complaints) ? complaints : [];
+  const { t } = useLanguage();
 
   return (
     <div
@@ -104,7 +89,7 @@ export const MapView: React.FC<MapViewProps> = ({
           borderRadius: 'var(--radius-lg)',
           boxShadow: 'var(--shadow-hover)',
           border: '1px solid var(--color-border)',
-          padding: 8,
+          padding: 6,
           display: 'flex',
           flexDirection: 'column',
           gap: 6,
@@ -113,20 +98,10 @@ export const MapView: React.FC<MapViewProps> = ({
         {/* Pins toggle */}
         <button
           onClick={() => setShowPins((p) => !p)}
-          title="Toggle Pins"
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 'var(--radius-md)',
-            border: 'none',
-            background: showPins ? 'var(--color-teal-100)' : 'transparent',
-            color: showPins ? 'var(--color-teal-900)' : 'var(--color-ink-muted)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'background 120ms ease, color 120ms ease',
-          }}
+          title={t('map.toggle_pins')}
+          className={`w-9 h-9 rounded-md border-none flex items-center justify-center cursor-pointer transition-colors ${
+            showPins ? 'bg-[#0B2545] text-white' : 'bg-transparent text-slate-600 hover:bg-slate-100'
+          }`}
         >
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -137,20 +112,10 @@ export const MapView: React.FC<MapViewProps> = ({
         {/* Heatmap toggle */}
         <button
           onClick={() => setShowHeatmap((h) => !h)}
-          title="Toggle Heatmap"
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 'var(--radius-md)',
-            border: 'none',
-            background: showHeatmap ? 'var(--color-teal-100)' : 'transparent',
-            color: showHeatmap ? 'var(--color-teal-900)' : 'var(--color-ink-muted)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'background 120ms ease, color 120ms ease',
-          }}
+          title={t('map.toggle_heatmap')}
+          className={`w-9 h-9 rounded-md border-none flex items-center justify-center cursor-pointer transition-colors ${
+            showHeatmap ? 'bg-[#0B2545] text-white' : 'bg-transparent text-slate-600 hover:bg-slate-100'
+          }`}
         >
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="4" />
@@ -161,20 +126,10 @@ export const MapView: React.FC<MapViewProps> = ({
         {/* Wards boundary toggle */}
         <button
           onClick={() => setShowWards((w) => !w)}
-          title="Toggle Ward Boundaries"
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 'var(--radius-md)',
-            border: 'none',
-            background: showWards ? 'var(--color-teal-100)' : 'transparent',
-            color: showWards ? 'var(--color-teal-900)' : 'var(--color-ink-muted)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'background 120ms ease, color 120ms ease',
-          }}
+          title={t('map.toggle_wards')}
+          className={`w-9 h-9 rounded-md border-none flex items-center justify-center cursor-pointer transition-colors ${
+            showWards ? 'bg-[#0B2545] text-white' : 'bg-transparent text-slate-600 hover:bg-slate-100'
+          }`}
         >
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
@@ -191,11 +146,11 @@ export const MapView: React.FC<MapViewProps> = ({
           bottom: 16,
           left: 16,
           zIndex: 20,
-          background: 'rgba(255,255,255,0.92)',
+          background: 'rgba(255,255,255,0.95)',
           backdropFilter: 'blur(8px)',
-          borderRadius: 'var(--radius-pill)',
+          borderRadius: 'var(--radius-md)',
           border: '1px solid var(--color-border)',
-          padding: '6px 14px',
+          padding: '6px 12px',
           display: 'flex',
           alignItems: 'center',
           gap: 12,
@@ -206,14 +161,14 @@ export const MapView: React.FC<MapViewProps> = ({
         }}
       >
         {[
-          { color: '#6B9E7A', label: 'Low' },
-          { color: '#D89A2C', label: 'Medium' },
-          { color: '#B33B2E', label: 'Critical' },
-          { color: '#3E8E5B', label: 'Resolved' },
+          { color: '#166534', label: t('sev.low') },
+          { color: '#B45309', label: t('sev.medium') },
+          { color: '#B91C1C', label: t('sev.critical') },
+          { color: '#15803D', label: t('status.resolved') },
         ].map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-            <span style={{ fontWeight: 500 }}>{label}</span>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
+            <span style={{ fontWeight: 600, color: '#0F172A' }}>{label}</span>
           </div>
         ))}
       </div>

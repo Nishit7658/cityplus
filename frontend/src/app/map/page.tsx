@@ -1,8 +1,7 @@
 'use client';
 
-// F.2 — Live Map Page
-// Full-width map (68%) + visible complaints list synced to map bounds (32%)
-// Responsive multi-row filter bar with high-contrast active states and instant clear action
+// F.2 — Live Map Page with Full Bilingual Gujarati & English Support
+// Vadodara Municipal Corporation (VMC) / Government of Gujarat
 
 import React, { useEffect, useState } from 'react';
 import { MapView } from '@/components/MapView';
@@ -11,35 +10,10 @@ import { ComplaintCard } from '@/components/ComplaintCard';
 import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
 import { Complaint, Officer } from '@/types';
 import { useSocket } from '@/components/SocketProvider';
+import { useLanguage } from '@/context/LanguageContext';
 import { MOCK_COMPLAINTS, MOCK_OFFICERS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
-const CATEGORY_FILTERS: FilterOption[] = [
-  { key: 'pothole',            label: 'Pothole' },
-  { key: 'water_leak',         label: 'Water Leak' },
-  { key: 'broken_streetlight', label: 'Streetlight' },
-  { key: 'garbage_overflow',   label: 'Garbage' },
-  { key: 'open_manhole',       label: 'Manhole' },
-  { key: 'exposed_wiring',     label: 'Wiring' },
-  { key: 'drainage',           label: 'Drainage' },
-  { key: 'gas_leak',           label: 'Gas Leak' },
-  { key: 'traffic_signal',     label: 'Traffic' },
-  { key: 'road_damage',        label: 'Road' },
-];
-
-const SEVERITY_FILTERS: FilterOption[] = [
-  { key: 'low',      label: 'Low' },
-  { key: 'medium',   label: 'Medium' },
-  { key: 'critical', label: 'Critical' },
-];
-
-const STATUS_FILTERS: FilterOption[] = [
-  { key: 'Pending',     label: 'Pending' },
-  { key: 'Assigned',    label: 'Assigned' },
-  { key: 'In Progress', label: 'In Progress' },
-  { key: 'Resolved',    label: 'Resolved' },
-];
 
 export default function MapPage() {
   const [complaints, setComplaints] = useState<Complaint[]>(MOCK_COMPLAINTS);
@@ -49,6 +23,33 @@ export default function MapPage() {
   const [activeSeverities, setActiveSeverities] = useState<string[]>([]);
   const [activeStatuses, setActiveStatuses]     = useState<string[]>([]);
   const { lastEvent } = useSocket();
+  const { language, t } = useLanguage();
+
+  const CATEGORY_FILTERS: FilterOption[] = [
+    { key: 'pothole',            label: t('cat.pothole') },
+    { key: 'water_leak',         label: t('cat.water_leak') },
+    { key: 'broken_streetlight', label: t('cat.broken_streetlight') },
+    { key: 'garbage_overflow',   label: t('cat.garbage_overflow') },
+    { key: 'open_manhole',       label: t('cat.open_manhole') },
+    { key: 'exposed_wiring',     label: t('cat.exposed_wiring') },
+    { key: 'drainage_overflow',  label: t('cat.drainage_overflow') },
+    { key: 'gas_leak',           label: t('cat.gas_leak') },
+    { key: 'traffic_signal',     label: t('cat.traffic_signal') },
+    { key: 'road_damage',        label: t('cat.road_damage') },
+  ];
+
+  const SEVERITY_FILTERS: FilterOption[] = [
+    { key: 'low',      label: t('sev.low') },
+    { key: 'medium',   label: t('sev.medium') },
+    { key: 'critical', label: t('sev.critical') },
+  ];
+
+  const STATUS_FILTERS: FilterOption[] = [
+    { key: 'Pending',     label: t('status.pending') },
+    { key: 'Assigned',    label: t('status.assigned') },
+    { key: 'In Progress', label: t('status.in_progress') },
+    { key: 'Resolved',    label: t('status.resolved') },
+  ];
 
   useEffect(() => {
     fetch(`${API_URL}/api/complaints`)
@@ -99,23 +100,13 @@ export default function MapPage() {
 
   return (
     <>
-      <div className="flex flex-col h-[calc(100vh-112px)] overflow-hidden">
+      <div className="flex flex-col h-[calc(100vh-115px)] overflow-hidden bg-slate-50">
         {/* Filter bar container */}
-        <div className="px-6 py-3 bg-cp-bg border-b border-cp-border flex flex-col gap-2.5 flex-shrink-0">
+        <div className="px-6 py-3 bg-white border-b border-slate-200 flex flex-col gap-2.5 flex-shrink-0 shadow-2xs">
           {/* Row 1: Categories */}
           <div className="flex gap-3 flex-wrap items-center">
-            <span
-              style={{
-                fontSize: 'var(--fs-eyebrow)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: 'var(--color-ink-muted)',
-                fontWeight: 700,
-                minWidth: 80,
-                flexShrink: 0,
-              }}
-            >
-              Category
+            <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider min-w-[70px] shrink-0">
+              {t('common.category')}:
             </span>
             <FilterPillRow
               options={CATEGORY_FILTERS}
@@ -125,21 +116,11 @@ export default function MapPage() {
           </div>
 
           {/* Row 2: Status, Severity & Clear Button */}
-          <div className="flex gap-4 flex-wrap items-center justify-between">
+          <div className="flex gap-4 flex-wrap items-center justify-between pt-1 border-t border-slate-100">
             <div className="flex gap-4 flex-wrap items-center">
               <div className="flex gap-2 items-center">
-                <span
-                  style={{
-                    fontSize: 'var(--fs-eyebrow)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: 'var(--color-ink-muted)',
-                    fontWeight: 700,
-                    minWidth: 80,
-                    flexShrink: 0,
-                  }}
-                >
-                  Status
+                <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider min-w-[70px] shrink-0">
+                  {t('common.status')}:
                 </span>
                 <FilterPillRow
                   options={STATUS_FILTERS}
@@ -148,20 +129,11 @@ export default function MapPage() {
                 />
               </div>
 
-              <div className="h-4 w-px bg-cp-border-strong hidden sm:block" />
+              <div className="h-4 w-px bg-slate-300 hidden sm:block" />
 
               <div className="flex gap-2 items-center">
-                <span
-                  style={{
-                    fontSize: 'var(--fs-eyebrow)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    color: 'var(--color-ink-muted)',
-                    fontWeight: 700,
-                    flexShrink: 0,
-                  }}
-                >
-                  Severity
+                <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider shrink-0">
+                  {t('common.severity')}:
                 </span>
                 <FilterPillRow
                   options={SEVERITY_FILTERS}
@@ -177,24 +149,15 @@ export default function MapPage() {
                 <button
                   onClick={resetAllFilters}
                   type="button"
-                  style={{
-                    height: 28,
-                    padding: '0 10px',
-                    borderRadius: 'var(--radius-pill)',
-                    background: 'var(--color-surface-sunken)',
-                    border: '1px solid var(--color-border-strong)',
-                    color: 'var(--color-terracotta-700)',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    fontFamily: 'var(--font-body)',
-                  }}
+                  className="px-2.5 py-1 rounded bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-colors cursor-pointer"
                 >
-                  Clear Filters
+                  {t('common.clear_filters')}
                 </button>
               )}
-              <span className="text-xs font-mono text-cp-ink font-semibold bg-cp-surface px-2.5 py-1 rounded-md border border-cp-border">
-                {filtered.length} of {safe.length} spots
+              <span className="text-xs font-mono text-[#0B2545] font-bold bg-slate-100 px-3 py-1 rounded border border-slate-300">
+                {language === 'gu'
+                  ? `${safe.length} માંથી ${filtered.length} સ્પોટ્સ`
+                  : `${filtered.length} of ${safe.length} spots`}
               </span>
             </div>
           </div>
@@ -208,28 +171,22 @@ export default function MapPage() {
           </div>
 
           {/* Complaint List */}
-          <div className="lg:basis-[32%] flex-1 lg:flex-none overflow-y-auto border-t lg:border-t-0 lg:border-l border-cp-border bg-cp-bg flex flex-col">
-            <div className="p-4 border-b border-cp-border bg-cp-surface flex items-center justify-between flex-shrink-0">
-              <span
-                style={{
-                  fontSize: 'var(--fs-eyebrow)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: 'var(--color-ink-muted)',
-                  fontWeight: 600,
-                }}
-              >
-                {filtered.length} Pinned Issues
+          <div className="lg:basis-[32%] flex-1 lg:flex-none overflow-y-auto border-t lg:border-t-0 lg:border-l border-slate-200 bg-slate-50 flex flex-col">
+            <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between flex-shrink-0">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
+                {filtered.length} {t('map.pinned_issues')}
               </span>
-              <span className="text-xs text-cp-faint font-mono">Live VMC Feed</span>
+              <span className="text-xs text-slate-500 font-mono font-semibold">
+                {t('map.live_feed')}
+              </span>
             </div>
             <div className="p-3 flex flex-col gap-3">
               {filtered.map((c) => (
                 <ComplaintCard key={c.id} complaint={c} onClick={() => setSelected(c)} />
               ))}
               {filtered.length === 0 && (
-                <div className="p-8 text-center text-cp-faint text-sm">
-                  No complaints match the selected filters.
+                <div className="p-8 text-center text-slate-400 text-sm">
+                  {t('common.no_data')}
                 </div>
               )}
             </div>

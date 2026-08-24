@@ -1,11 +1,17 @@
 'use client';
 
-// C.9 — Status Stepper (Complaint Detail Drawer)
-// Vertical layout, pulse-dot on current step, timestamps in mono font
+// C.9 — Status Stepper (Complaint Detail Drawer) with Bilingual i18n
+// Vadodara Municipal Corporation (VMC)
 
 import React from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 
-const STEPS = ['Pending', 'Assigned', 'In Progress', 'Resolved'];
+const RAW_STEPS = [
+  { key: 'pending', labelKey: 'status.pending' },
+  { key: 'assigned', labelKey: 'status.assigned' },
+  { key: 'in_progress', labelKey: 'status.in_progress' },
+  { key: 'resolved', labelKey: 'status.resolved' },
+];
 
 interface StatusStepperProps {
   currentStatus: string;
@@ -14,108 +20,80 @@ interface StatusStepperProps {
 
 const CheckGlyph = () => (
   <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-    <path d="M1 4L3 6L7 2" stroke="#FAF7F2" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M1 4L3 6L7 2" stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
 export const StatusStepper: React.FC<StatusStepperProps> = ({ currentStatus, logs = [] }) => {
-  const currentIndex = STEPS.findIndex(s =>
-    s.toLowerCase() === (currentStatus || '').toLowerCase()
+  const { language, t } = useLanguage();
+
+  const currentIndex = RAW_STEPS.findIndex((s) =>
+    s.key === (currentStatus || '').toLowerCase().replace(/\s+/g, '_')
   );
 
-  const getLogForStep = (step: string) =>
-    logs.find(l => l.new_status?.toLowerCase() === step.toLowerCase());
+  const getLogForStep = (stepKey: string) =>
+    logs.find((l) => (l.new_status || '').toLowerCase().replace(/\s+/g, '_') === stepKey);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-      {STEPS.map((step, i) => {
+    <div className="flex flex-col">
+      {RAW_STEPS.map((step, i) => {
         const isCompleted = i < currentIndex;
         const isCurrent  = i === currentIndex;
         const isFuture   = i > currentIndex;
-        const log = getLogForStep(step);
+        const log = getLogForStep(step.key);
 
         return (
-          <div key={step} style={{ display: 'flex', gap: 16, position: 'relative' }}>
+          <div key={step.key} className="flex gap-4 relative">
             {/* Connecting line */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 20, flexShrink: 0 }}>
+            <div className="flex flex-col items-center w-5 shrink-0">
               {/* Node */}
-              <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+              <div className="relative inline-flex items-center justify-center z-1">
                 {isCompleted && (
-                  <div style={{
-                    width: 20, height: 20,
-                    borderRadius: '50%',
-                    background: 'var(--color-teal-700)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
+                  <div className="w-5 h-5 rounded-full bg-[#15803D] flex items-center justify-center">
                     <CheckGlyph />
                   </div>
                 )}
                 {isCurrent && (
-                  <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{
-                      width: 20, height: 20,
-                      borderRadius: '50%',
-                      background: 'var(--color-teal-700)',
-                      border: '3px solid var(--color-teal-200)',
-                    }} />
-                    <div
-                      className="pulse-dot-ring"
-                      style={{
-                        position: 'absolute',
-                        inset: -4,
-                        borderRadius: '50%',
-                        background: 'var(--color-teal-500)',
-                      }}
-                    />
+                  <div className="relative inline-flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-full bg-[#0B2545] border-2 border-blue-200" />
                   </div>
                 )}
                 {isFuture && (
-                  <div style={{
-                    width: 12, height: 12,
-                    borderRadius: '50%',
-                    border: '2px solid var(--color-border-strong)',
-                    background: 'transparent',
-                  }} />
+                  <div className="w-3 h-3 rounded-full border-2 border-slate-300 bg-white" />
                 )}
               </div>
 
               {/* Connecting line below (except last) */}
-              {i < STEPS.length - 1 && (
-                <div style={{
-                  flex: 1,
-                  width: 2,
-                  minHeight: 32,
-                  background: isCompleted ? 'var(--color-teal-700)' : 'var(--color-border)',
-                  borderStyle: isCurrent ? 'dashed' : 'solid',
-                  borderWidth: isCurrent ? '0 0 0 2px' : 0,
-                  borderColor: 'var(--color-border)',
-                  marginTop: 2,
-                }} />
+              {i < RAW_STEPS.length - 1 && (
+                <div
+                  className={`flex-1 w-0.5 min-h-[32px] mt-1 ${
+                    isCompleted ? 'bg-[#15803D]' : 'bg-slate-200'
+                  }`}
+                />
               )}
             </div>
 
             {/* Step content */}
-            <div style={{ paddingBottom: i < STEPS.length - 1 ? 24 : 0, flex: 1 }}>
-              <div style={{
-                fontSize: 'var(--fs-body-md)',
-                fontWeight: isCurrent ? 600 : 500,
-                color: isFuture ? 'var(--color-ink-faint)' : 'var(--color-ink)',
-                fontFamily: 'var(--font-body)',
-                marginTop: isCurrent ? -2 : isFuture ? 0 : -2,
-              }}>
-                {step}
+            <div className={`flex-1 ${i < RAW_STEPS.length - 1 ? 'pb-6' : ''}`}>
+              <div
+                className={`text-xs font-bold ${
+                  isCurrent ? 'text-[#0B2545]' : isFuture ? 'text-slate-400' : 'text-slate-800'
+                }`}
+              >
+                {t(step.labelKey)}
               </div>
               {(log || isCompleted || isCurrent) && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
+                <div className="flex gap-2 mt-0.5 flex-wrap text-[11px] text-slate-500 font-mono">
                   {log?.changed_at && (
-                    <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--color-ink-muted)' }}>
-                      {new Date(log.changed_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                    <span>
+                      {new Date(log.changed_at).toLocaleString(language === 'gu' ? 'gu-IN' : 'en-IN', {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      })}
                     </span>
                   )}
                   {log?.officer_name && (
-                    <span style={{ fontSize: 13, color: 'var(--color-ink-muted)' }}>
-                      · {log.officer_name}
-                    </span>
+                    <span>• {log.officer_name}</span>
                   )}
                 </div>
               )}

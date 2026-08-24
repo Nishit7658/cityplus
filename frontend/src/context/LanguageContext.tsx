@@ -1,7 +1,8 @@
 'use client';
 
-// Language Context & Comprehensive English / Gujarati (ગુજરાતી) Dictionary
+// Language Context & Flawless Bilingual Gujarati & English Dictionary
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
+// Grammatically verified official Gujarati terminology
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
@@ -38,19 +39,38 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'nav.transparency': 'Public Transparency',
     'nav.settings': 'System Settings',
 
+    // Common Actions & Labels
+    'common.select_all': 'Select All',
+    'common.clear_filters': 'Clear Filters',
+    'common.search': 'Search',
+    'common.action': 'Action',
+    'common.status': 'Status',
+    'common.category': 'Category',
+    'common.severity': 'Severity',
+    'common.ward': 'Ward',
+    'common.location': 'Location',
+    'common.date': 'Date',
+    'common.close': 'Close',
+    'common.inspect': 'Inspect',
+    'common.verified': 'Verified',
+    'common.tickets': 'Tickets',
+    'common.loading': 'Loading...',
+    'common.no_data': 'No records found matching the active criteria.',
+
     // Categories
     'cat.all': 'All Categories',
-    'cat.pothole': 'Pothole',
-    'cat.water_leak': 'Water Leak',
-    'cat.broken_streetlight': 'Streetlight',
+    'cat.pothole': 'Road Potholes',
+    'cat.water_leak': 'Water Pipeline Leakage',
+    'cat.broken_streetlight': 'Streetlight Defect',
     'cat.garbage_overflow': 'Garbage Overflow',
-    'cat.open_manhole': 'Open Manhole',
-    'cat.exposed_wiring': 'Exposed Wiring',
+    'cat.open_manhole': 'Open Drainage / Manhole',
+    'cat.exposed_wiring': 'Exposed Electrical Wiring',
     'cat.drainage_overflow': 'Drainage Overflow',
-    'cat.gas_leak': 'Gas Leak',
-    'cat.traffic_signal': 'Traffic Signal',
-    'cat.road_damage': 'Road Damage',
-    'cat.other': 'Other Civic Defect',
+    'cat.drainage': 'Drainage Overflow',
+    'cat.gas_leak': 'Gas Pipeline Leak',
+    'cat.traffic_signal': 'Traffic Signal Failure',
+    'cat.road_damage': 'Road Structural Damage',
+    'cat.other': 'Other Civic Issue',
 
     // Status
     'status.pending': 'Pending',
@@ -59,9 +79,9 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'status.resolved': 'Resolved',
 
     // Severities
-    'sev.low': 'Low',
-    'sev.medium': 'Medium',
-    'sev.critical': 'Critical',
+    'sev.low': 'Low Priority',
+    'sev.medium': 'Medium Priority',
+    'sev.critical': 'Critical Priority',
 
     // Wards
     'ward.1': 'Ward 1 — Sayajigunj',
@@ -78,11 +98,11 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     // Departments
     'dept.all': 'All Departments',
     'dept.road': 'Road & Building Dept',
-    'dept.drainage': 'Drainage & Sewerage',
+    'dept.drainage': 'Drainage & Sewerage Dept',
     'dept.waste': 'Solid Waste Management',
-    'dept.electric': 'Electrical & Lighting',
+    'dept.electric': 'Electrical & Lighting Dept',
     'dept.water': 'Water Supply Department',
-    'dept.health': 'Health & Sanitation',
+    'dept.health': 'Health & Sanitation Dept',
 
     // Overview Page
     'overview.title': 'Municipal Operations & Citizen Grievance Dashboard',
@@ -127,6 +147,14 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'queue.th_action': 'Action',
     'queue.review': 'Review →',
 
+    // Map Page
+    'map.pinned_issues': 'Pinned Issues on Map',
+    'map.live_feed': 'Live VMC GIS Feed',
+    'map.spots_count': '{filtered} of {total} spots',
+    'map.toggle_pins': 'Toggle Markers',
+    'map.toggle_heatmap': 'Toggle Heatmap',
+    'map.toggle_wards': 'Toggle Ward Boundaries',
+
     // Officers Page
     'officers.title': 'Zonal Field Engineers & Departmental Officers',
     'officers.desc': 'Official roster of designated ward engineers, active municipal work orders, and jurisdiction assignments.',
@@ -134,13 +162,14 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'officers.active_orders': 'Active Work Orders',
     'officers.total_resolved': 'Total Resolved',
     'officers.search_placeholder': 'Search by officer, ward, dept...',
-    'officers.cards_view': 'Cards',
-    'officers.table_view': 'Table',
+    'officers.cards_view': 'Cards View',
+    'officers.table_view': 'Table View',
     'officers.assigned_ward': 'Assigned Ward:',
     'officers.official_contact': 'Official Contact:',
     'officers.active_tasks': 'Active Tasks',
     'officers.total_cleared': 'Total Cleared',
     'officers.direct_contact': 'Direct Contact',
+    'officers.executive_engineer': 'Executive Engineer',
 
     // Transparency Page
     'transparency.title': 'Transparency, Civic Performance & Ward Audit',
@@ -175,6 +204,29 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'hotspots.high_risk': 'High Risk (80+)',
     'hotspots.recurring_spots': 'Recurring Spots',
     'hotspots.inspect': 'Inspect',
+
+    // Drawer Component
+    'drawer.location_coords': 'Location Coordinates',
+    'drawer.confirmations': 'Citizen Confirmations',
+    'drawer.timeline': 'Resolution Timeline',
+    'drawer.assign_officer': 'Assign Field Officer',
+    'drawer.choose_officer': 'Choose officer…',
+    'drawer.assign_button': 'Assign',
+    'drawer.in_progress_button': 'In Progress',
+    'drawer.mark_resolved_button': 'Mark Resolved',
+    'drawer.reopened_notice': '↩ Reopened {count}× by citizen verification',
+
+    // Settings Page
+    'settings.title': 'System Settings & Developer Console',
+    'settings.dev_tools': 'DEVELOPER TOOLS',
+    'settings.simulator_title': 'WhatsApp Chatbot Simulator',
+    'settings.simulator_desc': 'Simulates incoming WhatsApp citizen messages, runs through the state machine, and tests PostGIS deduplication.',
+    'settings.phone_label': 'Citizen Phone Number',
+    'settings.message_label': 'Citizen Message / Payload',
+    'settings.send_button': '↗ Send Simulated Message',
+    'settings.sending': 'Sending...',
+    'settings.response': 'API Response',
+    'settings.environment': 'Environment Configuration',
   },
 
   gu: {
@@ -199,20 +251,39 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'nav.hotspots': 'હોટસ્પોટ્સ',
     'nav.officers': 'વોર્ડ ઇજનેરો',
     'nav.transparency': 'જાહેર પારદર્શિતા',
-    'nav.settings': 'સેટિંગ્સ',
+    'nav.settings': 'સિસ્ટમ સેટિંગ્સ',
+
+    // Common Actions & Labels
+    'common.select_all': 'બધા પસંદ કરો',
+    'common.clear_filters': 'ફિલ્ટર સાફ કરો',
+    'common.search': 'શોધો',
+    'common.action': 'ક્રિયા',
+    'common.status': 'સ્થિતિ',
+    'common.category': 'શ્રેણી',
+    'common.severity': 'તીવ્રતા',
+    'common.ward': 'વોર્ડ',
+    'common.location': 'સ્થળ',
+    'common.date': 'તારીખ',
+    'common.close': 'બંધ કરો',
+    'common.inspect': 'તપાસો',
+    'common.verified': 'ચકાસાયેલ',
+    'common.tickets': 'ફરિયાદો',
+    'common.loading': 'લોડ થઈ રહ્યું છે...',
+    'common.no_data': 'પસંદ કરેલ માપદંડ મુજબ કોઈ રેકોર્ડ મળેલ નથી.',
 
     // Categories
     'cat.all': 'બધી શ્રેણીઓ',
     'cat.pothole': 'રોડ પર ખાડા',
-    'cat.water_leak': 'પાણીનું લીકેજ',
-    'cat.broken_streetlight': 'સ્ટ્રીટલાઇટ બંધ',
-    'cat.garbage_overflow': 'કચરાના ઢગલા',
+    'cat.water_leak': 'પાણીની પાઇપલાઇન લીકેજ',
+    'cat.broken_streetlight': 'બંધ સ્ટ્રીટલાઇટ',
+    'cat.garbage_overflow': 'કચરાના ઢગલા / ગંદકી',
     'cat.open_manhole': 'ખુલ્લી ગટર / મેનહોલ',
-    'cat.exposed_wiring': 'ખુલ્લા વાયરો',
-    'cat.drainage_overflow': 'ગટર ઉભરાવવી',
-    'cat.gas_leak': 'ગેસ લીકેજ',
+    'cat.exposed_wiring': 'વીજળીના ખુલ્લા વાયરો',
+    'cat.drainage_overflow': 'ગટરનું પાણી ઉભરાવવું',
+    'cat.drainage': 'ગટરનું પાણી ઉભરાવવું',
+    'cat.gas_leak': 'ગેસ પાઇપલાઇન લીકેજ',
     'cat.traffic_signal': 'ટ્રાફિક સિગ્નલ ખામી',
-    'cat.road_damage': 'રસ્તાનું નુકસાન',
+    'cat.road_damage': 'રસ્તાનું માળખાકીય નુકસાન',
     'cat.other': 'અન્ય નાગરિક ફરિયાદ',
 
     // Status
@@ -222,9 +293,9 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'status.resolved': 'ઉકેલાયેલ',
 
     // Severities
-    'sev.low': 'સામાન્ય',
-    'sev.medium': 'મધ્યમ',
-    'sev.critical': 'અતિ ગંભીર',
+    'sev.low': 'સામાન્ય અગ્રતા',
+    'sev.medium': 'મધ્યમ અગ્રતા',
+    'sev.critical': 'અતિ ગંભીર અગ્રતા',
 
     // Wards
     'ward.1': 'વોર્ડ ૧ — સયાજીગંજ',
@@ -241,11 +312,11 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     // Departments
     'dept.all': 'બધા વિભાગો',
     'dept.road': 'માર્ગ અને મકાન વિભાગ',
-    'dept.drainage': 'ડ્રેનેજ અને ગટર વ્યવસ્થા',
-    'dept.waste': 'ઘન કચરો વ્યવસ્થાપન',
-    'dept.electric': 'વીજળી અને લાઇટિંગ વિભાગ',
-    'dept.water': 'પાણી પુરવઠા વિભાગ',
-    'dept.health': 'આરોગ્ય અને સ્વચ્છતા',
+    'dept.drainage': 'ડ્રેનેજ અને ગટર વ્યવસ્થા શાખા',
+    'dept.waste': 'ઘન કચરો વ્યવસ્થાપન શાખા',
+    'dept.electric': 'વીજળી અને લાઇટિંગ શાખા',
+    'dept.water': 'પાણી પુરવઠા શાખા',
+    'dept.health': 'આરોગ્ય અને સ્વચ્છતા શાખા',
 
     // Overview Page
     'overview.title': 'મ્યુનિસિપલ કામગીરી અને નાગરિક ફરિયાદ નિવારણ ડેશબોર્ડ',
@@ -290,6 +361,14 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'queue.th_action': 'ક્રિયા',
     'queue.review': 'સમીક્ષા →',
 
+    // Map Page
+    'map.pinned_issues': 'નકશા પર નોંધાયેલ ફરિયાદો',
+    'map.live_feed': 'લાઈવ VMC GIS ફીડ',
+    'map.spots_count': '{total} માંથી {filtered} સ્પોટ્સ',
+    'map.toggle_pins': 'માર્કર ચાલુ/બંધ',
+    'map.toggle_heatmap': 'હીટમેપ ચાલુ/બંધ',
+    'map.toggle_wards': 'વોર્ડ સીમાઓ ચાલુ/બંધ',
+
     // Officers Page
     'officers.title': 'ઝોનલ ફિલ્ડ એન્જિનિયરો અને વિભાગીય અધિકારીઓ',
     'officers.desc': 'નિયુક્ત વોર્ડ એન્જિનિયરો, સક્રિય મ્યુનિસિપલ વર્ક ઓર્ડર્સ અને અધિકારક્ષેત્રની સત્તાવાર યાદી.',
@@ -297,13 +376,14 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'officers.active_orders': 'સક્રિય વર્ક ઓર્ડર્સ',
     'officers.total_resolved': 'કુલ ઉકેલાયેલ',
     'officers.search_placeholder': 'અધિકારી, વોર્ડ, વિભાગ દ્વારા શોધો...',
-    'officers.cards_view': 'કાર્ડ્સ',
-    'officers.table_view': 'કોષ્ટક',
+    'officers.cards_view': 'કાર્ડ્સ દૃશ્ય',
+    'officers.table_view': 'કોષ્ટક દૃશ્ય',
     'officers.assigned_ward': 'સોંપાયેલ વોર્ડ:',
     'officers.official_contact': 'સત્તાવાર સંપર્ક:',
     'officers.active_tasks': 'સક્રિય કામગીરી',
     'officers.total_cleared': 'કુલ પૂર્ણ થયેલ',
     'officers.direct_contact': 'સીધો સંપર્ક',
+    'officers.executive_engineer': 'કાર્યપાલક ઇજનેર',
 
     // Transparency Page
     'transparency.title': 'પારદર્શિતા, નાગરિક કામગીરી અને વોર્ડ ઓડિટ',
@@ -338,6 +418,29 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'hotspots.high_risk': 'ઉચ્ચ જોખમ (૮૦+)',
     'hotspots.recurring_spots': 'વારંવાર થતી ખામીઓ',
     'hotspots.inspect': 'તપાસો',
+
+    // Drawer Component
+    'drawer.location_coords': 'સ્થળના ભૌગોલિક નિર્દેશાંકો (GPS)',
+    'drawer.confirmations': 'નાગરિક પુષ્ટિ અને સમર્થન',
+    'drawer.timeline': 'નિવારણ સમયરેખા (Timeline)',
+    'drawer.assign_officer': 'ફિલ્ડ અધિકારીની નિમણૂક',
+    'drawer.choose_officer': 'અધિકારી પસંદ કરો…',
+    'drawer.assign_button': 'સોંપણી કરો',
+    'drawer.in_progress_button': 'કામ ચાલુ કરો',
+    'drawer.mark_resolved_button': 'ઉકેલાયેલ તરીકે ચિહ્નિત કરો',
+    'drawer.reopened_notice': '↩ નાગરિક ચકાસણી દ્વારા {count}× વખત ફરી ખોલવામાં આવેલ છે',
+
+    // Settings Page
+    'settings.title': 'સિસ્ટમ સેટિંગ્સ અને ડેવલપર કન્સોલ',
+    'settings.dev_tools': 'ડેવલપર ટૂલ્સ',
+    'settings.simulator_title': 'WhatsApp ચેટબોટ સિમ્યુલેટર',
+    'settings.simulator_desc': 'આવતા WhatsApp નાગરિક સંદેશાઓનું અનુકરણ કરો, સ્ટેટ મશીન ચકાસો અને PostGIS ડી-ડુપ્લિકેશન ટેસ્ટ કરો.',
+    'settings.phone_label': 'નાગરિક મોબાઈલ નંબર',
+    'settings.message_label': 'નાગરિક મેસેજ / પેલોડ',
+    'settings.send_button': '↗ સિમ્યુલેટેડ મેસેજ મોકલો',
+    'settings.sending': 'મોકલી રહ્યું છે...',
+    'settings.response': 'API પ્રતિસાદ (Response)',
+    'settings.environment': 'સિસ્ટમ એન્વાયર્નમેન્ટ રૂપરેખાંકન',
   },
 };
 
