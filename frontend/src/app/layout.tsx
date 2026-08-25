@@ -5,8 +5,8 @@ import { TopIdentityStrip } from '@/components/TopIdentityStrip';
 import { PillTabNav } from '@/components/PillTabNav';
 
 export const metadata: Metadata = {
-  title: 'CityPulse — VMC Civic Dashboard',
-  description: 'Real-time civic complaint management for Vadodara Municipal Corporation',
+  title: 'CityPulse — VMC Municipal Operations Portal',
+  description: 'Vadodara Municipal Corporation Civic Grievance & GIS Command Console',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
           rel="stylesheet"
         />
       </head>
@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          fontFamily: "'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          fontFamily: "'Public Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         }}
       >
         <Providers>

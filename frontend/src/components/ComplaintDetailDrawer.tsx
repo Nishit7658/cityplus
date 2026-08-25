@@ -1,7 +1,8 @@
 'use client';
 
-// F.4 / D.6 — Complaint Detail Drawer with Full Trilingual i18n & Accessibility
+// F.4 / D.6 — Complaint Detail Drawer (Clean Enterprise Slide-Over Sheet) with Full Trilingual i18n
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
+// Accessible ARIA dialog, clean section dividers, zero side-accent stripes
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -66,8 +67,8 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
     };
   }, [complaint]);
 
-  const accentColor = complaint ? getCategoryColor(complaint.category) : '#6B9E7A';
-  const severityColor = complaint ? getSeverityColor(complaint.confirmation_count, complaint.status) : '#6B9E7A';
+  const accentColor = complaint ? getCategoryColor(complaint.category) : '#0B2545';
+  const severityColor = complaint ? getSeverityColor(complaint.confirmation_count, complaint.status) : '#0B2545';
   const statusStyle = complaint ? STATUS_STYLES[complaint.status] || STATUS_STYLES.Pending : STATUS_STYLES.Pending;
   const safeOfficers = Array.isArray(officers) ? officers : [];
 
@@ -94,12 +95,12 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.18 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/40 backdrop-blur-xs z-[1200]"
+            className="fixed inset-0 bg-black/45 backdrop-blur-xs z-[1200]"
           />
 
-          {/* Drawer panel */}
+          {/* Drawer panel (Clean white sheet, no left stripe) */}
           <motion.aside
             key="drawer"
             role="dialog"
@@ -108,108 +109,110 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed top-0 right-0 bottom-0 w-full sm:w-[460px] bg-white shadow-2xl z-[1250] flex flex-col overflow-y-auto border-l border-slate-200"
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-0 right-0 bottom-0 w-full sm:w-[480px] bg-white shadow-2xl z-[1250] flex flex-col overflow-y-auto border-l border-slate-200"
           >
-            {/* Close button (min 44x44 touch area) */}
-            <button
-              onClick={onClose}
-              className="absolute top-3 right-3 w-11 h-11 rounded-full border border-slate-300 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 text-lg cursor-pointer z-10 transition-colors"
-              aria-label="Close details drawer"
-            >
-              ✕
-            </button>
+            {/* Header with Title and Close Button */}
+            <div className="p-6 border-b border-slate-200 bg-slate-50/70 flex items-start justify-between gap-4 sticky top-0 bg-white/95 backdrop-blur-xs z-20">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                  <span
+                    style={{ backgroundColor: `${accentColor}15`, color: accentColor, borderColor: `${accentColor}35` }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-bold border"
+                  >
+                    <CategoryIcon category={complaint.category} size={13} />
+                    <span className="capitalize">{catLabel}</span>
+                  </span>
 
-            {/* Left accent bar */}
-            <div
-              style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: 5,
-                background: accentColor,
-              }}
-            />
+                  <span
+                    style={{ backgroundColor: `${severityColor}15`, color: severityColor, borderColor: `${severityColor}35` }}
+                    className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold border"
+                  >
+                    {severityText}
+                  </span>
 
-            <div className="p-7 flex-1 flex flex-col pl-9">
-              {/* Badges row */}
-              <div className="flex gap-2 flex-wrap mb-4">
-                <span
-                  style={{ backgroundColor: `${accentColor}15`, color: accentColor, borderColor: `${accentColor}35` }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border"
-                >
-                  <CategoryIcon category={complaint.category} size={14} />
-                  <span className="capitalize">{catLabel}</span>
-                </span>
+                  <span
+                    style={{ backgroundColor: statusStyle.bg, color: statusStyle.color, borderColor: statusStyle.border }}
+                    className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold border"
+                  >
+                    {statusLabel}
+                  </span>
+                </div>
 
-                <span
-                  style={{ backgroundColor: `${severityColor}15`, color: severityColor, borderColor: `${severityColor}35` }}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border"
-                >
-                  {severityText}
-                </span>
-
-                <span
-                  style={{ backgroundColor: statusStyle.bg, color: statusStyle.color, borderColor: statusStyle.border }}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border"
-                >
-                  {statusLabel}
-                </span>
+                <h2 id="drawer-title" className="text-lg font-bold text-[#0B2545] capitalize leading-snug">
+                  {catLabel} — #{complaint.id}
+                </h2>
               </div>
 
-              {/* Title */}
-              <h2 id="drawer-title" className="text-xl font-bold text-[#0B2545] capitalize mb-1">
-                {catLabel} — #{complaint.id}
-              </h2>
+              <button
+                onClick={onClose}
+                className="w-9 h-9 rounded-full border border-slate-300 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 text-base cursor-pointer shrink-0 transition-colors"
+                aria-label="Close details drawer"
+              >
+                ✕
+              </button>
+            </div>
 
-              {/* Location & Reported date */}
-              <p className="text-xs text-slate-500 mb-1 font-mono">
-                📍 {wardLabel} • {language === 'gu' ? 'નોંધણી તારીખ: ' : language === 'hi' ? 'दर्ज तारीख: ' : 'Reported: '}
-                {new Date(complaint.created_at).toLocaleDateString(
-                  language === 'gu' ? 'gu-IN' : language === 'hi' ? 'hi-IN' : 'en-IN',
-                  {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  }
+            {/* Body */}
+            <div className="p-6 flex-1 flex flex-col space-y-6">
+              {/* Location & Metadata */}
+              <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200 text-xs space-y-1.5">
+                <div className="flex items-center justify-between font-mono text-slate-700">
+                  <span className="font-semibold text-slate-500">Jurisdiction:</span>
+                  <span className="font-bold text-[#0B2545]">📍 {wardLabel}</span>
+                </div>
+                <div className="flex items-center justify-between font-mono text-slate-700">
+                  <span className="font-semibold text-slate-500">
+                    {language === 'gu' ? 'નોંધણી તારીખ:' : language === 'hi' ? 'दर्ज तारीख:' : 'Logged At:'}
+                  </span>
+                  <span className="font-bold">
+                    {new Date(complaint.created_at).toLocaleDateString(
+                      language === 'gu' ? 'gu-IN' : language === 'hi' ? 'hi-IN' : 'en-IN',
+                      { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }
+                    )}
+                  </span>
+                </div>
+                {typeof complaint.latitude === 'number' && (
+                  <div className="flex items-center justify-between font-mono text-slate-700">
+                    <span className="font-semibold text-slate-500">GPS Coordinates:</span>
+                    <span className="font-semibold">{complaint.latitude.toFixed(6)}, {complaint.longitude.toFixed(6)}</span>
+                  </div>
                 )}
-              </p>
-
-              {typeof complaint.latitude === 'number' && (
-                <p className="font-mono text-xs text-slate-400 mb-4">
-                  GPS: {complaint.latitude.toFixed(6)}, {complaint.longitude.toFixed(6)}
-                </p>
-              )}
+              </div>
 
               {/* Description */}
-              <div className="p-3.5 rounded bg-slate-50 border border-slate-200 text-xs text-slate-800 leading-relaxed mb-5">
-                {complaint.description ||
-                  (language === 'gu'
-                    ? 'નાગરિક દ્વારા નોંધાયેલ ફરિયાદ.'
-                    : language === 'hi'
-                    ? 'नागरिक द्वारा दर्ज शिकायत।'
-                    : 'Civic infrastructure report submitted by citizen.')}
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  {language === 'gu' ? 'વિગતવાર વર્ણન' : language === 'hi' ? 'शिकायत का विवरण' : 'Description'}
+                </div>
+                <div className="p-3.5 rounded bg-white border border-slate-200 text-xs text-slate-800 leading-relaxed">
+                  {complaint.description ||
+                    (language === 'gu'
+                      ? 'નાગરિક દ્વારા નોંધાયેલ ફરિયાદ.'
+                      : language === 'hi'
+                      ? 'नागरिक द्वारा दर्ज शिकायत।'
+                      : 'Civic infrastructure report submitted by citizen.')}
+                </div>
               </div>
 
-              {/* Error Message Toast if action fails */}
+              {/* Error Toast */}
               {errorMessage && (
-                <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">
+                <div className="p-3 rounded bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">
                   ⚠️ {errorMessage}
                 </div>
               )}
 
               {/* Citizen Confirmations */}
-              <div className="mb-6 pb-4 border-b border-slate-200">
-                <div className="text-xs font-bold uppercase tracking-wider text-[#0B2545] mb-2.5">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
                   {t('drawer.confirmations')} ({complaint.confirmation_count || 1})
                 </div>
                 <ConfirmationAvatarStack count={complaint.confirmation_count || 1} size={26} />
               </div>
 
               {/* Resolution Stepper */}
-              <div className="mb-6 pb-4 border-b border-slate-200">
-                <div className="text-xs font-bold uppercase tracking-wider text-[#0B2545] mb-4">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">
                   {t('drawer.timeline')}
                 </div>
                 <StatusStepper currentStatus={complaint.status} />
@@ -217,7 +220,7 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
 
               {/* Assign Officer */}
               {complaint.status !== 'Resolved' && (
-                <div className="mb-6">
+                <div className="pt-4 border-t border-slate-200">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#0B2545] block mb-2">
                     {t('drawer.assign_officer')}
                   </label>
@@ -259,7 +262,7 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
 
               {/* Action buttons (min 44px height for accessibility) */}
               {complaint.status !== 'Resolved' && (
-                <div className="flex gap-3 mt-auto pt-4 border-t border-slate-200">
+                <div className="flex gap-3 pt-2">
                   <button
                     onClick={async () => {
                       setIsSubmitting(true);
@@ -298,7 +301,7 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
               )}
 
               {complaint.reopened_count > 0 && (
-                <div className="mt-4 p-3 rounded bg-red-50 border border-red-200 text-red-800 text-xs font-bold">
+                <div className="p-3 rounded bg-red-50 border border-red-200 text-red-800 text-xs font-bold">
                   {language === 'gu'
                     ? `↩ નાગરિક ચકાસણી દ્વારા ${complaint.reopened_count}× વખત ફરી ખોલવામાં આવેલ છે`
                     : language === 'hi'

@@ -1,7 +1,8 @@
 'use client';
 
-// F.2 — Live GIS Map with Category / Severity / Status Multi-Filter and Trilingual i18n
+// F.2 — Live GIS Cartography & Municipal Incident Console
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
+// Docked Filter Ribbon, Full-Bleed Spatial Map, Clean Item Sidebar, Zero Side Accent Stripes
 
 import React, { useEffect, useState } from 'react';
 import { MapView } from '@/components/MapView';
@@ -132,108 +133,99 @@ export default function MapPage() {
   return (
     <>
       <div className="max-w-[1520px] mx-auto px-6 py-6 bg-slate-50 min-h-[calc(100vh-115px)] flex flex-col">
-        {/* Top Filter Bar */}
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-2xs mb-6 space-y-3">
-          {/* Header Row */}
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider">
-              {t('map.filters_title')}
-            </span>
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-mono text-slate-500">
+        {/* Compact Docked Filter Ribbon */}
+        <div className="bg-white rounded-lg border border-slate-200 p-3.5 shadow-2xs mb-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            {/* Filter Category Chips */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1 shrink-0">
+                {t('map.category_label')}:
+              </span>
+              {CATEGORY_FILTERS.map((f) => {
+                const active = activeCategories.includes(f.key);
+                return (
+                  <button
+                    key={f.key}
+                    onClick={() => toggleFilter(activeCategories, setActiveCategories, f.key)}
+                    className={`px-2.5 py-1 rounded text-xs font-semibold border transition-colors cursor-pointer ${
+                      active
+                        ? 'bg-[#0B2545] text-white border-[#0B2545]'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Severity, Status & Reset */}
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <div className="flex items-center gap-1">
+                {SEVERITY_FILTERS.map((f) => {
+                  const active = activeSeverities.includes(f.key);
+                  return (
+                    <button
+                      key={f.key}
+                      onClick={() => toggleFilter(activeSeverities, setActiveSeverities, f.key)}
+                      className={`px-2 py-0.5 rounded text-xs font-semibold border transition-colors cursor-pointer ${
+                        active
+                          ? 'bg-[#B45309] text-white border-[#B45309]'
+                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="h-4 w-px bg-slate-200" />
+
+              <div className="flex items-center gap-1">
+                {STATUS_FILTERS.map((f) => {
+                  const active = activeStatuses.includes(f.key);
+                  return (
+                    <button
+                      key={f.key}
+                      onClick={() => toggleFilter(activeStatuses, setActiveStatuses, f.key)}
+                      className={`px-2 py-0.5 rounded text-xs font-semibold border transition-colors cursor-pointer ${
+                        active
+                          ? 'bg-[#133E87] text-white border-[#133E87]'
+                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <span className="text-xs font-mono text-slate-500 font-semibold pl-2">
                 {`${filtered.length} / ${safe.length} ${t('overview.spots', 'spots')}`}
               </span>
+
               {hasFilters && (
                 <button
                   onClick={clearAll}
-                  className="text-xs font-semibold text-[#B91C1C] hover:underline cursor-pointer"
+                  className="text-xs font-semibold text-[#B91C1C] hover:underline cursor-pointer pl-1"
                 >
                   {t('map.clear_all')}
                 </button>
               )}
             </div>
           </div>
-
-          {/* Categories */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1 w-20">
-              {t('map.category_label')}:
-            </span>
-            {CATEGORY_FILTERS.map((f) => {
-              const active = activeCategories.includes(f.key);
-              return (
-                <button
-                  key={f.key}
-                  onClick={() => toggleFilter(activeCategories, setActiveCategories, f.key)}
-                  className={`px-2.5 py-1 rounded text-xs font-semibold border transition-colors cursor-pointer ${
-                    active
-                      ? 'bg-[#0B2545] text-white border-[#0B2545]'
-                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Severity & Status */}
-          <div className="flex flex-wrap items-center gap-4 pt-1 border-t border-slate-100">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1 w-20">
-                {t('map.severity_label')}:
-              </span>
-              {SEVERITY_FILTERS.map((f) => {
-                const active = activeSeverities.includes(f.key);
-                return (
-                  <button
-                    key={f.key}
-                    onClick={() => toggleFilter(activeSeverities, setActiveSeverities, f.key)}
-                    className={`px-2.5 py-1 rounded text-xs font-semibold border transition-colors cursor-pointer ${
-                      active
-                        ? 'bg-[#B45309] text-white border-[#B45309]'
-                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">
-                {t('map.status_label')}:
-              </span>
-              {STATUS_FILTERS.map((f) => {
-                const active = activeStatuses.includes(f.key);
-                return (
-                  <button
-                    key={f.key}
-                    onClick={() => toggleFilter(activeStatuses, setActiveStatuses, f.key)}
-                    className={`px-2.5 py-1 rounded text-xs font-semibold border transition-colors cursor-pointer ${
-                      active
-                        ? 'bg-[#133E87] text-white border-[#133E87]'
-                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
-        {/* Map & Side List */}
+        {/* Spatial Map & Clean Item Sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
-          {/* Map Container */}
-          <div className="lg:col-span-8 bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden h-[600px] relative">
-            <MapView complaints={filtered} onSelectComplaint={setSelected} height={600} />
+          {/* Map Viewport */}
+          <div className="lg:col-span-8 bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden h-[620px] relative">
+            <MapView complaints={filtered} onSelectComplaint={setSelected} height={620} />
           </div>
 
-          {/* Side List */}
-          <div className="lg:col-span-4 bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden flex flex-col h-[600px]">
+          {/* Clean Item Sidebar */}
+          <div className="lg:col-span-4 bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden flex flex-col h-[620px]">
             <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
               <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider">
                 {t('map.live_feed_title')}
@@ -242,11 +234,9 @@ export default function MapPage() {
                 {filtered.length} {t('overview.spots')}
               </span>
             </div>
-            <div className="p-3 overflow-y-auto divide-y divide-slate-100 flex-1">
+            <div className="p-3 overflow-y-auto space-y-2 flex-1">
               {filtered.map((c) => (
-                <div key={c.id} className="py-2.5">
-                  <ComplaintCard complaint={c} onClick={() => setSelected(c)} />
-                </div>
+                <ComplaintCard key={c.id} complaint={c} onClick={() => setSelected(c)} />
               ))}
             </div>
           </div>

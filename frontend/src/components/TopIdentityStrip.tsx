@@ -1,7 +1,7 @@
 'use client';
 
 // C.1 — Top Identity Strip (Official Government of Gujarat / VMC Header)
-// Trilingual (English / ગુજરાતી / हिन्दी) with connected Global WardContext
+// Solid color styling (No gradients), Trilingual dropdown, Connected WardContext
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
@@ -57,8 +57,8 @@ export const TopIdentityStrip: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-[1100] bg-white border-b border-slate-200 shadow-xs flex-shrink-0">
-      {/* Subtle National / State Government Accent Bar */}
-      <div className="h-1 w-full bg-gradient-to-r from-[#C25E00] via-[#FFFFFF] to-[#133E87]" />
+      {/* Solid Authoritative Navy & Saffron Trim (No Gradients) */}
+      <div className="h-0.5 w-full bg-[#0B2545]" />
 
       <div className="max-w-[1520px] mx-auto px-6 py-2.5 flex items-center justify-between gap-4">
         {/* Left Branding: Official State Seal + Title Hierarchy */}
@@ -120,7 +120,7 @@ export const TopIdentityStrip: React.FC = () => {
 
           {/* Portal Live Telemetry Badge */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#EFF6FF] border border-[#BFDBFE] text-xs font-semibold text-[#1E40AF]">
-            <span className="w-2 h-2 rounded-full bg-[#1D4ED8] animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[#1D4ED8]" />
             <span>{t('vmc.crms_active')}</span>
             <span className="font-mono font-bold text-[#0B2545]">({todayCount} {t('vmc.active_issues')})</span>
           </div>

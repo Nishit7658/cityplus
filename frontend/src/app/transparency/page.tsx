@@ -2,6 +2,7 @@
 
 // F.7 — Transparency Page (Official Municipal Citizen Charter & Audit Record) with Trilingual i18n
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
+// Clean subtle borders, zero side stripes, solid government color hierarchy
 
 import React, { useEffect, useState } from 'react';
 import { TransparencyStats } from '@/types';
@@ -26,7 +27,7 @@ export default function TransparencyPage() {
       desc: t('transparency.stage2_desc'),
     },
     {
-      step: language === 'gu' ? 'તબક્કો ૩' : language === 'hi' ? 'चरण ३' : 'STAGE 3',
+      step: language === 'gu' ? 'તબક્કો ૩' : language === 'hi' ? 'चरण ૩' : 'STAGE 3',
       title: t('transparency.stage3_title'),
       desc: t('transparency.stage3_desc'),
     },
@@ -81,7 +82,7 @@ export default function TransparencyPage() {
         </div>
       </div>
 
-      {/* 4 Official Civic Metrics */}
+      {/* 4 Official Civic Metrics (Clean Subtle Borders, Zero Side Stripes) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
@@ -99,7 +100,7 @@ export default function TransparencyPage() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#15803D]">
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
             {language === 'gu' ? 'ઉકેલાયેલ ફરિયાદો' : language === 'hi' ? 'निवारित शिकायतें' : 'Resolved Grievances'}
           </div>
@@ -115,7 +116,7 @@ export default function TransparencyPage() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#133E87]">
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
             {language === 'gu' ? 'નિવારણ ક્ષમતા' : language === 'hi' ? 'निवारण दक्षता' : 'Resolution Efficiency'}
           </div>
@@ -131,7 +132,7 @@ export default function TransparencyPage() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#B45309]">
+        <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
           <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
             {language === 'gu' ? 'સરેરાશ નિવારણ સમય' : language === 'hi' ? 'औसत निवारण समय' : 'Average Turnaround Time'}
           </div>
@@ -208,7 +209,7 @@ export default function TransparencyPage() {
         <table className="w-full text-left text-xs">
           <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
             <tr>
-              <th className="px-6 py-3.5">{language === 'gu' ? 'વહીવટી વોર્ડ' : language === 'hi' ? 'प्रशासनिक वार्ड' : 'Administrative Ward'}</th>
+              <th className="px-6 py-3.5">{language === 'gu' ? 'વહીવટી વોર્ડ' : language === 'hi' ? 'પ્રશાસનિક વોર્ડ' : 'Administrative Ward'}</th>
               <th className="px-4 py-3.5">{language === 'gu' ? 'કુલ નોંધાયેલ' : language === 'hi' ? 'कुल दर्ज' : 'Total Logged'}</th>
               <th className="px-4 py-3.5">{language === 'gu' ? 'ઉકેલાયેલ' : language === 'hi' ? 'निवारित' : 'Resolved Fixed'}</th>
               <th className="px-6 py-3.5">{language === 'gu' ? 'SLA પ્રગતિ' : language === 'hi' ? 'SLA प्रगति' : 'Resolution SLA Progress'}</th>
