@@ -1,10 +1,10 @@
 'use client';
 
 // C.1 — Top Identity Strip (Official Government of Gujarat / VMC Header)
-// Solid color styling (No gradients), Trilingual dropdown, Connected WardContext
+// Official Indian National Flag Tricolor Trim, State Emblem of India, Trilingual i18n & WardContext
 
 import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { NationalEmblem } from './NationalEmblem';
 import { useSocket } from './SocketProvider';
 import { useLanguage, Language } from '@/context/LanguageContext';
 import { useWard } from '@/context/WardContext';
@@ -57,38 +57,36 @@ export const TopIdentityStrip: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-[1100] bg-white border-b border-slate-200 shadow-xs flex-shrink-0">
-      {/* Solid Authoritative Navy & Saffron Trim (No Gradients) */}
-      <div className="h-0.5 w-full bg-[#0B2545]" />
+      {/* Official Indian National Flag Tricolor Banner Strip */}
+      <div className="w-full flex h-[3.5px]">
+        <div className="flex-1 bg-[#FF671F]" /> {/* India Saffron */}
+        <div className="flex-1 bg-[#FFFFFF] border-y border-slate-200/50" /> {/* White */}
+        <div className="flex-1 bg-[#046A38]" /> {/* India Green */}
+      </div>
 
       <div className="max-w-[1520px] mx-auto px-6 py-2.5 flex items-center justify-between gap-4">
-        {/* Left Branding: Official State Seal + Title Hierarchy */}
-        <div className="flex items-center gap-3.5">
-          <div className="relative w-10 h-10 shrink-0 flex items-center justify-center bg-slate-50 border border-slate-200 rounded p-1">
-            <Image
-              src="/gujarat-seal.svg"
-              alt="Government of Gujarat Seal"
-              width={34}
-              height={34}
-              className="object-contain"
-              priority
-            />
+        {/* Left Branding: Official National Emblem of India + State & Department Hierarchy */}
+        <div className="flex items-center gap-3">
+          {/* State Emblem of India (Ashoka Lion Capital) */}
+          <div className="shrink-0 flex items-center justify-center">
+            <NationalEmblem size={42} />
           </div>
 
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-none">
-                {t('vmc.state_label')}
+              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider leading-none">
+                {t('vmc.state_label', 'Government of Gujarat')}
               </span>
               <span className="text-slate-300 text-xs leading-none">•</span>
               <span className="text-[11px] font-bold text-[#C25E00] uppercase tracking-wider leading-none">
-                {t('vmc.dept_label')}
+                {t('vmc.dept_label', 'Urban Development & Urban Housing')}
               </span>
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex items-center gap-2 mt-1">
               <span className="text-base font-extrabold text-[#0B2545] tracking-tight leading-tight">
                 {t('vmc.title')}
               </span>
-              <span className="hidden sm:inline text-xs font-semibold text-slate-400">|</span>
+              <span className="hidden sm:inline text-xs font-semibold text-slate-300">|</span>
               <span className="hidden sm:inline text-xs font-semibold text-slate-600">
                 {t('vmc.subtitle')}
               </span>
@@ -96,7 +94,7 @@ export const TopIdentityStrip: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Controls: Trilingual Dropdown + CRMS Badge + Ward + Officer */}
+        {/* Right Controls: Trilingual Dropdown + CRMS Badge + Ward Selector + Officer */}
         <div className="flex items-center gap-3 shrink-0">
           {/* Trilingual Language Dropdown Selector (English / ગુજરાતી / हिन्दी) */}
           <div className="relative flex items-center bg-white rounded-md border border-slate-300 shadow-2xs hover:border-slate-400 transition-colors">
@@ -148,10 +146,10 @@ export const TopIdentityStrip: React.FC = () => {
             </div>
             <div className="flex flex-col text-left">
               <span className="text-xs font-bold text-[#0B2545] leading-tight">
-                {t('vmc.officer_title')}
+                {t('vmc.officer_title', 'Control Officer')}
               </span>
               <span className="text-[10px] text-slate-500 font-medium leading-none">
-                {t('vmc.officer_sub')}
+                {t('vmc.officer_sub', 'Vadodara Central')}
               </span>
             </div>
           </div>

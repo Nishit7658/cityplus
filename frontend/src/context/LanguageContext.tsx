@@ -27,7 +27,11 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'vmc.system_status': 'System Status',
     'vmc.operational': '100% Operational',
     'vmc.gov_gujarat': 'Government of Gujarat',
+    'vmc.state_label': 'Government of Gujarat',
     'vmc.dept_name': 'Urban Development & Urban Housing Department',
+    'vmc.dept_label': 'Urban Development & Urban Housing',
+    'vmc.officer_title': 'Control Officer',
+    'vmc.officer_sub': 'Vadodara Central',
 
     // Navigation Tabs
     'nav.overview': 'Overview',
@@ -242,7 +246,11 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'vmc.system_status': 'સિસ્ટમ સ્થિતિ',
     'vmc.operational': '૧૦૦% કાર્યરત',
     'vmc.gov_gujarat': 'ગુજરાત સરકાર',
+    'vmc.state_label': 'ગુજરાત સરકાર',
     'vmc.dept_name': 'શહેરી વિકાસ અને શહેરી ગૃહ નિર્માણ વિભાગ',
+    'vmc.dept_label': 'શહેરી વિકાસ અને શહેરી ગૃહ નિર્માણ',
+    'vmc.officer_title': 'કંટ્રોલ ઓફિસર',
+    'vmc.officer_sub': 'વડોદરા સેન્ટ્રલ',
 
     // Navigation Tabs
     'nav.overview': 'વિહંગાવલોકન',
@@ -457,7 +465,11 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'vmc.system_status': 'सिस्टम स्थिति',
     'vmc.operational': '१००% क्रियाशील',
     'vmc.gov_gujarat': 'गुजरात सरकार',
+    'vmc.state_label': 'गुजरात सरकार',
     'vmc.dept_name': 'शहरी विकास एवं शहरी आवास विभाग',
+    'vmc.dept_label': 'शहरी विकास एवं शहरी आवास',
+    'vmc.officer_title': 'नियंत्रण अधिकारी',
+    'vmc.officer_sub': 'वडोदरा सेंट्रल',
 
     // Navigation Tabs
     'nav.overview': 'अवलोकन',
