@@ -313,8 +313,7 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
         ref={mapContainerRef}
         className="w-full h-full"
         style={{
-          filter: 'sepia(8%) saturate(85%) hue-rotate(-6deg)',
-          background: '#F3EEE4',
+          background: '#F1F5F9',
         }}
       />
       <div className="absolute top-3 right-3 z-[1000] flex gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-md border border-slate-200 shadow-xs">

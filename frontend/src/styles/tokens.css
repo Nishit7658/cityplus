@@ -17,7 +17,7 @@
   --color-gov-saffron-light: #FFF7ED;
   --color-gov-gold:      #B45309;
 
-  /* ---- Surface & Backgrounds ---- */
+  /* ---- Surface & Backgrounds (Crisp Neutral Slate) ---- */
   --color-bg-app:        #F8FAFC;
   --color-bg-app-alt:    #F1F5F9;
   --color-surface:       #FFFFFF;
@@ -70,16 +70,16 @@
   --shadow-hover:  0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
   --shadow-drawer: -4px 0 16px rgba(0, 0, 0, 0.1);
 
-  /* ---- Typography ---- */
-  --font-display: 'Public Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-body:    'Public Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* ---- Typography: Plus Jakarta Sans + IBM Plex Mono ---- */
+  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body:    'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono:    'IBM Plex Mono', 'JetBrains Mono', SFMono-Regular, monospace;
 
-  --fs-display-xl: 36px;
-  --fs-display-lg: 28px;
-  --fs-display-md: 22px;
-  --fs-body-lg:    16px;
-  --fs-body-md:    14px;
+  --fs-display-xl: 32px;
+  --fs-display-lg: 24px;
+  --fs-display-md: 20px;
+  --fs-body-lg:    15px;
+  --fs-body-md:    13px;
   --fs-body-sm:    12px;
   --fs-eyebrow:    11px;
 

@@ -242,7 +242,7 @@ export default function OfficersPage() {
                     </td>
                     <td className="px-4 py-3.5 font-mono text-slate-700 font-semibold">{officer.phone || '—'}</td>
                     <td className="px-4 py-3.5 text-center">
-                      <span className="font-mono font-bold text-[#B45309] bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-300">
                         {activeCount}
                       </span>
                     </td>

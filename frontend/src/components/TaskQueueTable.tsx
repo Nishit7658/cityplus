@@ -89,25 +89,25 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({
     switch (status) {
       case 'Resolved':
         return (
-          <span className="bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold px-2 py-0.5 rounded text-[11px] inline-block">
+          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold px-2.5 py-0.5 rounded text-[11px] inline-block">
             {label}
           </span>
         );
       case 'In Progress':
         return (
-          <span className="bg-amber-50 text-amber-900 border border-amber-300 font-bold px-2 py-0.5 rounded text-[11px] inline-block">
+          <span className="bg-blue-50 text-blue-900 border border-blue-200 font-bold px-2.5 py-0.5 rounded text-[11px] inline-block">
             {label}
           </span>
         );
       case 'Assigned':
         return (
-          <span className="bg-amber-50 text-amber-800 border border-amber-200 font-bold px-2 py-0.5 rounded text-[11px] inline-block">
+          <span className="bg-slate-100 text-slate-800 border border-slate-300 font-bold px-2.5 py-0.5 rounded text-[11px] inline-block">
             {label}
           </span>
         );
       default:
         return (
-          <span className="bg-blue-50 text-blue-800 border border-blue-200 font-bold px-2 py-0.5 rounded text-[11px] inline-block">
+          <span className="bg-slate-50 text-slate-700 border border-slate-300 font-bold px-2.5 py-0.5 rounded text-[11px] inline-block">
             {label}
           </span>
         );

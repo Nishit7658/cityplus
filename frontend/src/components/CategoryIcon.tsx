@@ -1,6 +1,6 @@
 // E.1 — Custom Category Icon Set
-// 10 line icons, 1.5px stroke, 24×24px viewBox, rounded caps
-// Duotone: outline --color-ink, fill 15% opacity of category color
+// Vadodara Municipal Corporation (VMC) / Government of Gujarat
+// Clean, high-contrast GovTech styling, 1.5px stroke, 24×24px viewBox
 
 import React from 'react';
 
@@ -21,7 +21,7 @@ const baseProps = (size: number) => ({
   strokeLinejoin: 'round' as const,
 });
 
-export const PotholeIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(107,158,122,0.15)', className }: IconProps) => (
+export const PotholeIcon = ({ size = 24, color = '#0B2545', fillColor = 'rgba(11,37,69,0.08)', className }: IconProps) => (
   <svg {...baseProps(size)} className={className}>
     <ellipse cx="12" cy="13" rx="8" ry="5" stroke={color} fill={fillColor} />
     <path d="M8 13 Q9 9 12 8 Q15 9 16 13" stroke={color} fill="none" />
@@ -30,7 +30,7 @@ export const PotholeIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(10
   </svg>
 );
 
-export const WaterLeakIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(92,122,148,0.15)', className }: IconProps) => (
+export const WaterLeakIcon = ({ size = 24, color = '#1E40AF', fillColor = 'rgba(30,64,175,0.08)', className }: IconProps) => (
   <svg {...baseProps(size)} className={className}>
     <path d="M12 3 Q15 8 15 12 A3 3 0 0 1 9 12 Q9 8 12 3Z" stroke={color} fill={fillColor} />
     <path d="M9 18 Q9.5 16 10 18" stroke={color} strokeWidth={1.2} />
@@ -39,7 +39,7 @@ export const WaterLeakIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(
   </svg>
 );
 
-export const StreetlightIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(216,154,44,0.15)', className }: IconProps) => (
+export const StreetlightIcon = ({ size = 24, color = '#D97706', fillColor = 'rgba(217,119,6,0.08)', className }: IconProps) => (
   <svg {...baseProps(size)} className={className}>
     <line x1="12" y1="21" x2="12" y2="8" stroke={color} />
     <path d="M12 8 Q12 4 17 4" stroke={color} fill="none" />
@@ -48,7 +48,7 @@ export const StreetlightIcon = ({ size = 24, color = '#22221F', fillColor = 'rgb
   </svg>
 );
 
-export const GarbageIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(107,102,89,0.1)', className }: IconProps) => (
+export const GarbageIcon = ({ size = 24, color = '#475569', fillColor = 'rgba(71,85,105,0.08)', className }: IconProps) => (
   <svg {...baseProps(size)} className={className}>
     <path d="M5 8 L6.5 20 H17.5 L19 8Z" stroke={color} fill={fillColor} />
     <line x1="3" y1="8" x2="21" y2="8" stroke={color} />
@@ -56,13 +56,12 @@ export const GarbageIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(10
     <path d="M9 12 L9.5 17" stroke={color} strokeWidth={1.2} />
     <path d="M12 12 V17" stroke={color} strokeWidth={1.2} />
     <path d="M15 12 L14.5 17" stroke={color} strokeWidth={1.2} />
-    {/* overflow lines */}
     <path d="M7 6 Q5 4 4 5" stroke={color} strokeWidth={1.2} />
     <path d="M17 6 Q19 4 20 5" stroke={color} strokeWidth={1.2} />
   </svg>
 );
 
-export const ManholeIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(179,59,46,0.12)', className }: IconProps) => (
+export const ManholeIcon = ({ size = 24, color = '#B91C1C', fillColor = 'rgba(185,28,28,0.08)', className }: IconProps) => (
   <svg {...baseProps(size)} className={className}>
     <ellipse cx="12" cy="12" rx="9" ry="5" stroke={color} fill={fillColor} />
     <ellipse cx="12" cy="10" rx="5" ry="2.5" stroke={color} fill="none" />
@@ -72,7 +71,7 @@ export const ManholeIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(17
   </svg>
 );
 
-export const WiringIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(216,154,44,0.15)', className }: IconProps) => (
+export const WiringIcon = ({ size = 24, color = '#D97706', fillColor = 'rgba(217,119,6,0.08)', className }: IconProps) => (
   <svg {...baseProps(size)} className={className}>
     <path d="M4 18 L10 12" stroke={color} />
     <path d="M14 8 L20 4" stroke={color} />
@@ -83,7 +82,7 @@ export const WiringIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(216
   </svg>
 );
 
-export const GasLeakIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(179,59,46,0.12)', className }: IconProps) => (
+export const GasLeakIcon = ({ size = 24, color = '#B91C1C', fillColor = 'rgba(185,28,28,0.08)', className }: IconProps) => (
   <svg {...baseProps(size)} className={className}>
     <path d="M12 20 A6 6 0 0 1 6 14 C6 10 12 4 12 4 C12 4 18 10 18 14 A6 6 0 0 1 12 20Z" stroke={color} fill={fillColor} />
     <path d="M10 16 Q11 13 12 15 Q13 12 14 10" stroke={color} strokeWidth={1.2} />
@@ -94,7 +93,7 @@ export const GasLeakIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(17
   </svg>
 );
 
-export const RoadDamageIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(107,102,89,0.1)', className }: IconProps) => (
+export const RoadDamageIcon = ({ size = 24, color = '#334155', fillColor = 'rgba(51,65,85,0.08)', className }: IconProps) => (
   <svg {...baseProps(size)} className={className}>
     <rect x="3" y="8" width="18" height="8" rx="1" stroke={color} fill={fillColor} />
     <path d="M8 8 L10 12 L7 16" stroke={color} fill="none" />
@@ -103,7 +102,7 @@ export const RoadDamageIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba
   </svg>
 );
 
-export const DrainageIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(92,122,148,0.15)', className }: IconProps) => (
+export const DrainageIcon = ({ size = 24, color = '#0284C7', fillColor = 'rgba(2,132,199,0.08)', className }: IconProps) => (
   <svg {...baseProps(size)} className={className}>
     <path d="M4 6 H20 V10 H4 Z" stroke={color} fill={fillColor} />
     <path d="M7 10 L7 18" stroke={color} />
@@ -113,12 +112,12 @@ export const DrainageIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(9
   </svg>
 );
 
-export const TrafficSignalIcon = ({ size = 24, color = '#22221F', fillColor = 'rgba(107,158,122,0.15)', className }: IconProps) => (
+export const TrafficSignalIcon = ({ size = 24, color = '#0B2545', fillColor = 'rgba(11,37,69,0.08)', className }: IconProps) => (
   <svg {...baseProps(size)} className={className}>
     <rect x="8" y="3" width="8" height="14" rx="2" stroke={color} fill={fillColor} />
-    <circle cx="12" cy="7"  r="1.5" stroke={color} fill="rgba(179,59,46,0.4)" />
-    <circle cx="12" cy="11" r="1.5" stroke={color} fill="rgba(216,154,44,0.4)" />
-    <circle cx="12" cy="15" r="1.5" stroke={color} fill="rgba(107,158,122,0.4)" />
+    <circle cx="12" cy="7"  r="1.5" stroke={color} fill="rgba(185,28,28,0.7)" />
+    <circle cx="12" cy="11" r="1.5" stroke={color} fill="rgba(217,119,6,0.7)" />
+    <circle cx="12" cy="15" r="1.5" stroke={color} fill="rgba(21,128,61,0.7)" />
     <line x1="12" y1="17" x2="12" y2="21" stroke={color} />
     <line x1="9" y1="21" x2="15" y2="21" stroke={color} />
   </svg>
@@ -159,26 +158,26 @@ export const CategoryIcon = ({
   }
 };
 
-// Category color map
+// Category color map (High-contrast official municipal palette)
 export const getCategoryColor = (category: string): string => {
   const map: Record<string, string> = {
-    pothole:            '#6B9E7A',
-    water_leak:         '#5C7A94',
-    broken_streetlight: '#D89A2C',
-    garbage_overflow:   '#6B6659',
-    open_manhole:       '#B33B2E',
-    exposed_wiring:     '#D89A2C',
-    gas_leak:           '#B33B2E',
-    road_damage:        '#6B6659',
-    drainage:           '#5C7A94',
-    traffic_signal:     '#6B9E7A',
+    pothole:            '#0B2545',
+    water_leak:         '#1E40AF',
+    broken_streetlight: '#D97706',
+    garbage_overflow:   '#475569',
+    open_manhole:       '#B91C1C',
+    exposed_wiring:     '#D97706',
+    gas_leak:           '#B91C1C',
+    road_damage:        '#334155',
+    drainage:           '#0284C7',
+    traffic_signal:     '#0B2545',
   };
-  return map[(category || '').toLowerCase().replace(/\s+/g, '_')] || '#6B6659';
+  return map[(category || '').toLowerCase().replace(/\s+/g, '_')] || '#0B2545';
 };
 
 export const getSeverityColor = (confirmationCount: number, status: string): string => {
-  if (status === 'Resolved') return '#3E8E5B';
-  if (confirmationCount >= 8)  return '#B33B2E';
-  if (confirmationCount >= 4)  return '#D89A2C';
-  return '#6B9E7A';
+  if (status === 'Resolved') return '#15803D';
+  if (confirmationCount >= 8)  return '#B91C1C';
+  if (confirmationCount >= 4)  return '#B45309';
+  return '#166534';
 };

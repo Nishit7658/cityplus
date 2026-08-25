@@ -6,7 +6,7 @@
 @tailwind utilities;
 
 /* ============================================================
-   Global Base Styles
+   Global Base Styles (Plus Jakarta Sans + Slate Theme)
    ============================================================ */
 html {
   background: var(--color-bg-app);
@@ -33,7 +33,7 @@ body {
 }
 
 /* ============================================================
-   D.3 — Pulse Dot Animation (sonar ping)
+   D.3 — Pulse Dot Animation
    ============================================================ */
 @keyframes pulse-dot {
   0%   { transform: scale(1); opacity: 0.5; }
@@ -50,8 +50,6 @@ body {
 
 /* ============================================================
    Custom Map Marker Styles & Reset
-   Leaflet icon wrapper must have transparent background & no top-level CSS transform
-   so Leaflet's zoom matrix math never drifts!
    ============================================================ */
 .leaflet-custom-marker {
   background: transparent !important;
@@ -76,14 +74,14 @@ body {
 }
 
 /* ============================================================
-   Map tile warm filter — applied to the map container
+   Clean Natural Map Tile Layer (No Sepia / No Muddy Filters)
    ============================================================ */
 .leaflet-tile-pane {
-  filter: sepia(8%) saturate(85%) hue-rotate(-6deg);
+  filter: none;
 }
 
 /* ============================================================
-   Leaflet popup custom styling
+   Leaflet Popup Custom Styling
    ============================================================ */
 .leaflet-popup-content-wrapper {
   background: var(--color-surface);
@@ -104,7 +102,7 @@ body {
 }
 
 /* ============================================================
-   Focus ring — accessibility, on every interactive element
+   Focus Ring — Accessibility
    ============================================================ */
 *:focus-visible {
   outline: 2px solid var(--color-gov-navy-800);
@@ -113,7 +111,7 @@ body {
 }
 
 /* ============================================================
-   Scrollbar — subtle, formal
+   Scrollbar — Subtle & Formal
    ============================================================ */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

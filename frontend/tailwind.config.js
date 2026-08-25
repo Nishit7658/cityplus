@@ -37,9 +37,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ['var(--font-public-sans)', 'Inter', 'sans-serif'],
-        body:    ['var(--font-public-sans)', 'Inter', 'sans-serif'],
-        mono:    ['var(--font-ibm-plex-mono)', 'JetBrains Mono', 'monospace'],
+        display: ['Plus Jakarta Sans', 'sans-serif'],
+        body:    ['Plus Jakarta Sans', 'sans-serif'],
+        mono:    ['IBM Plex Mono', 'JetBrains Mono', 'monospace'],
       },
       borderRadius: {
         sm:   '4px',

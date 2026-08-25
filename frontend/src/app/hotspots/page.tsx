@@ -252,7 +252,7 @@ export default function HotspotsPage() {
                     </td>
                     <td className="px-4 py-3.5">
                       {c.is_recurring ? (
-                        <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded text-[10px] font-bold">
+                        <span className="bg-slate-100 text-slate-800 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold">
                           ⚠️ {c.total_cycles || 2}× {language === 'gu' ? `વખત (${c.months_span || 6} મહિના)` : language === 'hi' ? `बार (${c.months_span || 6} माह)` : `Cycles (${c.months_span || 6}mo)`}
                         </span>
                       ) : (

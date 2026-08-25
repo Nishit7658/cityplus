@@ -17,10 +17,10 @@ interface ComplaintCardProps {
 }
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  Pending:    { bg: '#EFF6FF', color: '#1E40AF', border: '#BFDBFE' },
-  Assigned:   { bg: '#FFFBEB', color: '#B45309', border: '#FDE68A' },
-  'In Progress': { bg: '#FFFBEB', color: '#B45309', border: '#FDE68A' },
-  Resolved:   { bg: '#F0FDF4', color: '#15803D', border: '#BBF7D0' },
+  Pending:       { bg: '#F8FAFC', color: '#475569', border: '#CBD5E1' },
+  Assigned:      { bg: '#F1F5F9', color: '#334155', border: '#CBD5E1' },
+  'In Progress': { bg: '#EFF6FF', color: '#1E40AF', border: '#BFDBFE' },
+  Resolved:      { bg: '#F0FDF4', color: '#15803D', border: '#BBF7D0' },
 };
 
 function timeAgo(dateStr: string, lang: Language): string {
