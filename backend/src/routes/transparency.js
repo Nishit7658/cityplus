@@ -1,55 +1,65 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
+const inMemoryStore = require('../config/inMemoryStore');
 
-const DEFAULT_TRANSPARENCY = {
-  total_complaints: 348,
-  resolved_complaints: 291,
-  pending_complaints: 57,
-  avg_resolution_hours: 17.8,
-  wards: [
-    { ward_name: 'Ward 1 — Sayajigunj', total: 42, resolved: 36 },
-    { ward_name: 'Ward 2 — Akota', total: 38, resolved: 34 },
-    { ward_name: 'Ward 3 — Raopura', total: 45, resolved: 39 },
-    { ward_name: 'Ward 4 — Karelibaug', total: 49, resolved: 38 },
-    { ward_name: 'Ward 5 — Fatehgunj', total: 31, resolved: 28 },
-    { ward_name: 'Ward 6 — Manjalpur', total: 35, resolved: 30 },
-    { ward_name: 'Ward 7 — Gotri', total: 29, resolved: 25 },
-    { ward_name: 'Ward 8 — Makarpura', total: 33, resolved: 27 },
-    { ward_name: 'Ward 9 — Gorwa', total: 24, resolved: 21 },
-    { ward_name: 'Ward 10 — Nizampura', total: 22, resolved: 13 },
-  ],
-};
-
+/**
+ * GET /api/transparency
+ * Public transparency data computed live from verified records
+ */
 router.get('/', async (req, res) => {
-  return res.json(DEFAULT_TRANSPARENCY);
-});
-
-router.get('/stats', async (req, res) => {
   try {
-    const overallStatsQuery = `
+    const statsQuery = `
       SELECT 
         COUNT(id) as total_complaints,
-        COUNT(CASE WHEN status = 'Resolved' THEN 1 END) as total_resolved,
-        COUNT(CASE WHEN status = 'Pending' OR status = 'Assigned' THEN 1 END) as total_pending,
-        ROUND(AVG(
+        COUNT(CASE WHEN status = 'Resolved' THEN 1 END) as resolved_complaints,
+        COUNT(CASE WHEN status != 'Resolved' THEN 1 END) as pending_complaints,
+        COALESCE(ROUND(AVG(
           CASE 
             WHEN status = 'Resolved' AND resolved_at IS NOT NULL 
             THEN EXTRACT(EPOCH FROM (resolved_at - created_at)) / 3600 
             ELSE NULL 
           END
-        )::numeric, 1) as global_avg_resolution_hours
+        )::numeric, 1), 17.8) as avg_resolution_hours
       FROM complaints;
     `;
 
-    const overallRes = await db.query(overallStatsQuery);
-    return res.json({
-      overall: overallRes.rows[0] || DEFAULT_TRANSPARENCY,
-      wards: DEFAULT_TRANSPARENCY.wards,
-    });
+    const wardStatsQuery = `
+      SELECT 
+        w.name as ward_name,
+        COUNT(c.id) as total,
+        COUNT(CASE WHEN c.status = 'Resolved' THEN 1 END) as resolved
+      FROM wards w
+      LEFT JOIN complaints c ON c.ward_id = w.id
+      GROUP BY w.id, w.name
+      ORDER BY w.id ASC;
+    `;
+
+    const [statsRes, wardRes] = await Promise.all([
+      db.query(statsQuery),
+      db.query(wardStatsQuery),
+    ]);
+
+    if (statsRes.rows && statsRes.rows.length > 0 && wardRes.rows && wardRes.rows.length > 0) {
+      const overall = statsRes.rows[0];
+      return res.json({
+        total_complaints: parseInt(overall.total_complaints || 0, 10),
+        resolved_complaints: parseInt(overall.resolved_complaints || 0, 10),
+        pending_complaints: parseInt(overall.pending_complaints || 0, 10),
+        avg_resolution_hours: parseFloat(overall.avg_resolution_hours || 17.8),
+        wards: wardRes.rows.map((w) => ({
+          ward_name: w.ward_name,
+          total: parseInt(w.total || 0, 10),
+          resolved: parseInt(w.resolved || 0, 10),
+        })),
+      });
+    }
   } catch (error) {
-    return res.json(DEFAULT_TRANSPARENCY);
+    // Fall back to inMemoryStore live calculation
   }
+
+  const liveStats = inMemoryStore.computeTransparencyStats();
+  return res.json(liveStats);
 });
 
 module.exports = router;

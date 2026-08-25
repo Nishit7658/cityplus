@@ -3,12 +3,23 @@ const router = express.Router();
 const telegramService = require('../services/telegramService');
 const gisService = require('../services/gisService');
 const socketService = require('../services/socketService');
+const db = require('../config/db');
+
+const TELEGRAM_SECRET_TOKEN = process.env.TELEGRAM_SECRET_TOKEN;
 
 /**
  * POST /api/telegram/webhook
  * Incoming webhook endpoint for Telegram Bot API
  */
 router.post('/webhook', async (req, res) => {
+  // Validate Telegram secret token if configured
+  if (TELEGRAM_SECRET_TOKEN) {
+    const receivedToken = req.headers['x-telegram-bot-api-secret-token'];
+    if (receivedToken !== TELEGRAM_SECRET_TOKEN) {
+      return res.status(403).send('Unauthorized token');
+    }
+  }
+
   res.sendStatus(200);
   try {
     if (req.body) {
@@ -24,6 +35,10 @@ router.post('/webhook', async (req, res) => {
  * Local developer testing endpoint for Telegram Bot interactions
  */
 router.post('/simulate', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'Simulator disabled in production.' });
+  }
+
   const { chatId = 12345678, message, location, callback_data } = req.body;
 
   try {

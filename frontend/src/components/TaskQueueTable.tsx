@@ -10,7 +10,9 @@ import { useLanguage } from '@/context/LanguageContext';
 interface TaskQueueTableProps {
   complaints: Complaint[];
   onSelect?: (c: Complaint) => void;
+  onSelectComplaint?: (c: Complaint) => void;
   newIds?: number[];
+  newComplaintIds?: number[];
 }
 
 type SortKey = 'priority' | 'newest' | 'confirmed' | 'oldest';
@@ -26,7 +28,15 @@ function sortComplaints(complaints: Complaint[], key: SortKey): Complaint[] {
   }
 }
 
-export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({ complaints, onSelect, newIds = [] }) => {
+export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({
+  complaints,
+  onSelect,
+  onSelectComplaint,
+  newIds = [],
+  newComplaintIds = [],
+}) => {
+  const handleSelect = onSelectComplaint || onSelect;
+  const activeNewIds = newComplaintIds.length > 0 ? newComplaintIds : newIds;
   const safe = Array.isArray(complaints) ? complaints : [];
   const [sort, setSort] = useState<SortKey>('priority');
   const { language, t } = useLanguage();
@@ -54,7 +64,7 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({ complaints, onSe
       key: 'confirmed',
       label:
         language === 'gu'
-          ? '👥 સૌથી વધુ પુષ્ટિ'
+          ? '👥 વધુ પુષ્ટિ થયેલ'
           : language === 'hi'
           ? '👥 सर्वाधिक पुष्टि'
           : '👥 Most Confirmed',
@@ -63,185 +73,168 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({ complaints, onSe
       key: 'oldest',
       label:
         language === 'gu'
-          ? '⏳ સૌથી જૂની પેન્ડિંગ'
+          ? '⏳ જૂની ફરિયાદો'
           : language === 'hi'
-          ? '⏳ सबसे पुरानी लंबित'
-          : '⏳ Longest Pending',
+          ? '⏳ पुरानी शिकायतें'
+          : '⏳ Oldest First',
     },
   ];
 
   const sorted = sortComplaints(safe, sort);
 
-  return (
-    <div className="flex flex-col gap-4">
-      {/* Control Bar: Sort & View Toggle */}
-      <div className="flex items-center justify-between gap-4 flex-wrap pb-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">
-            {language === 'gu' ? 'ક્રમ:' : language === 'hi' ? 'क्रम:' : 'Sort:'}
+  const getStatusBadge = (status: string) => {
+    const statusKey = (status || '').toLowerCase().replace(/ /g, '_');
+    const label = t(`status.${statusKey}`, status);
+
+    switch (status) {
+      case 'Resolved':
+        return (
+          <span className="bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold px-2 py-0.5 rounded text-[11px] inline-block">
+            {label}
           </span>
-          {SORT_OPTIONS.map((opt) => {
-            const isActive = sort === opt.key;
-            return (
+        );
+      case 'In Progress':
+        return (
+          <span className="bg-amber-50 text-amber-900 border border-amber-300 font-bold px-2 py-0.5 rounded text-[11px] inline-block">
+            {label}
+          </span>
+        );
+      case 'Assigned':
+        return (
+          <span className="bg-amber-50 text-amber-800 border border-amber-200 font-bold px-2 py-0.5 rounded text-[11px] inline-block">
+            {label}
+          </span>
+        );
+      default:
+        return (
+          <span className="bg-blue-50 text-blue-800 border border-blue-200 font-bold px-2 py-0.5 rounded text-[11px] inline-block">
+            {label}
+          </span>
+        );
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
+      {/* Table Top Controls */}
+      <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50">
+        <div>
+          <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider">
+            {t('queue.table_header')} ({sorted.length})
+          </span>
+        </div>
+
+        {/* Sort Controls */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-500">{t('queue.sort_by')}:</span>
+          <div className="flex bg-white rounded border border-slate-300 p-0.5">
+            {SORT_OPTIONS.map((opt) => (
               <button
                 key={opt.key}
                 onClick={() => setSort(opt.key)}
-                className={`px-3 py-1.5 rounded text-xs font-semibold tracking-wide transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-[#0B2545] text-white shadow-2xs'
-                    : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100'
+                className={`px-2.5 py-1 text-xs font-semibold rounded cursor-pointer transition-colors ${
+                  sort === opt.key ? 'bg-[#0B2545] text-white' : 'text-slate-700 hover:bg-slate-100'
                 }`}
               >
                 {opt.label}
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Table View */}
-      <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-body">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-600">
-              <tr>
-                <th className="px-6 py-3.5">{t('queue.th_ticket')}</th>
-                <th className="px-4 py-3.5">{t('queue.th_status')}</th>
-                <th className="px-4 py-3.5">{t('queue.th_priority')}</th>
-                <th className="px-4 py-3.5">{t('queue.th_ward')}</th>
-                <th className="px-4 py-3.5">{t('queue.th_density')}</th>
-                <th className="px-4 py-3.5">{t('queue.th_reported')}</th>
-                <th className="px-6 py-3.5 text-right">{t('queue.th_action')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {sorted.map((c) => {
-                const score = c.severity_score || 0;
-                const isCritical = score >= 80;
-                const isMedium = score >= 55 && score < 80;
-                const isFresh = newIds.includes(c.id);
-                const catLabel = t(`cat.${c.category}`, (c.category || '').replace(/_/g, ' '));
-                const statusKey = (c.status || '').toLowerCase().replace(/ /g, '_');
-                const statusLabel = t(`status.${statusKey}`, c.status);
-                const wardLabel = t(`ward.${c.ward_id}`, c.ward_name || `Ward ${c.ward_id}`);
+      {/* Main Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+            <tr>
+              <th className="px-6 py-3.5">{t('queue.th_id')}</th>
+              <th className="px-4 py-3.5">{t('queue.th_category')}</th>
+              <th className="px-4 py-3.5">{t('queue.th_description')}</th>
+              <th className="px-4 py-3.5">{t('queue.th_ward')}</th>
+              <th className="px-4 py-3.5">{t('queue.th_status')}</th>
+              <th className="px-4 py-3.5">{t('queue.th_score')}</th>
+              <th className="px-4 py-3.5">{t('queue.th_confirmations')}</th>
+              <th className="px-4 py-3.5">{t('queue.th_reported')}</th>
+              <th className="px-6 py-3.5 text-right">{t('queue.th_action')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+            {sorted.map((c) => {
+              const isNew = activeNewIds.includes(c.id);
+              const isCritical = (c.severity_score || 0) >= 80;
+              const catLabel = t(`cat.${c.category}`, (c.category || '').replace(/_/g, ' '));
+              const wardLabel = t(`ward.${c.ward_id}`, c.ward_name || `Ward ${c.ward_id}`);
 
-                return (
-                  <tr
-                    key={c.id}
-                    onClick={() => onSelect?.(c)}
-                    className={`hover:bg-slate-50 cursor-pointer transition-all ${
-                      isFresh ? 'bg-blue-50/80 animate-pulse' : ''
-                    }`}
-                  >
-                    {/* ID & Category */}
-                    <td className="px-6 py-3.5">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900 capitalize text-sm">
-                            {catLabel}
-                          </span>
-                          <span className="font-mono text-[11px] text-slate-400 font-semibold">
-                            #{c.id}
-                          </span>
-                          {c.is_recurring && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">
-                              ↻ {language === 'gu' ? `પુનરાવર્તન (${c.total_cycles}×)` : language === 'hi' ? `पुनरावृत्ति (${c.total_cycles}×)` : `Recurring (${c.total_cycles}×)`}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-500 line-clamp-1 max-w-md mt-0.5">
-                          {c.description}
-                        </p>
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-4 py-3.5">
+              return (
+                <tr
+                  key={c.id}
+                  onClick={() => handleSelect && handleSelect(c)}
+                  className={`hover:bg-slate-50 transition-colors cursor-pointer ${
+                    isNew ? 'bg-amber-50/70 font-semibold' : ''
+                  }`}
+                >
+                  <td className="px-6 py-3.5 font-mono text-[#0B2545] font-bold">
+                    #{c.id}
+                  </td>
+                  <td className="px-4 py-3.5 capitalize font-semibold text-[#0B2545]">
+                    {catLabel}
+                  </td>
+                  <td className="px-4 py-3.5 max-w-xs truncate text-slate-600">
+                    {c.description || '—'}
+                  </td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
+                    <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-800 font-semibold text-[11px]">
+                      📍 {wardLabel}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
+                    {getStatusBadge(c.status)}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-2">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-bold border ${
-                          c.status === 'Resolved'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            : c.status === 'In Progress'
-                            ? 'bg-amber-50 text-amber-800 border-amber-200'
-                            : c.status === 'Assigned'
-                            ? 'bg-sky-50 text-sky-800 border-sky-200'
-                            : 'bg-slate-100 text-slate-700 border-slate-200'
+                        className={`font-mono font-bold ${
+                          isCritical ? 'text-[#B91C1C]' : 'text-slate-800'
                         }`}
                       >
-                        {statusLabel}
+                        {c.severity_score || 0}
                       </span>
-                    </td>
-
-                    {/* Priority Score Bar */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2 max-w-[120px]">
-                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            style={{ width: `${Math.min(100, score)}%` }}
-                            className={`h-full rounded-full ${
-                              isCritical ? 'bg-red-600' : isMedium ? 'bg-amber-500' : 'bg-[#133E87]'
-                            }`}
-                          />
-                        </div>
-                        <span
-                          className={`font-mono font-bold text-xs ${
-                            isCritical ? 'text-red-700' : 'text-slate-800'
-                          }`}
-                        >
-                          {score}
+                      {isCritical && (
+                        <span className="text-[10px] bg-red-100 text-red-800 font-bold px-1.5 py-0.2 rounded border border-red-200">
+                          {t('sev.critical')}
                         </span>
-                      </div>
-                    </td>
-
-                    {/* Ward */}
-                    <td className="px-4 py-3.5">
-                      <span className="font-semibold text-slate-800 bg-slate-100 px-2.5 py-0.5 rounded text-[11px]">
-                        📍 {wardLabel}
-                      </span>
-                    </td>
-
-                    {/* Citizen Confirmations */}
-                    <td className="px-4 py-3.5">
-                      <span className="font-mono font-bold text-slate-800 text-xs">
-                        👥 {c.confirmation_count || 1} {language === 'gu' ? 'ચકાસાયેલ' : language === 'hi' ? 'सत्यापित' : 'verified'}
-                      </span>
-                    </td>
-
-                    {/* Reported Date */}
-                    <td className="px-4 py-3.5 font-mono text-[11px] text-slate-500">
-                      {new Date(c.created_at).toLocaleDateString(language === 'gu' ? 'gu-IN' : language === 'hi' ? 'hi-IN' : 'en-IN', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </td>
-
-                    {/* Action */}
-                    <td className="px-6 py-3.5 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelect?.(c);
-                        }}
-                        className="px-3 py-1 rounded bg-slate-100 border border-slate-300 text-slate-800 text-xs font-semibold hover:bg-[#0B2545] hover:text-white transition-all cursor-pointer shadow-2xs"
-                      >
-                        {t('queue.review')}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3.5 font-mono text-slate-700">
+                    👥 {c.confirmation_count || 1}
+                  </td>
+                  <td className="px-4 py-3.5 whitespace-nowrap text-slate-500 font-mono text-[11px]">
+                    {new Date(c.created_at).toLocaleDateString(language === 'gu' ? 'gu-IN' : language === 'hi' ? 'hi-IN' : 'en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </td>
+                  <td className="px-6 py-3.5 text-right whitespace-nowrap">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (handleSelect) handleSelect(c);
+                      }}
+                      className="px-3 py-1 bg-slate-100 hover:bg-[#0B2545] hover:text-white text-slate-800 font-semibold rounded text-xs transition-colors cursor-pointer"
+                    >
+                      {t('queue.action_review')}
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-
-      {sorted.length === 0 && (
-        <div className="text-center py-16 text-slate-400 font-body text-sm bg-white rounded-lg border border-slate-200">
-          {t('common.no_data')}
-        </div>
-      )}
     </div>
   );
 };

@@ -1,11 +1,12 @@
 'use client';
 
-// F.6 — Officers Page (Official Municipal Personnel Directory) with Trilingual i18n
+// F.6 — Officers Page (Official Municipal Personnel Directory) with Trilingual i18n & WardContext
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
 
 import React, { useEffect, useState } from 'react';
 import { Officer } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
+import { useWard } from '@/context/WardContext';
 import { MOCK_OFFICERS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -16,6 +17,7 @@ export default function OfficersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const { language, t } = useLanguage();
+  const { selectedWard } = useWard();
 
   const DEPARTMENTS = [
     { key: 'all', label: t('dept.all') },
@@ -36,7 +38,12 @@ export default function OfficersPage() {
       .catch(() => {});
   }, []);
 
-  const safe = Array.isArray(officers) ? officers : MOCK_OFFICERS;
+  const rawSafe = Array.isArray(officers) ? officers : MOCK_OFFICERS;
+
+  // Filter by Global WardContext
+  const safe = selectedWard === 'all'
+    ? rawSafe
+    : rawSafe.filter((o) => String(o.ward_id) === String(selectedWard));
 
   // Filter officers
   const filtered = safe.filter((o) => {
@@ -50,7 +57,7 @@ export default function OfficersPage() {
     return matchesDept && matchesSearch;
   });
 
-  const totalActive = safe.reduce((acc, o) => acc + (o.active_complaints || 0), 0);
+  const totalActive = safe.reduce((acc, o) => acc + (o.active_complaints || o.active_assigned || 0), 0);
   const totalResolved = safe.reduce((acc, o) => acc + (o.resolved_complaints || 0), 0);
 
   return (
@@ -89,195 +96,164 @@ export default function OfficersPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
-        {/* Department Filter Buttons */}
-        <div className="flex gap-1.5 flex-wrap">
-          {DEPARTMENTS.map((dept) => {
-            const isActive = selectedDept === dept.key;
-            return (
-              <button
-                key={dept.key}
-                onClick={() => setSelectedDept(dept.key)}
-                className={`px-3 py-1.5 rounded text-xs font-semibold tracking-tight transition-colors cursor-pointer ${
-                  isActive
-                    ? 'bg-[#0B2545] text-white shadow-2xs'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                {dept.label}
-              </button>
-            );
-          })}
+      <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-2xs mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Department Filter Pills */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {DEPARTMENTS.map((dept) => (
+            <button
+              key={dept.key}
+              onClick={() => setSelectedDept(dept.key)}
+              className={`px-3 py-1 text-xs font-semibold rounded border transition-colors cursor-pointer ${
+                selectedDept === dept.key
+                  ? 'bg-[#0B2545] text-white border-[#0B2545]'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              {dept.label}
+            </button>
+          ))}
         </div>
 
         {/* Search & View Switcher */}
-        <div className="flex items-center gap-3 shrink-0">
-          <input
-            type="text"
-            placeholder={t('officers.search_placeholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 px-3 text-xs rounded border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#133E87] w-64"
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('officers.search_placeholder')}
+              className="h-8 pl-8 pr-3 text-xs rounded border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:border-[#133E87] w-64"
+            />
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+          </div>
 
-          <div className="flex items-center bg-slate-100 p-0.5 rounded border border-slate-300">
+          <div className="flex items-center rounded border border-slate-300 bg-slate-100 p-0.5">
             <button
               onClick={() => setViewMode('grid')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded cursor-pointer ${
-                viewMode === 'grid' ? 'bg-white text-[#0B2545] shadow-2xs' : 'text-slate-600'
+              className={`px-2.5 py-1 text-xs font-bold rounded cursor-pointer ${
+                viewMode === 'grid' ? 'bg-white text-[#0B2545] shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {t('officers.cards_view')}
+              ▦ {t('officers.cards_view')}
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded cursor-pointer ${
-                viewMode === 'table' ? 'bg-white text-[#0B2545] shadow-2xs' : 'text-slate-600'
+              className={`px-2.5 py-1 text-xs font-bold rounded cursor-pointer ${
+                viewMode === 'table' ? 'bg-white text-[#0B2545] shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {t('officers.table_view')}
+              ☰ {t('officers.roster_view')}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Officers Display */}
+      {/* Grid or Table Layout */}
       {viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((officer) => {
-            const activeCount = officer.active_complaints || 0;
-            const resolvedCount = officer.resolved_complaints || 0;
             const wardLabel = t(`ward.${officer.ward_id}`, officer.ward_name || `Ward ${officer.ward_id}`);
+            const activeCount = officer.active_complaints || officer.active_assigned || 0;
+            const resolvedCount = officer.resolved_complaints || 0;
 
             return (
               <div
                 key={officer.id}
-                className="bg-white rounded-lg border border-slate-200 p-5 shadow-2xs hover:border-slate-300 transition-all flex flex-col justify-between"
+                className="bg-white rounded-lg border border-slate-200 shadow-2xs hover:shadow-xs transition-shadow p-5 flex flex-col justify-between"
               >
                 <div>
-                  {/* Top Bar: Official ID */}
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3.5">
-                    <span className="text-[11px] font-mono font-bold text-slate-500">
-                      VMC-CADRE-0{officer.id}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#0B2545] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                      {officer.name.split(' ').map((n) => n[0]).join('')}
+                    </div>
+                    <span className="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-semibold border border-slate-200">
+                      ID: #{officer.id}
                     </span>
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                      {t('officers.executive_engineer')}
-                    </span>
                   </div>
 
-                  {/* Officer Info */}
-                  <div className="flex items-start gap-3 mb-4">
-                    <div className="w-10 h-10 rounded bg-[#0B2545] text-white font-bold flex items-center justify-center text-sm shrink-0">
-                      {(officer.name || '?')
-                        .split(' ')
-                        .map((n: string) => n[0])
-                        .join('')
-                        .slice(0, 2)}
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold text-[#0B2545]">
-                        {officer.name}
-                      </h3>
-                      <p className="text-xs font-semibold text-slate-600 mt-0.5">
-                        {officer.department}
-                      </p>
-                    </div>
-                  </div>
+                  <h3 className="text-base font-bold text-[#0B2545] mt-3">
+                    {officer.name}
+                  </h3>
+                  <p className="text-xs text-slate-600 font-medium">
+                    {officer.department}
+                  </p>
 
-                  {/* Official Jurisdiction */}
-                  <div className="bg-slate-50 p-2.5 rounded border border-slate-200 mb-4 space-y-1.5 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">{t('officers.assigned_ward')}</span>
-                      <span className="font-bold text-slate-900">{wardLabel}</span>
+                  <div className="mt-3 pt-3 border-t border-slate-100 text-xs space-y-1 text-slate-600">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 font-semibold">{t('officers.jurisdiction')}:</span>
+                      <span className="font-semibold text-slate-900">📍 {wardLabel}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">{t('officers.official_contact')}</span>
-                      <span className="font-mono font-semibold text-slate-800">{officer.phone || '+91 98250 12345'}</span>
-                    </div>
-                  </div>
-
-                  {/* Work Order Stats */}
-                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
-                    <div className="p-2 bg-slate-50 rounded text-center">
-                      <span className="text-slate-500 block text-[11px]">{t('officers.active_tasks')}</span>
-                      <span className="font-mono font-bold text-[#B45309] text-sm">{activeCount}</span>
-                    </div>
-                    <div className="p-2 bg-slate-50 rounded text-center">
-                      <span className="text-slate-500 block text-[11px]">{t('officers.total_cleared')}</span>
-                      <span className="font-mono font-bold text-[#15803D] text-sm">{resolvedCount}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 font-semibold">{t('officers.official_phone')}:</span>
+                      <span className="font-mono text-slate-800 font-bold">{officer.phone || '—'}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Dispatch Trigger */}
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-mono">
-                    {language === 'gu' ? 'સ્થિતિ: સક્રિય' : language === 'hi' ? 'स्थिति: सक्रिय' : 'Status: Active'}
-                  </span>
-                  <a
-                    href={`tel:${officer.phone}`}
-                    className="px-3 py-1 bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] font-semibold rounded hover:bg-[#DBEAFE] transition-colors"
-                  >
-                    {t('officers.direct_contact')}
-                  </a>
+                <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between bg-slate-50 -mx-5 -mb-5 p-3 rounded-b-lg">
+                  <div className="text-center">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase block">{t('status.active')}</span>
+                    <span className="font-mono font-bold text-[#B45309] text-sm">{activeCount}</span>
+                  </div>
+                  <div className="h-6 w-px bg-slate-200" />
+                  <div className="text-center">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase block">{t('status.resolved')}</span>
+                    <span className="font-mono font-bold text-[#15803D] text-sm">{resolvedCount}</span>
+                  </div>
+                  <div className="h-6 w-px bg-slate-200" />
+                  <div className="text-center">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase block">{t('officers.cadre')}</span>
+                    <span className="text-[11px] font-bold text-[#0B2545]">{t('officers.cadre_role')}</span>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        /* Official Table View */
         <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
               <tr>
-                <th className="px-6 py-3.5">
-                  {language === 'gu' ? 'કેડર ID અને નામ' : language === 'hi' ? 'संवर्ग ID एवं नाम' : 'Cadre ID & Name'}
-                </th>
-                <th className="px-4 py-3.5">
-                  {language === 'gu' ? 'વિભાગ' : language === 'hi' ? 'विभाग' : 'Department'}
-                </th>
-                <th className="px-4 py-3.5">
-                  {language === 'gu' ? 'સોંપાયેલ અધિકારક્ષેત્ર' : language === 'hi' ? 'आवंटित अधिकार क्षेत्र' : 'Assigned Jurisdiction'}
-                </th>
-                <th className="px-4 py-3.5">{t('officers.active_tasks')}</th>
-                <th className="px-4 py-3.5">{t('officers.total_cleared')}</th>
-                <th className="px-4 py-3.5">{t('officers.official_contact')}</th>
-                <th className="px-6 py-3.5 text-right">{t('queue.th_action')}</th>
+                <th className="px-6 py-3.5">{t('officers.th_officer_id')}</th>
+                <th className="px-4 py-3.5">{t('officers.th_name')}</th>
+                <th className="px-4 py-3.5">{t('officers.th_dept')}</th>
+                <th className="px-4 py-3.5">{t('officers.th_ward_jurisdiction')}</th>
+                <th className="px-4 py-3.5">{t('officers.th_phone')}</th>
+                <th className="px-4 py-3.5 text-center">{t('officers.th_active_tasks')}</th>
+                <th className="px-4 py-3.5 text-center">{t('officers.th_resolved')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.map((officer) => (
-                <tr key={officer.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-3.5">
-                    <div className="font-bold text-[#0B2545]">{officer.name}</div>
-                    <div className="font-mono text-slate-400 text-[11px]">VMC-CADRE-0{officer.id}</div>
-                  </td>
-                  <td className="px-4 py-3.5 font-medium text-slate-700">{officer.department}</td>
-                  <td className="px-4 py-3.5">
-                    <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-800 font-semibold">
-                      {t(`ward.${officer.ward_id}`, officer.ward_name || `Ward ${officer.ward_id}`)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 font-mono font-bold text-[#B45309]">
-                    {officer.active_complaints || 0}
-                  </td>
-                  <td className="px-4 py-3.5 font-mono font-bold text-[#15803D]">
-                    {officer.resolved_complaints || 0}
-                  </td>
-                  <td className="px-4 py-3.5 font-mono text-slate-600">
-                    {officer.phone || '+91 98250 12345'}
-                  </td>
-                  <td className="px-6 py-3.5 text-right">
-                    <a
-                      href={`tel:${officer.phone}`}
-                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded transition-colors"
-                    >
-                      {t('officers.direct_contact')}
-                    </a>
-                  </td>
-                </tr>
-              ))}
+            <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+              {filtered.map((officer) => {
+                const wardLabel = t(`ward.${officer.ward_id}`, officer.ward_name || `Ward ${officer.ward_id}`);
+                const activeCount = officer.active_complaints || officer.active_assigned || 0;
+                const resolvedCount = officer.resolved_complaints || 0;
+
+                return (
+                  <tr key={officer.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-3.5 font-mono text-slate-500 font-bold">#{officer.id}</td>
+                    <td className="px-4 py-3.5 font-bold text-[#0B2545]">{officer.name}</td>
+                    <td className="px-4 py-3.5">{officer.department}</td>
+                    <td className="px-4 py-3.5">
+                      <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-800 font-semibold text-[11px]">
+                        📍 {wardLabel}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 font-mono text-slate-700 font-semibold">{officer.phone || '—'}</td>
+                    <td className="px-4 py-3.5 text-center">
+                      <span className="font-mono font-bold text-[#B45309] bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                        {activeCount}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-center">
+                      <span className="font-mono font-bold text-[#15803D] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        {resolvedCount}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

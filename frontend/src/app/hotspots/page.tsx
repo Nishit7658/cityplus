@@ -7,7 +7,9 @@ import React, { useEffect, useState } from 'react';
 import { MapView } from '@/components/MapView';
 import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
 import { Complaint, Officer } from '@/types';
+import { useSocket } from '@/components/SocketProvider';
 import { useLanguage } from '@/context/LanguageContext';
+import { useWard } from '@/context/WardContext';
 import { MOCK_COMPLAINTS, MOCK_OFFICERS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -17,7 +19,9 @@ export default function HotspotsPage() {
   const [officers, setOfficers]     = useState<Officer[]>(MOCK_OFFICERS);
   const [selected, setSelected]     = useState<Complaint | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'critical' | 'recurring'>('all');
+  const { lastEvent } = useSocket();
   const { language, t } = useLanguage();
+  const { selectedWard } = useWard();
 
   useEffect(() => {
     fetch(`${API_URL}/api/complaints`)
@@ -34,7 +38,39 @@ export default function HotspotsPage() {
       .catch(() => {});
   }, []);
 
-  const safe = Array.isArray(complaints) ? complaints : MOCK_COMPLAINTS;
+  // Complete Socket Event Synchronization
+  useEffect(() => {
+    if (!lastEvent) return;
+
+    if (lastEvent.type === 'new_complaint' || lastEvent.type === 'complaint:created') {
+      const nc = lastEvent.data as Complaint;
+      if (nc && nc.id) {
+        setComplaints((prev) => [nc, ...prev.filter((c) => c.id !== nc.id)]);
+      }
+    } else if (
+      lastEvent.type === 'complaint_status_changed' ||
+      lastEvent.type === 'complaint:updated' ||
+      lastEvent.type === 'complaint:reopened' ||
+      lastEvent.type === 'complaint_reopened'
+    ) {
+      const updated = lastEvent.data as Complaint;
+      if (updated && updated.id) {
+        setComplaints((prev) =>
+          prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
+        );
+        if (selected && selected.id === updated.id) {
+          setSelected((prev) => (prev ? { ...prev, ...updated } : null));
+        }
+      }
+    }
+  }, [lastEvent, selected]);
+
+  const rawSafe = Array.isArray(complaints) ? complaints : MOCK_COMPLAINTS;
+
+  // Filter by Global WardContext
+  const safe = selectedWard === 'all'
+    ? rawSafe
+    : rawSafe.filter((c) => String(c.ward_id) === String(selectedWard));
 
   const filtered = safe.filter((c) => {
     if (filterType === 'critical') return (c.severity_score || 0) >= 80;
@@ -247,15 +283,26 @@ export default function HotspotsPage() {
         officers={officers}
         onClose={() => setSelected(null)}
         onUpdateStatus={async (id, status, officerId) => {
-          await fetch(`${API_URL}/api/complaints/${id}`, {
+          const res = await fetch(`${API_URL}/api/complaints/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status, assigned_officer_id: officerId }),
-          }).catch(() => {});
+          });
+          if (!res.ok) throw new Error('Update failed');
+          const updated = await res.json();
+          setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
           setSelected(null);
         }}
-        onResolve={async (id) => {
-          await fetch(`${API_URL}/api/complaints/${id}/resolve`, { method: 'POST' }).catch(() => {});
+        onResolve={async (id, officerId) => {
+          const res = await fetch(`${API_URL}/api/complaints/${id}/resolve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ officer_id: officerId }),
+          });
+          if (!res.ok) throw new Error('Resolve failed');
+          const data = await res.json();
+          const updated = data.complaint || { id, status: 'Resolved' };
+          setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
           setSelected(null);
         }}
       />

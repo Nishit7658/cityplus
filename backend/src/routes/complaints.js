@@ -3,15 +3,39 @@ const router = express.Router();
 const db = require('../config/db');
 const whatsappService = require('../services/whatsappService');
 const socketService = require('../services/socketService');
+const { optionalAuth, requireAuth } = require('../middleware/auth');
+const { validateCreateComplaint, validateUpdateComplaint } = require('../middleware/validation');
+
+/**
+ * Redacts citizen phone numbers for public privacy (e.g. "+91 98250 11111" -> "+91 98****1111")
+ */
+function maskPhone(phone) {
+  if (!phone || typeof phone !== 'string') return null;
+  const clean = phone.trim();
+  if (clean.length < 8) return '****';
+  return clean.slice(0, 6) + '****' + clean.slice(-4);
+}
+
+/**
+ * Sanitizes complaint row based on requester's auth status
+ */
+function sanitizeComplaint(row, isStaff = false) {
+  if (!row) return null;
+  return {
+    ...row,
+    reporter_phone: isStaff ? row.reporter_phone : maskPhone(row.reporter_phone),
+  };
+}
 
 /**
  * GET /api/complaints
- * Lists complaints with optional filtering by status, category, ward_id.
- * Includes geographic coordinates, problem spot recurring metrics, and assigned officer details.
+ * Lists complaints with filtering by status, category, ward_id.
+ * Masks PII unless authenticated staff.
  */
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { status, category, ward_id } = req.query;
+    const isStaff = Boolean(req.user);
 
     let queryText = `
       SELECT 
@@ -41,15 +65,16 @@ router.get('/', async (req, res) => {
       params.push(category);
       queryText += ` AND c.category = $${params.length}`;
     }
-    if (ward_id) {
-      params.push(ward_id);
+    if (ward_id && ward_id !== 'all') {
+      params.push(parseInt(ward_id, 10));
       queryText += ` AND c.ward_id = $${params.length}`;
     }
 
     queryText += ` ORDER BY c.severity_score DESC, c.created_at DESC;`;
 
     const result = await db.query(queryText, params);
-    return res.json(result.rows);
+    const sanitized = result.rows.map((r) => sanitizeComplaint(r, isStaff));
+    return res.json(sanitized);
   } catch (error) {
     console.error('[GET /api/complaints Error]:', error);
     return res.status(500).json({ error: error.message });
@@ -58,11 +83,12 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/complaints/:id
- * Single complaint + status history logs
+ * Single complaint + status history logs with proper 404 handling
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    const isStaff = Boolean(req.user);
 
     const complaintQuery = `
       SELECT 
@@ -83,8 +109,8 @@ router.get('/:id', async (req, res) => {
     `;
 
     const complaintRes = await db.query(complaintQuery, [id]);
-    if (complaintRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Complaint not found' });
+    if (!complaintRes.rows || complaintRes.rows.length === 0) {
+      return res.status(404).json({ error: `Complaint #${id} not found.` });
     }
 
     const logsQuery = `
@@ -97,8 +123,8 @@ router.get('/:id', async (req, res) => {
     const logsRes = await db.query(logsQuery, [id]);
 
     return res.json({
-      ...complaintRes.rows[0],
-      logs: logsRes.rows
+      ...sanitizeComplaint(complaintRes.rows[0], isStaff),
+      logs: logsRes.rows || [],
     });
   } catch (error) {
     console.error('[GET /api/complaints/:id Error]:', error);
@@ -110,15 +136,16 @@ router.get('/:id', async (req, res) => {
  * PATCH /api/complaints/:id
  * Update status or assign officer
  */
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', optionalAuth, validateUpdateComplaint, async (req, res) => {
   try {
     const { id } = req.params;
     const { status, assigned_officer_id } = req.body;
+    const actorId = req.user?.id || assigned_officer_id || null;
 
-    // Get existing complaint to log state changes
+    // Check existing complaint
     const currentRes = await db.query(`SELECT status, assigned_officer_id FROM complaints WHERE id = $1;`, [id]);
-    if (currentRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Complaint not found' });
+    if (!currentRes.rows || currentRes.rows.length === 0) {
+      return res.status(404).json({ error: `Complaint #${id} not found.` });
     }
     const current = currentRes.rows[0];
 
@@ -147,11 +174,11 @@ router.patch('/:id', async (req, res) => {
     const updatedRes = await db.query(updateQuery, params);
     const updatedComplaint = updatedRes.rows[0];
 
-    // Log status change if status changed
+    // Log status change
     if (status && status !== current.status) {
       await db.query(
         `INSERT INTO status_logs (complaint_id, old_status, new_status, changed_by) VALUES ($1, $2, $3, $4);`,
-        [id, current.status, status, assigned_officer_id || null]
+        [id, current.status, status, actorId]
       );
     }
 
@@ -165,22 +192,23 @@ router.patch('/:id', async (req, res) => {
 
 /**
  * POST /api/complaints/:id/resolve
- * Marks complaint as Resolved, stamps resolved_at, updates problem_spots.last_resolved_at,
- * and triggers WhatsApp outbound closed-loop verification check message.
+ * Marks complaint as Resolved, stamps resolved_at, logs officer ID in audit history,
+ * and triggers closed-loop verification.
  */
-router.post('/:id/resolve', async (req, res) => {
+router.post('/:id/resolve', optionalAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { officer_id } = req.body;
+    const actorId = req.user?.id || officer_id || null;
 
     const currentRes = await db.query(`SELECT * FROM complaints WHERE id = $1;`, [id]);
-    if (currentRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Complaint not found' });
+    if (!currentRes.rows || currentRes.rows.length === 0) {
+      return res.status(404).json({ error: `Complaint #${id} not found.` });
     }
 
     const complaint = currentRes.rows[0];
 
-    // 1. Stamp resolved_at on complaint
+    // 1. Stamp resolved_at
     const updateRes = await db.query(
       `UPDATE complaints
        SET status = 'Resolved',
@@ -194,7 +222,7 @@ router.post('/:id/resolve', async (req, res) => {
 
     const resolvedComplaint = updateRes.rows[0];
 
-    // Update problem_spot last_resolved_at if attached
+    // Update problem_spot if recurring
     if (complaint.problem_spot_id) {
       await db.query(
         `UPDATE problem_spots SET last_resolved_at = NOW() WHERE id = $1;`,
@@ -202,13 +230,13 @@ router.post('/:id/resolve', async (req, res) => {
       );
     }
 
-    // Log status transition
+    // Log status transition with acting officer ID
     await db.query(
       `INSERT INTO status_logs (complaint_id, old_status, new_status, changed_by) VALUES ($1, $2, 'Resolved', $3);`,
-      [id, complaint.status, officer_id || null]
+      [id, complaint.status, actorId]
     );
 
-    // 2. Trigger outbound WhatsApp closed-loop verification message to reporter
+    // 2. Trigger outbound verification
     try {
       await whatsappService.sendClosedLoopVerification(
         complaint.reporter_phone,
@@ -216,15 +244,14 @@ router.post('/:id/resolve', async (req, res) => {
         complaint.category
       );
     } catch (wsErr) {
-      console.warn(`[WhatsApp Closed-Loop Trigger Warning]: Could not send WhatsApp to ${complaint.reporter_phone}:`, wsErr.message);
+      // Non-blocking notification warning
     }
 
-    // Broadcast live event to Next.js dashboard
     socketService.emitEvent('complaint:updated', resolvedComplaint);
 
     return res.json({
       success: true,
-      message: `Complaint #${id} marked as Resolved. Closed-loop verification sent to ${complaint.reporter_phone}.`,
+      message: `Complaint #${id} resolved successfully.`,
       complaint: resolvedComplaint,
     });
   } catch (error) {

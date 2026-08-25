@@ -1,13 +1,34 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const whatsappService = require('../services/whatsappService');
 const gisService = require('../services/gisService');
 const socketService = require('../services/socketService');
 const db = require('../config/db');
 
 // In-memory conversation state machine per phone number
-// States: START, CATEGORY, LOCATION
 const userSessions = new Map();
+
+const META_APP_SECRET = process.env.META_APP_SECRET;
+
+/**
+ * Verifies Meta X-Hub-Signature-256 HMAC-SHA256 in constant time
+ */
+function verifyMetaSignature(req) {
+  if (!META_APP_SECRET) return true; // Skip signature check if app secret is not configured in dev
+  const signature = req.headers['x-hub-signature-256'];
+  if (!signature) return false;
+
+  const rawBody = req.rawBody || JSON.stringify(req.body);
+  const hmac = crypto.createHmac('sha256', META_APP_SECRET);
+  const digest = 'sha256=' + hmac.update(rawBody).digest('hex');
+
+  try {
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+  } catch {
+    return false;
+  }
+}
 
 /**
  * GET /webhook
@@ -22,10 +43,10 @@ router.get('/', (req, res) => {
 
   if (mode && token) {
     if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-      console.log('[Webhook Verification] Verified successfully!');
+      console.log('✅ [Webhook Verification] Handshake verified successfully!');
       return res.status(200).send(challenge);
     } else {
-      console.warn('[Webhook Verification Failed] Tokens do not match.');
+      console.warn('⚠️ [Webhook Verification Failed] Token mismatch.');
       return res.sendStatus(403);
     }
   }
@@ -34,9 +55,14 @@ router.get('/', (req, res) => {
 
 /**
  * POST /webhook
- * Incoming WhatsApp Message & Interaction Handler
+ * Incoming WhatsApp Message & Interaction Handler with HMAC Signature Verification
  */
 router.post('/', async (req, res) => {
+  if (!verifyMetaSignature(req)) {
+    console.warn('⚠️ [Meta Webhook Signature Failed] Rejecting unauthenticated webhook payload.');
+    return res.status(401).send('Invalid signature');
+  }
+
   res.sendStatus(200);
 
   try {
@@ -64,11 +90,11 @@ router.post('/', async (req, res) => {
 
         await whatsappService.sendTextMessage(
           fromPhone,
-          `Thank you for confirming! Report #${complaintId} is now permanently closed as Resolved. VMC appreciates your feedback.`
+          `Thank you for confirming! Report #${complaintId} is now permanently closed as Resolved in VMC audit records.`
         );
 
         const updatedRes = await db.query(`SELECT * FROM complaints WHERE id = $1;`, [complaintId]);
-        if (updatedRes.rows.length > 0) {
+        if (updatedRes.rows && updatedRes.rows.length > 0) {
           socketService.emitEvent('complaint:updated', updatedRes.rows[0]);
         }
         return;
@@ -81,12 +107,12 @@ router.post('/', async (req, res) => {
           [complaintId]
         );
 
-        const reopenedComplaint = updateRes.rows[0] || { id: complaintId, status: 'Pending', reopened_count: 1 };
+        const reopenedComplaint = (updateRes.rows && updateRes.rows[0]) || { id: complaintId, status: 'Pending', reopened_count: 1 };
         await db.query(`INSERT INTO status_logs (complaint_id, old_status, new_status) VALUES ($1, 'Resolved', 'Pending');`, [complaintId]);
 
         await whatsappService.sendTextMessage(
           fromPhone,
-          `We apologize for the inconvenience. Report #${complaintId} has been RE-OPENED and flagged as high priority for VMC department heads.`
+          `We apologize for the inconvenience. Report #${complaintId} has been RE-OPENED and escalated to high priority for zonal executive engineers.`
         );
 
         socketService.emitEvent('complaint:reopened', reopenedComplaint);
@@ -164,9 +190,13 @@ router.post('/', async (req, res) => {
 
 /**
  * POST /webhook/simulate
- * Local testing endpoint to simulate full WhatsApp chat interactions
+ * Local developer testing endpoint to simulate full WhatsApp chat interactions
  */
 router.post('/simulate', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'Simulator disabled in production.' });
+  }
+
   const { reporterPhone, phone, latitude, longitude, category, description, message } = req.body;
   const userPhone = reporterPhone || phone || '+919876543210';
   const text = (message || '').trim();
@@ -237,15 +267,25 @@ router.post('/simulate', async (req, res) => {
     }
 
     if (text.toLowerCase() === 'no' || text.toLowerCase() === 'reject (no)') {
-      const fakeComplaint = { id: 101, status: 'Pending', reopened_count: 1 };
-      socketService.emitEvent('complaint:reopened', fakeComplaint);
+      // Reopen last complaint in database
+      const lastComplaintRes = await db.query(`SELECT id FROM complaints ORDER BY id DESC LIMIT 1;`);
+      const targetId = lastComplaintRes.rows[0]?.id || 101;
+
+      const updateRes = await db.query(
+        `UPDATE complaints SET status = 'Pending', reopened_count = reopened_count + 1, updated_at = NOW() WHERE id = $1 RETURNING *;`,
+        [targetId]
+      );
+      const reopened = updateRes.rows[0] || { id: targetId, status: 'Pending', reopened_count: 1 };
+      socketService.emitEvent('complaint:reopened', reopened);
+
       return res.json({
         success: true,
-        botReply: `We apologize for the inconvenience. Report has been RE-OPENED and escalated to high priority.`,
+        botReply: `We apologize for the inconvenience. Report #${targetId} has been RE-OPENED and escalated to high priority.`,
+        complaint: reopened,
       });
     }
 
-    // 4. Simulated category selection (e.g. "1", "pothole", "manhole", etc.)
+    // 4. Simulated category selection
     const categoryMap = {
       '1': 'Pothole',
       '2': 'Water Leak',

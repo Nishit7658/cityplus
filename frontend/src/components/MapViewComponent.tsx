@@ -5,6 +5,7 @@
 // CARTO Positron tiles + CSS warm filter sepia(8%) saturate(85%) hue-rotate(-6deg)
 // Pixel-accurate iconAnchor prevents position drift during zoom in/out
 // Auto fit-bounds frames all municipal areas and problem spots
+// Stored XSS protection: Sanitized HTML strings and escapeHtml utility
 
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
@@ -19,9 +20,21 @@ interface MapViewComponentProps {
   showHeatmap?: boolean;
 }
 
+/**
+ * Escapes HTML entities to prevent Stored XSS in map popups
+ */
+function escapeHtml(unsafe: string | null | undefined): string {
+  if (!unsafe) return '';
+  return String(unsafe)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function buildCustomMarkerHtml(complaint: Complaint): string {
   const catColor = getCategoryColor(complaint.category);
-  const sevColor = getSeverityColor(complaint.confirmation_count, complaint.status);
   const isCritical = complaint.confirmation_count >= 8 && complaint.status !== 'Resolved';
   const isResolved = complaint.status === 'Resolved';
 
@@ -98,8 +111,6 @@ function buildCustomMarkerHtml(complaint: Complaint): string {
         <rect x="1.5" y="1.5" width="29" height="28" rx="8" fill="${badgeBg}" stroke="${borderColor}" stroke-width="2.5"/>
         <!-- Inner Category Icon -->
         ${iconInner}
-        <!-- Needle contact dot at anchor (16, 41) -->
-        <circle cx="16" cy="41" r="2" fill="${borderColor}" stroke="#FFFFFF" stroke-width="1"/>
       </svg>
     </div>
   `;
@@ -109,76 +120,102 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
   complaints = [],
   onSelectComplaint,
   center = [22.3072, 73.1812],
-  zoom = 12.5,
+  zoom = 13,
   showHeatmap = false,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const heatmapLayerRef = useRef<L.Layer | null>(null);
+  const markersGroupRef = useRef<L.LayerGroup | null>(null);
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
-  const [isMapReady, setIsMapReady] = useState(false);
+  const [activeLayer, setActiveLayer] = useState<'streets' | 'satellite'>('streets');
 
   const safeComplaints = Array.isArray(complaints) ? complaints : [];
 
-  // Initialize map instance
+  // 1. Initialize Leaflet Map Instance
   useEffect(() => {
-    if (typeof window === 'undefined' || !containerRef.current) return;
+    if (!mapContainerRef.current || mapRef.current) return;
 
-    if ((containerRef.current as any)._leaflet_id) {
-      delete (containerRef.current as any)._leaflet_id;
-    }
-    if (mapRef.current) {
-      mapRef.current.remove();
-      mapRef.current = null;
-    }
+    // Fix default marker asset paths in Next.js bundle
+    delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: '/marker-icon-2x.png',
+      iconUrl: '/marker-icon.png',
+      shadowUrl: '/marker-shadow.png',
+    });
 
-    try {
-      const map = L.map(containerRef.current, {
-        zoomControl: true,
-        scrollWheelZoom: true,
-        minZoom: 10,
-        maxZoom: 19,
-      }).setView(center, zoom);
+    const map = L.map(mapContainerRef.current, {
+      center,
+      zoom,
+      zoomControl: false,
+      attributionControl: false,
+      scrollWheelZoom: true,
+      fadeAnimation: true,
+      zoomAnimation: true,
+    });
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap contributors © CARTO',
-        subdomains: 'abcd',
-      }).addTo(map);
+    // High-readability CARTO Positron Light Cartography
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+    }).addTo(map);
 
-      mapRef.current = map;
-      setIsMapReady(true);
-    } catch (err) {
-      console.warn('[MapView] Leaflet init error:', err);
-    }
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    L.control
+      .attribution({
+        position: 'bottomleft',
+        prefix: '<span style="font-size:10px;color:#888;">© VMC GIS • CARTO</span>',
+      })
+      .addTo(map);
+
+    const markersGroup = L.layerGroup().addTo(map);
+    markersGroupRef.current = markersGroup;
+    mapRef.current = map;
 
     return () => {
-      timeoutsRef.current.forEach(clearTimeout);
+      timeoutsRef.current.forEach((t) => clearTimeout(t));
       timeoutsRef.current = [];
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-        setIsMapReady(false);
-      }
-      if (containerRef.current && (containerRef.current as any)._leaflet_id) {
-        delete (containerRef.current as any)._leaflet_id;
-      }
+      map.remove();
+      mapRef.current = null;
     };
-  }, []);
+  }, [center, zoom]);
 
-  // Update markers & auto fit-bounds
+  // 2. Render Markers & Fit Bounds
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !isMapReady) return;
+    const group = markersGroupRef.current;
+    if (!map || !group) return;
 
-    timeoutsRef.current.forEach(clearTimeout);
+    // Clear previous timeouts & markers
+    timeoutsRef.current.forEach((t) => clearTimeout(t));
     timeoutsRef.current = [];
+    group.clearLayers();
 
-    // Remove existing markers & layers
-    map.eachLayer((layer) => {
-      if (layer instanceof L.Marker || layer instanceof L.CircleMarker || (layer as any)._heat) {
-        map.removeLayer(layer);
+    if (heatmapLayerRef.current) {
+      map.removeLayer(heatmapLayerRef.current);
+      heatmapLayerRef.current = null;
+    }
+
+    // Optional Heatmap layer for hotspots view
+    if (showHeatmap && safeComplaints.length > 0 && typeof (L as unknown as { heatLayer?: unknown }).heatLayer === 'function') {
+      const heatPoints = safeComplaints
+        .filter((c) => c && typeof c.latitude === 'number' && typeof c.longitude === 'number' && !isNaN(c.latitude) && !isNaN(c.longitude))
+        .map((c) => [c.latitude, c.longitude, (c.severity_score || 50) / 100]);
+
+      if (heatPoints.length > 0) {
+        const heat = (L as unknown as { heatLayer: (pts: (number | number[])[], opts: unknown) => L.Layer }).heatLayer(
+          heatPoints,
+          {
+            radius: 35,
+            blur: 25,
+            maxZoom: 16,
+            gradient: { 0.2: '#0B4A40', 0.5: '#D97D53', 0.8: '#C05B32', 1.0: '#B33B2E' },
+          }
+        );
+        heat.addTo(map);
+        heatmapLayerRef.current = heat;
       }
-    });
+    }
 
     const validCoordinates: [number, number][] = [];
 
@@ -199,33 +236,38 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
       const marker = L.marker([c.latitude, c.longitude], {
         icon: customIcon,
         zIndexOffset: c.confirmation_count >= 8 ? 1000 : 500,
+        title: `${c.category || 'Issue'} #${c.id}`,
       });
+
+      const safeCategory = escapeHtml((c.category || '').replace(/_/g, ' '));
+      const safeDescription = escapeHtml(c.description || 'Civic infrastructure report.');
+      const safeStatus = escapeHtml(c.status);
 
       const popupHtml = `
         <div style="padding:14px;min-width:220px;font-family:'Public Sans',sans-serif;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
             <span style="font-size:13px;font-weight:700;text-transform:capitalize;color:#22221F;">
-              ${(c.category || '').replace(/_/g, ' ')} #${c.id}
+              ${safeCategory} #${c.id}
             </span>
             <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:${
               c.status === 'Resolved' ? '#EDF3EE' : '#EAF0F4'
             };color:${c.status === 'Resolved' ? '#3E8E5B' : '#5C7A94'};">
-              ${c.status}
+              ${safeStatus}
             </span>
           </div>
           <div style="font-size:12px;color:#6B6659;line-height:1.45;margin-bottom:10px;">
-            ${c.description || 'Civic infrastructure report.'}
+            ${safeDescription}
           </div>
           ${
             c.is_recurring
               ? `<div style="font-size:11px;font-weight:600;color:#C05B32;background:#F7E3D8;border-radius:6px;padding:5px 8px;margin-bottom:10px;">
-              ⚠️ Recurring spot — ${c.total_cycles || 2}× in ${c.months_span || 6} months
+              ⚠️ Recurring spot — ${Number(c.total_cycles) || 2}× in ${Number(c.months_span) || 6} months
             </div>`
               : ''
           }
           <div style="display:flex;justify-content:space-between;font-size:11px;color:#6B6659;font-family:'IBM Plex Mono',monospace;border-top:1px solid #E8E2D6;padding-top:8px;">
-            <span>👥 ${c.confirmation_count || 1} confirmed</span>
-            <span>⚡ Score: ${c.severity_score || 0}</span>
+            <span>👥 ${Number(c.confirmation_count) || 1} confirmed</span>
+            <span>⚡ Score: ${Number(c.severity_score) || 0}</span>
           </div>
         </div>
       `;
@@ -257,40 +299,32 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
         console.warn('[MapView] Fit bounds error:', err);
       }
     }
+  }, [safeComplaints, onSelectComplaint, showHeatmap]);
 
-    // Heatmap layer
-    if (showHeatmap && safeComplaints.length > 0) {
-      import('leaflet.heat')
-        .then(() => {
-          if (!mapRef.current) return;
-          const pts = safeComplaints.map((c) => [
-            c.latitude,
-            c.longitude,
-            Math.min(1, (c.confirmation_count || 1) * 0.15),
-          ]);
-          const heat = (L as any).heatLayer(pts, {
-            radius: 28,
-            blur: 18,
-            maxZoom: 17,
-            gradient: { 0.3: '#6B9E7A', 0.6: '#D89A2C', 0.9: '#B33B2E' },
-          });
-          heat.addTo(mapRef.current);
-        })
-        .catch(() => {});
-    }
-  }, [isMapReady, safeComplaints, showHeatmap, onSelectComplaint]);
+  const toggleLayer = () => {
+    if (!mapRef.current) return;
+    const next = activeLayer === 'streets' ? 'satellite' : 'streets';
+    setActiveLayer(next);
+  };
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div className="relative w-full h-full">
       <div
-        ref={containerRef}
+        ref={mapContainerRef}
+        className="w-full h-full"
         style={{
-          width: '100%',
-          height: '100%',
-          minHeight: 400,
-          borderRadius: 'inherit',
+          filter: 'sepia(8%) saturate(85%) hue-rotate(-6deg)',
+          background: '#F3EEE4',
         }}
       />
+      <div className="absolute top-3 right-3 z-[1000] flex gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-md border border-slate-200 shadow-xs">
+        <button
+          onClick={toggleLayer}
+          className="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+        >
+          {activeLayer === 'streets' ? '🛰️ Satellite' : '🗺️ Map'}
+        </button>
+      </div>
     </div>
   );
 };

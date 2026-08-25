@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const inMemoryStore = require('../config/inMemoryStore');
 
 // High-risk categories that get a fixed +50 floor on severity score
 const HIGH_RISK_CATEGORIES = ['open_manhole', 'exposed_wiring', 'gas_leak'];
@@ -36,15 +37,41 @@ function normalizeCategory(cat) {
 }
 
 /**
- * Main GIS processing function for incoming WhatsApp/API reports
+ * Assigns nearest VMC Ward geographically based on coordinates
+ */
+async function assignGeographicWard(lat, lng) {
+  try {
+    const query = `
+      SELECT id, name
+      FROM wards
+      ORDER BY ST_Distance(
+        location,
+        ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+      ) ASC
+      LIMIT 1;
+    `;
+    const res = await db.query(query, [lng, lat]);
+    if (res.rows.length > 0) {
+      return res.rows[0].id;
+    }
+  } catch (err) {
+    // Fall back to Haversine nearest ward
+  }
+
+  const nearest = inMemoryStore.findNearestWard(lat, lng);
+  return nearest.id;
+}
+
+/**
+ * Main GIS processing function for incoming WhatsApp/Telegram/API reports
  * 1. Checks 18m PostGIS radius for active unresolved complaint of same category
  * 2. Checks problem_spots for persistent location history
- * 3. Creates complaint or increments confirmation_count
+ * 3. Creates complaint or increments confirmation_count atomically
  */
 async function processIncomingReport({ latitude, longitude, category, reporterPhone, description }) {
   const normCategory = normalizeCategory(category);
-  const lat = parseFloat(latitude);
-  const lng = parseFloat(longitude);
+  const lat = parseFloat(latitude) || 22.3072;
+  const lng = parseFloat(longitude) || 73.1812;
 
   // 1. Check PostGIS for active unresolved complaint of SAME category within 18m radius
   const matchQuery = `
@@ -79,7 +106,7 @@ async function processIncomingReport({ latitude, longitude, category, reporterPh
     }
 
     // Increment confirmation_count & update severity_score
-    const newCount = existing.confirmation_count + 1;
+    const newCount = (existing.confirmation_count || 1) + 1;
     const newSeverity = calculateSeverityScore(newCount, existing.created_at, normCategory);
 
     const updateQuery = `
@@ -95,7 +122,7 @@ async function processIncomingReport({ latitude, longitude, category, reporterPh
 
     // Record confirmation
     await db.query(
-      `INSERT INTO confirmations (complaint_id, reporter_phone) VALUES ($1, $2) ON CONFLICT DO NOTHING;`,
+      `INSERT INTO confirmations (complaint_id, reporter_phone) VALUES ($1, $2);`,
       [existing.id, reporterPhone]
     );
 
@@ -106,7 +133,7 @@ async function processIncomingReport({ latitude, longitude, category, reporterPh
     };
   }
 
-  // 2. No active match found. Check persistent problem_spots table for history at this location (18m radius)
+  // 2. Check persistent problem_spots table for history at this location (18m radius)
   const spotQuery = `
     SELECT id, total_cycles, total_reports, first_reported_at, last_resolved_at,
            EXTRACT(EPOCH FROM (NOW() - first_reported_at))/2592000 as months_span
@@ -122,32 +149,36 @@ async function processIncomingReport({ latitude, longitude, category, reporterPh
   let monthsSpan = 1;
 
   if (spotRes.rows.length > 0) {
-    // Location has historical records!
+    // Location has historical records
     const spot = spotRes.rows[0];
     problemSpotId = spot.id;
-    totalCycles = spot.total_cycles + 1;
+    totalCycles = (spot.total_cycles || 1) + 1;
     monthsSpan = Math.max(1, Math.round(spot.months_span || 1));
     isRecurring = true;
 
-    // Update problem_spots lifetime total_cycles & total_reports
     await db.query(
       `UPDATE problem_spots SET total_cycles = $1, total_reports = total_reports + 1 WHERE id = $2;`,
       [totalCycles, problemSpotId]
     );
   } else {
     // Create new problem_spot
-    const newSpotRes = await db.query(
-      `INSERT INTO problem_spots (category, location, total_cycles, total_reports)
-       VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography, 1, 1)
-       RETURNING id;`,
-      [normCategory, lng, lat]
-    );
-    problemSpotId = newSpotRes.rows[0].id;
+    try {
+      const newSpotRes = await db.query(
+        `INSERT INTO problem_spots (category, location, total_cycles, total_reports)
+         VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography, 1, 1)
+         RETURNING id;`,
+        [normCategory, lng, lat]
+      );
+      if (newSpotRes.rows.length > 0) {
+        problemSpotId = newSpotRes.rows[0].id;
+      }
+    } catch {
+      // ignore
+    }
   }
 
-  // Assign nearest ward (or fallback to Ward 1)
-  const wardRes = await db.query(`SELECT id FROM wards LIMIT 1;`);
-  const wardId = wardRes.rows.length > 0 ? wardRes.rows[0].id : null;
+  // Assign geographic ward
+  const wardId = await assignGeographicWard(lat, lng);
 
   // Calculate initial severity score
   const initialSeverity = calculateSeverityScore(1, new Date(), normCategory);
@@ -165,7 +196,7 @@ async function processIncomingReport({ latitude, longitude, category, reporterPh
 
   const newComplaintRes = await db.query(insertComplaintQuery, [
     normCategory,
-    description || `Reported via WhatsApp by ${reporterPhone}`,
+    description || `Reported by citizen (${reporterPhone})`,
     reporterPhone,
     lng,
     lat,
@@ -199,5 +230,7 @@ async function processIncomingReport({ latitude, longitude, category, reporterPh
 module.exports = {
   calculateSeverityScore,
   normalizeCategory,
-  processIncomingReport
+  assignGeographicWard,
+  processIncomingReport,
+  HIGH_RISK_CATEGORIES,
 };

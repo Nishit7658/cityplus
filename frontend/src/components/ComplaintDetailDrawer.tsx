@@ -1,6 +1,6 @@
 'use client';
 
-// F.4 / D.6 — Complaint Detail Drawer with Full Trilingual i18n
+// F.4 / D.6 — Complaint Detail Drawer with Full Trilingual i18n & Accessibility
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
 
 import React, { useEffect, useState } from 'react';
@@ -15,8 +15,8 @@ interface DrawerProps {
   complaint: Complaint | null;
   officers: Officer[];
   onClose: () => void;
-  onUpdateStatus: (id: number, status: string, officerId?: number) => void;
-  onResolve: (id: number, officerId?: number) => void;
+  onUpdateStatus: (id: number, status: string, officerId?: number) => Promise<boolean | void>;
+  onResolve: (id: number, officerId?: number) => Promise<boolean | void>;
 }
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
@@ -35,13 +35,25 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
 }) => {
   const [selectedOfficer, setSelectedOfficer] = useState<number | undefined>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { language, t } = useLanguage();
 
   useEffect(() => {
     if (complaint) {
       setSelectedOfficer(complaint.assigned_officer_id ?? undefined);
+      setErrorMessage(null);
     }
   }, [complaint?.id, complaint?.assigned_officer_id]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && complaint) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [complaint, onClose]);
 
   useEffect(() => {
     if (complaint) {
@@ -90,17 +102,20 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
           {/* Drawer panel */}
           <motion.aside
             key="drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="drawer-title"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
             className="fixed top-0 right-0 bottom-0 w-full sm:w-[460px] bg-white shadow-2xl z-[1250] flex flex-col overflow-y-auto border-l border-slate-200"
           >
-            {/* Close button */}
+            {/* Close button (min 44x44 touch area) */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full border border-slate-300 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 text-lg cursor-pointer z-10 transition-colors"
-              aria-label="Close"
+              className="absolute top-3 right-3 w-11 h-11 rounded-full border border-slate-300 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 text-lg cursor-pointer z-10 transition-colors"
+              aria-label="Close details drawer"
             >
               ✕
             </button>
@@ -144,7 +159,7 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
               </div>
 
               {/* Title */}
-              <h2 className="text-xl font-bold text-[#0B2545] capitalize mb-1">
+              <h2 id="drawer-title" className="text-xl font-bold text-[#0B2545] capitalize mb-1">
                 {catLabel} — #{complaint.id}
               </h2>
 
@@ -177,6 +192,13 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
                     : 'Civic infrastructure report submitted by citizen.')}
               </div>
 
+              {/* Error Message Toast if action fails */}
+              {errorMessage && (
+                <div className="mb-4 p-3 rounded bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">
+                  ⚠️ {errorMessage}
+                </div>
+              )}
+
               {/* Citizen Confirmations */}
               <div className="mb-6 pb-4 border-b border-slate-200">
                 <div className="text-xs font-bold uppercase tracking-wider text-[#0B2545] mb-2.5">
@@ -203,7 +225,7 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
                     <select
                       value={selectedOfficer ?? ''}
                       onChange={(e) => setSelectedOfficer(e.target.value ? Number(e.target.value) : undefined)}
-                      className="flex-1 h-10 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-800 px-3 focus:outline-none focus:border-[#133E87] cursor-pointer"
+                      className="flex-1 h-11 rounded border border-slate-300 bg-white text-xs font-semibold text-slate-800 px-3 focus:outline-none focus:border-[#133E87] cursor-pointer"
                     >
                       <option value="">{t('drawer.choose_officer')}</option>
                       {safeOfficers.map((o) => (
@@ -216,43 +238,61 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
                       onClick={async () => {
                         if (selectedOfficer) {
                           setIsSubmitting(true);
-                          await onUpdateStatus(complaint.id, 'Assigned', selectedOfficer);
-                          setIsSubmitting(false);
+                          setErrorMessage(null);
+                          try {
+                            await onUpdateStatus(complaint.id, 'Assigned', selectedOfficer);
+                          } catch {
+                            setErrorMessage('Failed to assign officer. Please try again.');
+                          } finally {
+                            setIsSubmitting(false);
+                          }
                         }
                       }}
                       disabled={isSubmitting || !selectedOfficer}
-                      className="h-10 px-4 rounded bg-[#0B2545] text-white text-xs font-bold hover:bg-[#133E87] transition-colors cursor-pointer disabled:opacity-50"
+                      className="h-11 px-4 rounded bg-[#0B2545] text-white text-xs font-bold hover:bg-[#133E87] transition-colors cursor-pointer disabled:opacity-50"
                     >
-                      {t('drawer.assign_button')}
+                      {isSubmitting ? '...' : t('drawer.assign_button')}
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Action buttons */}
+              {/* Action buttons (min 44px height for accessibility) */}
               {complaint.status !== 'Resolved' && (
                 <div className="flex gap-3 mt-auto pt-4 border-t border-slate-200">
                   <button
                     onClick={async () => {
                       setIsSubmitting(true);
-                      await onUpdateStatus(complaint.id, 'In Progress', selectedOfficer);
-                      setIsSubmitting(false);
+                      setErrorMessage(null);
+                      try {
+                        await onUpdateStatus(complaint.id, 'In Progress', selectedOfficer);
+                      } catch {
+                        setErrorMessage('Failed to update status. Please try again.');
+                      } finally {
+                        setIsSubmitting(false);
+                      }
                     }}
                     disabled={isSubmitting}
-                    className="flex-1 h-11 rounded border border-[#0B2545] bg-white text-[#0B2545] text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+                    className="flex-1 h-11 rounded border border-[#0B2545] bg-white text-[#0B2545] text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    {t('drawer.in_progress_button')}
+                    {isSubmitting ? '...' : t('drawer.in_progress_button')}
                   </button>
                   <button
                     onClick={async () => {
                       setIsSubmitting(true);
-                      await onResolve(complaint.id, selectedOfficer);
-                      setIsSubmitting(false);
+                      setErrorMessage(null);
+                      try {
+                        await onResolve(complaint.id, selectedOfficer);
+                      } catch {
+                        setErrorMessage('Failed to mark resolved. Please try again.');
+                      } finally {
+                        setIsSubmitting(false);
+                      }
                     }}
                     disabled={isSubmitting}
-                    className="flex-1 h-11 rounded bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 transition-colors cursor-pointer shadow-xs"
+                    className="flex-1 h-11 rounded bg-emerald-700 text-white text-xs font-bold hover:bg-emerald-800 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
                   >
-                    {t('drawer.mark_resolved_button')}
+                    {isSubmitting ? '...' : t('drawer.mark_resolved_button')}
                   </button>
                 </div>
               )}

@@ -3,6 +3,7 @@
 export interface Complaint {
   id: number;
   phone_number?: string;
+  reporter_phone?: string;
   category: string;
   description?: string;
   latitude: number;
@@ -14,18 +15,22 @@ export interface Complaint {
   severity_score: number;
   assigned_officer_id?: number;
   assigned_officer_name?: string;
+  officer_name?: string;
+  officer_department?: string;
   reopened_count: number;
   is_recurring?: boolean;
   total_cycles?: number;
   months_span?: number;
   created_at: string;
   updated_at?: string;
+  resolved_at?: string | null;
 }
 
 export interface Ward {
   id: number;
   ward_number: number;
   ward_name: string;
+  name?: string;
   population?: number;
   area_sq_km?: number;
 }
@@ -39,6 +44,8 @@ export interface Officer {
   ward_name?: string;
   active_complaints?: number;
   resolved_complaints?: number;
+  active_assigned?: number;
+  assigned_total?: number;
   created_at?: string;
 }
 
@@ -59,7 +66,7 @@ export interface StatusLog {
   complaint_id: number;
   old_status: string;
   new_status: string;
-  changed_by?: string;
+  changed_by?: string | number;
   officer_name?: string;
   changed_at: string;
 }

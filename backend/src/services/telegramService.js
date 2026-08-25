@@ -140,7 +140,7 @@ async function handleTelegramUpdate(update) {
         );
 
         const updatedRes = await db.query(`SELECT * FROM complaints WHERE id = $1;`, [complaintId]);
-        if (updatedRes.rows.length > 0) {
+        if (updatedRes.rows && updatedRes.rows.length > 0) {
           socketService.emitEvent('complaint:updated', updatedRes.rows[0]);
         }
         return;
@@ -153,7 +153,7 @@ async function handleTelegramUpdate(update) {
           `UPDATE complaints SET status = 'Pending', reopened_count = reopened_count + 1, updated_at = NOW() WHERE id = $1 RETURNING *;`,
           [complaintId]
         );
-        const reopened = updateRes.rows[0] || { id: complaintId, status: 'Pending', reopened_count: 1 };
+        const reopened = (updateRes.rows && updateRes.rows[0]) || { id: complaintId, status: 'Pending', reopened_count: 1 };
         await db.query(`INSERT INTO status_logs (complaint_id, old_status, new_status) VALUES ($1, 'Resolved', 'Pending');`, [complaintId]);
 
         await sendMessage(
@@ -267,8 +267,8 @@ let pollingActive = false;
 let lastUpdateId = 0;
 
 async function startPolling() {
+  if (process.env.NODE_ENV === 'test') return;
   if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === 'your_telegram_bot_token_here') {
-    console.log('ℹ️ [Telegram Bot] No TELEGRAM_BOT_TOKEN in .env. Long-polling skipped.');
     return;
   }
 
@@ -292,7 +292,6 @@ async function startPolling() {
         }
       }
     } catch (err) {
-      // Pause briefly on network error before retrying
       await new Promise((r) => setTimeout(r, 4000));
     }
   }

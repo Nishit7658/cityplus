@@ -1,29 +1,35 @@
 'use client';
 
-// F.3 — Complaint Queue Page with Bilingual i18n
+// F.3 — Task / Grievance Queue Page with Full Trilingual i18n & Filter Badges
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
 
 import React, { useEffect, useState } from 'react';
 import { TaskQueueTable } from '@/components/TaskQueueTable';
 import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
-import { FilterPillRow, FilterOption } from '@/components/FilterPillRow';
-import { Complaint, Officer } from '@/types';
 import { useSocket } from '@/components/SocketProvider';
 import { useLanguage } from '@/context/LanguageContext';
+import { useWard } from '@/context/WardContext';
+import { Complaint, Officer } from '@/types';
 import { MOCK_COMPLAINTS, MOCK_OFFICERS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+interface StatusFilter {
+  key: string;
+  label: string;
+}
 
 export default function QueuePage() {
   const [complaints, setComplaints] = useState<Complaint[]>(MOCK_COMPLAINTS);
   const [officers, setOfficers]     = useState<Officer[]>(MOCK_OFFICERS);
   const [selected, setSelected]     = useState<Complaint | null>(null);
-  const [activeStatuses, setActiveStatuses] = useState<string[]>(['Pending', 'Assigned', 'In Progress', 'Resolved']);
-  const [newIds, setNewIds]         = useState<number[]>([]);
+  const [activeStatuses, setActiveStatuses] = useState<string[]>([]);
+  const [newIds, setNewIds] = useState<number[]>([]);
   const { lastEvent } = useSocket();
   const { t } = useLanguage();
+  const { selectedWard } = useWard();
 
-  const STATUS_FILTERS: FilterOption[] = [
+  const STATUS_FILTERS: StatusFilter[] = [
     { key: 'Pending',     label: t('status.pending') },
     { key: 'Assigned',    label: t('status.assigned') },
     { key: 'In Progress', label: t('status.in_progress') },
@@ -45,17 +51,41 @@ export default function QueuePage() {
       .catch(() => {});
   }, []);
 
-  // New complaint arrival
+  // Complete Socket Event Synchronization
   useEffect(() => {
-    if (lastEvent?.type === 'new_complaint') {
-      const nc = lastEvent.data as Complaint;
-      setComplaints((prev) => [nc, ...prev]);
-      setNewIds((prev) => [...prev, nc.id]);
-      setTimeout(() => setNewIds((prev) => prev.filter((id) => id !== nc.id)), 1600);
-    }
-  }, [lastEvent]);
+    if (!lastEvent) return;
 
-  const safe = Array.isArray(complaints) ? complaints : MOCK_COMPLAINTS;
+    if (lastEvent.type === 'new_complaint' || lastEvent.type === 'complaint:created') {
+      const nc = lastEvent.data as Complaint;
+      if (nc && nc.id) {
+        setComplaints((prev) => [nc, ...prev.filter((c) => c.id !== nc.id)]);
+        setNewIds((prev) => [...prev, nc.id]);
+        setTimeout(() => setNewIds((prev) => prev.filter((id) => id !== nc.id)), 1600);
+      }
+    } else if (
+      lastEvent.type === 'complaint_status_changed' ||
+      lastEvent.type === 'complaint:updated' ||
+      lastEvent.type === 'complaint:reopened' ||
+      lastEvent.type === 'complaint_reopened'
+    ) {
+      const updated = lastEvent.data as Complaint;
+      if (updated && updated.id) {
+        setComplaints((prev) =>
+          prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
+        );
+        if (selected && selected.id === updated.id) {
+          setSelected((prev) => (prev ? { ...prev, ...updated } : null));
+        }
+      }
+    }
+  }, [lastEvent, selected]);
+
+  const rawSafe = Array.isArray(complaints) ? complaints : MOCK_COMPLAINTS;
+
+  // Filter by Global WardContext
+  const safe = selectedWard === 'all'
+    ? rawSafe
+    : rawSafe.filter((c) => String(c.ward_id) === String(selectedWard));
 
   const filtered = safe.filter((c) =>
     activeStatuses.length === 0 || activeStatuses.includes(c.status)
@@ -89,11 +119,11 @@ export default function QueuePage() {
           <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 shadow-2xs flex-wrap">
             <div className="px-3 py-1 border-r border-slate-200 text-xs">
               <span className="text-slate-500 block">{t('status.pending')}</span>
-              <span className="font-mono font-bold text-slate-900 text-base">{pending}</span>
+              <span className="font-mono font-bold text-[#1E40AF] text-base">{pending}</span>
             </div>
             <div className="px-3 py-1 border-r border-slate-200 text-xs">
               <span className="text-slate-500 block">{t('status.assigned')}</span>
-              <span className="font-mono font-bold text-[#1E40AF] text-base">{assigned}</span>
+              <span className="font-mono font-bold text-[#B45309] text-base">{assigned}</span>
             </div>
             <div className="px-3 py-1 border-r border-slate-200 text-xs">
               <span className="text-slate-500 block">{t('status.in_progress')}</span>
@@ -106,45 +136,56 @@ export default function QueuePage() {
           </div>
         </div>
 
-        {/* High-Visibility Status Filter Bar */}
-        <div className="mb-6 bg-white p-4 rounded-lg border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider">
-              {t('queue.filter_status')}
-            </span>
-            <FilterPillRow
-              options={STATUS_FILTERS.map((f) => ({
-                ...f,
-                count: safe.filter((c) => c.status === f.key).length,
-              }))}
-              active={activeStatuses}
-              onToggle={(k) =>
-                setActiveStatuses((prev) =>
-                  prev.includes(k) ? prev.filter((x) => x !== k) : [...prev, k]
-                )
-              }
-            />
-          </div>
+        {/* Filter Pills with High-Contrast Border & Badges */}
+        <div className="flex items-center gap-2 flex-wrap mb-4">
+          <button
+            onClick={() => setActiveStatuses([])}
+            className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors cursor-pointer border ${
+              activeStatuses.length === 0
+                ? 'bg-[#0B2545] text-white border-[#0B2545]'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            {t('queue.all_items')} ({safe.length})
+          </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveStatuses(['Pending', 'Assigned', 'In Progress', 'Resolved'])}
-              className="text-xs font-semibold text-[#133E87] hover:underline cursor-pointer"
-            >
-              {t('queue.select_all')}
-            </button>
-            <span className="text-slate-300">|</span>
-            <button
-              onClick={() => setActiveStatuses([])}
-              className="text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer"
-            >
-              {t('queue.clear_filters')}
-            </button>
-          </div>
+          {STATUS_FILTERS.map((s) => {
+            const active = activeStatuses.includes(s.key);
+            const count = safe.filter((c) => c.status === s.key).length;
+
+            return (
+              <button
+                key={s.key}
+                onClick={() =>
+                  setActiveStatuses((prev) =>
+                    prev.includes(s.key) ? prev.filter((k) => k !== s.key) : [...prev, s.key]
+                  )
+                }
+                className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors cursor-pointer border flex items-center gap-1.5 ${
+                  active
+                    ? 'bg-[#0B2545] text-white border-[#0B2545]'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <span>{s.label}</span>
+                <span
+                  className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-bold ${
+                    active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Queue Table */}
-        <TaskQueueTable complaints={filtered} onSelect={setSelected} newIds={newIds} />
+        {/* Queue Table Container */}
+        <TaskQueueTable
+          complaints={filtered}
+          onSelectComplaint={setSelected}
+          newComplaintIds={newIds}
+        />
       </div>
 
       <ComplaintDetailDrawer
@@ -152,15 +193,26 @@ export default function QueuePage() {
         officers={officers}
         onClose={() => setSelected(null)}
         onUpdateStatus={async (id, status, officerId) => {
-          await fetch(`${API_URL}/api/complaints/${id}`, {
+          const res = await fetch(`${API_URL}/api/complaints/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status, assigned_officer_id: officerId }),
-          }).catch(() => {});
+          });
+          if (!res.ok) throw new Error('Update failed');
+          const updated = await res.json();
+          setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
           setSelected(null);
         }}
-        onResolve={async (id) => {
-          await fetch(`${API_URL}/api/complaints/${id}/resolve`, { method: 'POST' }).catch(() => {});
+        onResolve={async (id, officerId) => {
+          const res = await fetch(`${API_URL}/api/complaints/${id}/resolve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ officer_id: officerId }),
+          });
+          if (!res.ok) throw new Error('Resolve failed');
+          const data = await res.json();
+          const updated = data.complaint || { id, status: 'Resolved' };
+          setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
           setSelected(null);
         }}
       />

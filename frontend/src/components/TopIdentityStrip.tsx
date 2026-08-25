@@ -1,13 +1,13 @@
 'use client';
 
-// C.1 — Official Government Top Identity Strip
-// Vadodara Municipal Corporation (VMC) / Government of Gujarat
-// Trilingual Language Dropdown (English / ગુજરાતી / हिन्दी) + National tricolor accent line
+// C.1 — Top Identity Strip (Official Government of Gujarat / VMC Header)
+// Trilingual (English / ગુજરાતી / हिन्दी) with connected Global WardContext
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
+import Image from 'next/image';
 import { useSocket } from './SocketProvider';
 import { useLanguage, Language } from '@/context/LanguageContext';
+import { useWard } from '@/context/WardContext';
 import { MOCK_COMPLAINTS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -21,8 +21,8 @@ const LANGUAGE_OPTIONS: { code: Language; label: string; native: string }[] = [
 export const TopIdentityStrip: React.FC = () => {
   const { lastEvent } = useSocket();
   const { language, setLanguage, t } = useLanguage();
+  const { selectedWard, setSelectedWard } = useWard();
   const [todayCount, setTodayCount] = useState<number>(MOCK_COMPLAINTS.length);
-  const [ward, setWard] = useState('all');
   
   const wards = [
     { key: 'all', label: t('vmc.all_wards') },
@@ -50,7 +50,7 @@ export const TopIdentityStrip: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (lastEvent?.type === 'new_complaint') {
+    if (lastEvent?.type === 'new_complaint' || lastEvent?.type === 'complaint:created') {
       setTodayCount((prev) => prev + 1);
     }
   }, [lastEvent]);
@@ -58,44 +58,42 @@ export const TopIdentityStrip: React.FC = () => {
   return (
     <header className="sticky top-0 z-[1100] bg-white border-b border-slate-200 shadow-xs flex-shrink-0">
       {/* Subtle National / State Government Accent Bar */}
-      <div className="h-[3px] w-full flex">
-        <div className="h-full w-1/3 bg-[#FF9933]" />
-        <div className="h-full w-1/3 bg-[#FFFFFF]" />
-        <div className="h-full w-1/3 bg-[#138808]" />
-      </div>
+      <div className="h-1 w-full bg-gradient-to-r from-[#C25E00] via-[#FFFFFF] to-[#133E87]" />
 
-      <div className="max-w-[1520px] mx-auto px-6 h-[64px] flex items-center justify-between gap-4">
-        {/* Official VMC Emblem & Identity */}
-        <div className="flex items-center gap-3.5 shrink-0">
-          <div className="w-10 h-10 rounded-lg bg-[#0B2545] text-white flex items-center justify-center font-bold text-xs shadow-xs border border-slate-300">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" />
-              <path d="M12 6v6l4 2" />
-            </svg>
+      <div className="max-w-[1520px] mx-auto px-6 py-2.5 flex items-center justify-between gap-4">
+        {/* Left Branding: Official State Seal + Title Hierarchy */}
+        <div className="flex items-center gap-3.5">
+          <div className="relative w-10 h-10 shrink-0 flex items-center justify-center bg-slate-50 border border-slate-200 rounded p-1">
+            <Image
+              src="/gujarat-seal.svg"
+              alt="Government of Gujarat Seal"
+              width={34}
+              height={34}
+              className="object-contain"
+              priority
+            />
           </div>
 
-          <Link href="/" className="no-underline">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-base text-[#0B2545] tracking-tight font-body">
-                  {t('vmc.title')}
-                </span>
-                {language === 'en' && (
-                  <span className="text-xs font-semibold text-slate-500 hidden md:inline">
-                    | વડોદરા મહાનગરપાલિકા
-                  </span>
-                )}
-                {language === 'hi' && (
-                  <span className="text-xs font-semibold text-slate-500 hidden md:inline">
-                    | वडोदरा महानगर पालिका
-                  </span>
-                )}
-              </div>
-              <span className="text-[11px] font-medium text-slate-500">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-none">
+                {t('vmc.state_label')}
+              </span>
+              <span className="text-slate-300 text-xs leading-none">•</span>
+              <span className="text-[11px] font-bold text-[#C25E00] uppercase tracking-wider leading-none">
+                {t('vmc.dept_label')}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-base font-extrabold text-[#0B2545] tracking-tight leading-tight">
+                {t('vmc.title')}
+              </span>
+              <span className="hidden sm:inline text-xs font-semibold text-slate-400">|</span>
+              <span className="hidden sm:inline text-xs font-semibold text-slate-600">
                 {t('vmc.subtitle')}
               </span>
             </div>
-          </Link>
+          </div>
         </div>
 
         {/* Right Controls: Trilingual Dropdown + CRMS Badge + Ward + Officer */}
@@ -127,11 +125,12 @@ export const TopIdentityStrip: React.FC = () => {
             <span className="font-mono font-bold text-[#0B2545]">({todayCount} {t('vmc.active_issues')})</span>
           </div>
 
-          {/* Ward Selector */}
+          {/* Ward Selector (Connected to WardContext) */}
           <div className="hidden lg:block">
             <select
-              value={ward}
-              onChange={(e) => setWard(e.target.value)}
+              value={selectedWard}
+              onChange={(e) => setSelectedWard(e.target.value)}
+              aria-label="Select Ward"
               className="h-8 px-3 pr-8 rounded-md border border-slate-300 bg-white text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#133E87] cursor-pointer"
             >
               {wards.map((w) => (
@@ -142,16 +141,18 @@ export const TopIdentityStrip: React.FC = () => {
             </select>
           </div>
 
-          <div className="h-5 w-px bg-slate-200 hidden sm:block" />
-
-          {/* Official Officer Badge */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-md bg-[#0B2545] text-white flex items-center justify-center font-mono font-bold text-xs border border-slate-400 shadow-2xs">
+          {/* Duty Officer Card */}
+          <div className="hidden md:flex items-center gap-2 pl-3 border-l border-slate-200">
+            <div className="w-7 h-7 rounded-full bg-[#0B2545] text-white flex items-center justify-center font-bold text-xs">
               VMC
             </div>
-            <div className="hidden sm:flex flex-col text-left">
-              <span className="text-xs font-bold text-slate-900 leading-tight">{t('vmc.control_officer')}</span>
-              <span className="text-[10px] font-mono text-slate-500">{t('vmc.vadodara_central')}</span>
+            <div className="flex flex-col text-left">
+              <span className="text-xs font-bold text-[#0B2545] leading-tight">
+                {t('vmc.officer_title')}
+              </span>
+              <span className="text-[10px] text-slate-500 font-medium leading-none">
+                {t('vmc.officer_sub')}
+              </span>
             </div>
           </div>
         </div>

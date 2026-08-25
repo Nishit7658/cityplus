@@ -1,22 +1,27 @@
 'use client';
 
-// F.1 — Overview Page (Executive Municipal Control Room) with Trilingual i18n
+// C.3 / D.1 — Redesigned High-Authority Overview Dashboard
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
+// Full Trilingual support + Connected WardContext & Real-time Socket Event Bus
 
 import React, { useEffect, useState } from 'react';
-import { MapView } from '@/components/MapView';
-import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
+import Link from 'next/link';
 import { Complaint, Officer } from '@/types';
 import { useSocket } from '@/components/SocketProvider';
-import { useLanguage, Language } from '@/context/LanguageContext';
+import { useLanguage } from '@/context/LanguageContext';
+import { useWard } from '@/context/WardContext';
+import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
+import { MapView } from '@/components/MapView';
+import { CategoryIcon } from '@/components/CategoryIcon';
 import { MOCK_COMPLAINTS, MOCK_OFFICERS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-function timeAgo(d: string, lang: Language) {
-  const diff = Date.now() - new Date(d).getTime();
-  const h = Math.floor(diff / 3600000);
+function timeAgo(dateString: string, lang: string): string {
+  const diff = Date.now() - new Date(dateString).getTime();
   const m = Math.floor(diff / 60000);
+  const h = Math.floor(m / 60);
+
   if (lang === 'gu') {
     if (h > 24) return `${Math.floor(h / 24)} દિવસ પહેલા`;
     if (h > 0) return `${h} કલાક પહેલા`;
@@ -38,6 +43,7 @@ export default function OverviewPage() {
   const [selected, setSelected]     = useState<Complaint | null>(null);
   const { lastEvent } = useSocket();
   const { language, t } = useLanguage();
+  const { selectedWard } = useWard();
 
   useEffect(() => {
     Promise.all([
@@ -53,14 +59,40 @@ export default function OverviewPage() {
     });
   }, []);
 
+  // Complete Socket Event Synchronization
   useEffect(() => {
-    if (lastEvent?.type === 'new_complaint') {
-      const nc = lastEvent.data as Complaint;
-      setComplaints((prev) => [nc, ...prev]);
-    }
-  }, [lastEvent]);
+    if (!lastEvent) return;
 
-  const safe = Array.isArray(complaints) ? complaints : MOCK_COMPLAINTS;
+    if (lastEvent.type === 'new_complaint' || lastEvent.type === 'complaint:created') {
+      const nc = lastEvent.data as Complaint;
+      if (nc && nc.id) {
+        setComplaints((prev) => [nc, ...prev.filter((c) => c.id !== nc.id)]);
+      }
+    } else if (
+      lastEvent.type === 'complaint_status_changed' ||
+      lastEvent.type === 'complaint:updated' ||
+      lastEvent.type === 'complaint:reopened' ||
+      lastEvent.type === 'complaint_reopened'
+    ) {
+      const updated = lastEvent.data as Complaint;
+      if (updated && updated.id) {
+        setComplaints((prev) =>
+          prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
+        );
+        if (selected && selected.id === updated.id) {
+          setSelected((prev) => (prev ? { ...prev, ...updated } : null));
+        }
+      }
+    }
+  }, [lastEvent, selected]);
+
+  const rawSafe = Array.isArray(complaints) ? complaints : MOCK_COMPLAINTS;
+
+  // Filter by Global WardContext
+  const safe = selectedWard === 'all'
+    ? rawSafe
+    : rawSafe.filter((c) => String(c.ward_id) === String(selectedWard));
+
   const pending = safe.filter((c) => c.status === 'Pending');
   const inProgress = safe.filter((c) => c.status === 'In Progress' || c.status === 'Assigned');
   const resolved = safe.filter((c) => c.status === 'Resolved');
@@ -71,228 +103,176 @@ export default function OverviewPage() {
     const k = c.category || 'other';
     catCounts[k] = (catCounts[k] || 0) + 1;
   });
-  const catEntries = Object.entries(catCounts).sort(([, a], [, b]) => b - a).slice(0, 6);
 
-  const resolutionPct = Math.round((resolved.length / Math.max(1, safe.length)) * 100);
+  const criticalIssues = safe.filter((c) => (c.severity_score || 0) >= 80 && c.status !== 'Resolved');
 
   return (
     <>
       <div className="max-w-[1520px] mx-auto px-6 py-6 bg-slate-50 min-h-[calc(100vh-115px)]">
-        {/* Official Header */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <span>{t('vmc.gov_gujarat')}</span>
-              <span>•</span>
-              <span>{t('vmc.dept_name')}</span>
-            </div>
-            <h1 className="text-2xl font-bold text-[#0B2545] tracking-tight mt-1">
-              {t('overview.title')}
-            </h1>
-          </div>
-
-          {/* Official Portal Metadata Badge */}
-          <div className="flex items-center gap-3">
-            <div className="bg-white px-3.5 py-2 rounded border border-slate-200 shadow-2xs text-xs">
-              <span className="text-slate-500">{t('vmc.jurisdiction')}: </span>
-              <span className="font-bold text-[#0B2545]">{t('vmc.all_wards')}</span>
-            </div>
-            <div className="bg-white px-3.5 py-2 rounded border border-slate-200 shadow-2xs text-xs">
-              <span className="text-slate-500">{t('vmc.system_status')}: </span>
-              <span className="font-bold text-emerald-700">● {t('vmc.operational')}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 4 Primary Municipal KPI Cards */}
+        {/* Section 1: Executive KPI Telemetry Strip */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Card 1: Total Registered */}
           <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
-            <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-              {t('overview.total_logged')}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                {t('overview.total_logged')}
+              </span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                {selectedWard === 'all' ? t('vmc.all_wards') : `${t('queue.th_ward')} ${selectedWard}`}
+              </span>
             </div>
-            <div className="text-3xl font-mono font-bold text-[#0B2545]">
-              {safe.length}
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-[#0B2545] font-mono tracking-tight">
+                {safe.length}
+              </span>
+              <span className="text-xs text-slate-500 font-medium">
+                {t('overview.logged_24h')}
+              </span>
             </div>
-            <div className="text-xs text-slate-500 mt-2">
-              {t('overview.total_logged_sub')}
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#1E40AF]">
-            <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-              {t('overview.pending_dispatch')}
-            </div>
-            <div className="text-3xl font-mono font-bold text-[#1E40AF]">
-              {pending.length}
-            </div>
-            <div className="text-xs text-slate-500 mt-2">
-              {t('overview.pending_dispatch_sub')}
+            <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-full bg-[#133E87] rounded-full w-full" />
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#B45309]">
-            <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-              {t('overview.active_progress')}
+          {/* Card 2: Pending Zonal Triage */}
+          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                {t('overview.pending_triage')}
+              </span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                {t('overview.needs_action')}
+              </span>
             </div>
-            <div className="text-3xl font-mono font-bold text-[#B45309]">
-              {inProgress.length}
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-[#B45309] font-mono tracking-tight">
+                {pending.length}
+              </span>
+              <span className="text-xs text-slate-500 font-medium">
+                {t('overview.unassigned')}
+              </span>
             </div>
-            <div className="text-xs text-slate-500 mt-2">
-              {t('overview.active_progress_sub')}
+            <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div
+                style={{ width: `${safe.length ? (pending.length / safe.length) * 100 : 0}%` }}
+                className="h-full bg-[#B45309] rounded-full"
+              />
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs border-l-4 border-l-[#15803D]">
-            <div className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-1">
-              {t('overview.closed_verified')}
+          {/* Card 3: Field Crew In Progress */}
+          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                {t('overview.active_works')}
+              </span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
+                {t('overview.dispatched')}
+              </span>
             </div>
-            <div className="text-3xl font-mono font-bold text-[#15803D]">
-              {resolved.length} <span className="text-sm font-normal text-slate-500">({resolutionPct}%)</span>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-[#1E40AF] font-mono tracking-tight">
+                {inProgress.length}
+              </span>
+              <span className="text-xs text-slate-500 font-medium">
+                {t('overview.crew_on_ground')}
+              </span>
             </div>
-            <div className="text-xs text-slate-500 mt-2">
-              {t('overview.closed_verified_sub')}
+            <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div
+                style={{ width: `${safe.length ? (inProgress.length / safe.length) * 100 : 0}%` }}
+                className="h-full bg-[#1E40AF] rounded-full"
+              />
+            </div>
+          </div>
+
+          {/* Card 4: Verified Resolved */}
+          <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                {t('overview.citizen_verified')}
+              </span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                {t('overview.sla_compliant')}
+              </span>
+            </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="text-3xl font-extrabold text-[#15803D] font-mono tracking-tight">
+                {resolved.length}
+              </span>
+              <span className="text-xs text-slate-500 font-medium">
+                {safe.length ? Math.round((resolved.length / safe.length) * 100) : 0}% {t('overview.rate')}
+              </span>
+            </div>
+            <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div
+                style={{ width: `${safe.length ? (resolved.length / safe.length) * 100 : 0}%` }}
+                className="h-full bg-[#15803D] rounded-full"
+              />
             </div>
           </div>
         </div>
 
-        {/* Main Grid: GIS Map (7 cols) + Right Administrative Panel (5 cols) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-          {/* Live GIS Map Card */}
-          <div className="lg:col-span-7 bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden flex flex-col">
-            <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+        {/* Section 2: Critical Flash Alerts Banner */}
+        {criticalIssues.length > 0 && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="w-3 h-3 rounded-full bg-[#B91C1C] animate-ping shrink-0" />
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-[#B91C1C]">
+                  {t('overview.critical_banner')} ({criticalIssues.length} {t('overview.spots')})
+                </h2>
+                <p className="text-xs text-red-900 mt-0.5">
+                  {t('overview.critical_sub')}
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/queue"
+              className="inline-flex items-center justify-center px-4 py-2 rounded bg-[#B91C1C] hover:bg-red-800 text-white text-xs font-bold transition-colors cursor-pointer shrink-0"
+            >
+              {t('overview.open_triage')} →
+            </Link>
+          </div>
+        )}
+
+        {/* Section 3: Dual Command Console */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left 8 Cols: GIS Live Situational Map */}
+          <div className="lg:col-span-8 bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden flex flex-col">
+            <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#133E87]" />
-                <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider">
-                  {t('overview.gis_map_title')}
+                <span className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
+                  {t('overview.gis_title')}
                 </span>
               </div>
               <span className="text-xs font-mono text-slate-500">
-                {t('overview.gis_map_sub')}
+                {safe.length} {t('overview.geo_pinned')}
               </span>
             </div>
-            <div className="flex-1 min-h-[460px] relative">
-              <MapView complaints={safe} onSelectComplaint={setSelected} height="100%" />
+            <div className="h-[460px] w-full relative">
+              <MapView
+                complaints={safe}
+                onSelectComplaint={setSelected}
+                height={460}
+              />
             </div>
           </div>
 
-          {/* Right Panel: Official Redressal Protocol & Citizen Closed Loop */}
-          <div className="lg:col-span-5 flex flex-col gap-4">
-            {/* Citizen Verification Banner */}
-            <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
-                  {t('overview.closed_loop_title')}
-                </span>
-                <span className="text-xs font-mono font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
-                  {t('overview.closed_loop_mandatory')}
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed mb-3">
-                {t('overview.closed_loop_desc')}
-              </p>
-              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100 text-xs">
-                <div>
-                  <span className="text-slate-500 block">{t('overview.verification_rate')}</span>
-                  <span className="font-mono font-bold text-lg text-emerald-800">94.2%</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">{t('overview.auto_reopen')}</span>
-                  <span className="font-mono font-bold text-lg text-[#B91C1C]">100% SLA</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Departmental Work Distribution */}
-            <div className="bg-white p-5 rounded-lg border border-slate-200 shadow-2xs flex-1">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
-                  {t('overview.dept_dist_title')}
-                </span>
-                <span className="text-[11px] font-mono text-slate-500">{t('overview.active_tickets')}</span>
-              </div>
-              <div className="space-y-2.5">
-                {catEntries.map(([cat, count]) => {
-                  const pct = Math.round((count / safe.length) * 100);
-                  const catLabel = t(`cat.${cat}`, cat.replace(/_/g, ' '));
-                  return (
-                    <div key={cat} className="space-y-1">
-                      <div className="flex justify-between text-xs">
-                        <span className="font-medium text-slate-700 capitalize">{catLabel}</span>
-                        <span className="font-mono font-bold text-slate-900">{count} ({pct}%)</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          style={{ width: `${pct}%` }}
-                          className="h-full bg-[#133E87] rounded-full"
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Section: High Priority Infrastructure Spot + Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Recurring Infrastructure Failure Alert */}
-          <div className="lg:col-span-6 bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-[#B91C1C]">{t('overview.high_priority_alert')}</span>
-              </div>
-              <span className="text-xs font-mono bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded">
-                {t('overview.chronic_spot')}
-              </span>
-            </div>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-500">{t('overview.location')}</span>
-                <span className="font-bold text-slate-900">
-                  {language === 'gu'
-                    ? 'મુક્તાનંદ સર્કલ • વોર્ડ ૪ (કારેલીબાગ)'
-                    : language === 'hi'
-                    ? 'मुक्तानंद सर्कल • वार्ड ४ (कारेलीबाग)'
-                    : 'Muktanand Circle • Ward 4 (Karelibaug)'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">{t('overview.defect_category')}</span>
-                <span className="font-bold text-slate-900">
-                  {language === 'gu'
-                    ? 'ખુલ્લી ગટર અને સ્ટ્રોમ ડ્રેનેજ નુકસાન'
-                    : language === 'hi'
-                    ? 'खुला मैनहोल एवं स्टॉर्म ड्रेन क्षति'
-                    : 'Open Manhole & Storm Drain Collapse'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">{t('overview.failure_recurrence')}</span>
-                <span className="font-bold text-red-700">
-                  {language === 'gu'
-                    ? '૮ મહિનામાં ૪ વખત પુનરાવર્તન (માળખાકીય ખામી)'
-                    : language === 'hi'
-                    ? '८ महीनों में ४ बार पुनरावृत्ति (संरचनात्मक दोष)'
-                    : 'Reported 4× in 8 months (Structural Defect)'}
-                </span>
-              </div>
-              <div className="p-3 bg-slate-50 rounded border border-slate-200 mt-2 text-slate-700 leading-relaxed">
-                <strong>{t('overview.exec_note')}</strong>
-              </div>
-            </div>
-          </div>
-
-          {/* Real-time Grievance Inflow Audit Trail */}
-          <div className="lg:col-span-6 bg-white p-5 rounded-lg border border-slate-200 shadow-2xs">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
+          {/* Right 4 Cols: Live Incoming Citizen Grievance Stream */}
+          <div className="lg:col-span-4 bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden flex flex-col">
+            <div className="px-5 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
-                {t('overview.recent_inbound')}
+                {t('overview.live_feed')}
               </span>
-              <span className="text-xs font-mono text-emerald-700 font-bold">{t('overview.live_stream')}</span>
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                ● {t('overview.sync')}
+              </span>
             </div>
-            <div className="divide-y divide-slate-100">
-              {safe.slice(0, 4).map((c) => {
+
+            <div className="p-3 divide-y divide-slate-100 max-h-[460px] overflow-y-auto">
+              {safe.slice(0, 8).map((c) => {
                 const catLabel = t(`cat.${c.category}`, (c.category || '').replace(/_/g, ' '));
                 const statusKey = (c.status || '').toLowerCase().replace(/ /g, '_');
                 const statusLabel = t(`status.${statusKey}`, c.status);
@@ -302,23 +282,39 @@ export default function OverviewPage() {
                   <div
                     key={c.id}
                     onClick={() => setSelected(c)}
-                    className="py-2 flex items-center justify-between hover:bg-slate-50 cursor-pointer px-2 rounded transition-colors text-xs"
+                    className="py-3 px-2 hover:bg-slate-50 rounded cursor-pointer transition-colors flex items-start justify-between gap-3"
                   >
-                    <div className="space-y-0.5">
-                      <div className="font-bold text-slate-900 capitalize">
-                        {catLabel} <span className="font-mono text-slate-500 font-normal">#{c.id}</span>
+                    <div className="flex items-start gap-2.5">
+                      <div className="mt-0.5 p-1.5 rounded bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+                        <CategoryIcon category={c.category} size={14} />
                       </div>
-                      <div className="text-slate-500 text-[11px]">
-                        {wardLabel} • {timeAgo(c.created_at, language)}
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-[#0B2545] capitalize">
+                            {catLabel}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-500">
+                            #{c.id}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 line-clamp-1 mt-0.5">
+                          {c.description}
+                        </p>
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono mt-1">
+                          <span>📍 {wardLabel}</span>
+                          <span>•</span>
+                          <span>{timeAgo(c.created_at, language)}</span>
+                        </div>
                       </div>
                     </div>
+
                     <span
-                      className={`px-2 py-0.5 rounded text-[11px] font-bold font-mono ${
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 ${
                         c.status === 'Resolved'
-                          ? 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                           : c.status === 'In Progress'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-blue-100 text-blue-800'
+                          ? 'bg-amber-50 text-amber-800 border-amber-200'
+                          : 'bg-blue-50 text-blue-800 border-blue-200'
                       }`}
                     >
                       {statusLabel}
@@ -336,15 +332,26 @@ export default function OverviewPage() {
         officers={officers}
         onClose={() => setSelected(null)}
         onUpdateStatus={async (id, status, officerId) => {
-          await fetch(`${API_URL}/api/complaints/${id}`, {
+          const res = await fetch(`${API_URL}/api/complaints/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status, assigned_officer_id: officerId }),
-          }).catch(() => {});
+          });
+          if (!res.ok) throw new Error('Update failed');
+          const updated = await res.json();
+          setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
           setSelected(null);
         }}
-        onResolve={async (id) => {
-          await fetch(`${API_URL}/api/complaints/${id}/resolve`, { method: 'POST' }).catch(() => {});
+        onResolve={async (id, officerId) => {
+          const res = await fetch(`${API_URL}/api/complaints/${id}/resolve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ officer_id: officerId }),
+          });
+          if (!res.ok) throw new Error('Resolve failed');
+          const data = await res.json();
+          const updated = data.complaint || { id, status: 'Resolved' };
+          setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
           setSelected(null);
         }}
       />
