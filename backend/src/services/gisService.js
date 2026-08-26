@@ -187,10 +187,10 @@ async function processIncomingReport({ latitude, longitude, category, reporterPh
   const insertComplaintQuery = `
     INSERT INTO complaints (
       category, description, reporter_phone, location, status, confirmation_count,
-      severity_score, is_recurring, problem_spot_id, ward_id
+      severity_score, is_recurring, problem_spot_id, ward_id, photo_url
     )
-    VALUES ($1, $2, $3, ST_SetSRID(ST_MakePoint($4, $5), 4326)::geography, 'Pending', 1, $6, $7, $8, $9)
-    RETURNING id, category, description, reporter_phone, status, confirmation_count, severity_score, is_recurring, reopened_count, problem_spot_id, ward_id, created_at, updated_at,
+    VALUES ($1, $2, $3, ST_SetSRID(ST_MakePoint($4, $5), 4326)::geography, 'Pending', 1, $6, $7, $8, $9, $10)
+    RETURNING id, category, description, reporter_phone, status, confirmation_count, severity_score, is_recurring, reopened_count, problem_spot_id, ward_id, photo_url, photo_after_url, created_at, updated_at,
               ST_Y(location::geometry) as latitude, ST_X(location::geometry) as longitude;
   `;
 
@@ -204,6 +204,7 @@ async function processIncomingReport({ latitude, longitude, category, reporterPh
     isRecurring,
     problemSpotId,
     wardId,
+    photoUrl || null,
   ]);
 
   const createdComplaint = newComplaintRes.rows[0];

@@ -201,6 +201,21 @@ async function handleTelegramUpdate(update) {
         return;
       }
 
+      // Handle Photo Evidence
+      if (msg.photo && msg.photo.length > 0) {
+        const storageService = require('./storageService');
+        const bestPhoto = msg.photo[msg.photo.length - 1];
+        const photoUrl = await storageService.saveTelegramPhoto(bestPhoto.file_id);
+        session.photo_url = photoUrl;
+        telegramSessions.set(chatId, session);
+
+        await sendMessage(
+          chatId,
+          `📸 <b>Photo evidence received successfully!</b>\n\nNow please tap <b>📍 Share Current Location</b> below to complete registration.`
+        );
+        return;
+      }
+
       // Handle GPS Location Message
       if (msg.location) {
         const latitude = msg.location.latitude;
@@ -214,6 +229,7 @@ async function handleTelegramUpdate(update) {
           category,
           reporterPhone: `tg_${chatId}`,
           description: `Telegram report from ${senderName} (@${msg.from.username || chatId})`,
+          photoUrl: session.photo_url || null,
         });
 
         await sendMessage(

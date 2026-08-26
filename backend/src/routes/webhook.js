@@ -131,7 +131,21 @@ router.post('/', async (req, res) => {
       return;
     }
 
-    // 3. Handle Location Message Response
+    // 3. Handle Image Messages (Citizen Photo Evidence)
+    if (msg.type === 'image' && msg.image?.id) {
+      const storageService = require('../services/storageService');
+      const photoUrl = await storageService.saveWhatsAppImage(msg.image.id);
+      session.photo_url = photoUrl;
+      userSessions.set(fromPhone, session);
+
+      await whatsappService.sendTextMessage(
+        fromPhone,
+        `📸 Photo evidence received successfully! Now please share your location via WhatsApp attachment to register the complaint.`
+      );
+      return;
+    }
+
+    // 4. Handle Location Message Response
     if (msg.type === 'location') {
       const latitude = msg.location.latitude;
       const longitude = msg.location.longitude;
@@ -143,6 +157,7 @@ router.post('/', async (req, res) => {
         category,
         reporterPhone: fromPhone,
         description: `WhatsApp report from ${fromPhone} (${category})`,
+        photoUrl: session.photo_url || null,
       });
 
       await whatsappService.sendTextMessage(fromPhone, result.message);

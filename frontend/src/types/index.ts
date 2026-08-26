@@ -21,6 +21,8 @@ export interface Complaint {
   is_recurring?: boolean;
   total_cycles?: number;
   months_span?: number;
+  photo_url?: string | null;
+  photo_after_url?: string | null;
   created_at: string;
   updated_at?: string;
   resolved_at?: string | null;

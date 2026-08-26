@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -18,6 +19,7 @@ const officersRouter = require('./routes/officers');
 const transparencyRouter = require('./routes/transparency');
 const webhookRouter = require('./routes/webhook');
 const telegramRouter = require('./routes/telegramWebhook');
+const uploadRouter = require('./routes/upload');
 
 const app = express();
 const server = http.createServer(app);
@@ -25,7 +27,7 @@ const server = http.createServer(app);
 // 1. Security Headers via Helmet
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Managed separately for Next.js map tiles
+    contentSecurityPolicy: false, // Managed separately for Next.js map tiles & static uploads
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 );
@@ -63,15 +65,18 @@ app.use('/api/', apiLimiter);
 // 4. Request Body Parsers with Raw Body Capture for HMAC Verification
 app.use(
   express.json({
-    limit: '2mb',
+    limit: '10mb',
     verify: (req, res, buf) => {
       req.rawBody = buf.toString();
     },
   })
 );
-app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 5. Initialize Socket.IO with CORS validation
+// 5. Static Uploads File Serving (100% Free Persistent Local Storage)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// 6. Initialize Socket.IO with CORS validation
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
@@ -81,17 +86,18 @@ const io = new Server(server, {
 });
 socketService.initSocket(io);
 
-// 6. Mount API Routes
+// 7. Mount API Routes
 app.use('/api/auth', authRouter);
 app.use('/api/complaints', complaintsRouter);
 app.use('/api/wards', wardsRouter);
 app.use('/api/officers', officersRouter);
 app.use('/api/transparency', transparencyRouter);
+app.use('/api/upload', uploadRouter);
 app.use('/webhook', webhookRouter);
 app.use('/api/webhook', webhookRouter);
 app.use('/api/telegram', telegramRouter);
 
-// 7. Comprehensive, Safe Health Check
+// 8. Comprehensive, Safe Health Check
 const startTime = Date.now();
 app.get('/health', (req, res) => {
   const uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
@@ -121,6 +127,7 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`🚀 CityPulse Backend running on port ${PORT}`);
     console.log(`📍 WhatsApp Webhook: http://localhost:${PORT}/webhook`);
     console.log(`📍 Telegram Webhook: http://localhost:${PORT}/api/telegram/webhook`);
+    console.log(`📂 Evidence Storage: http://localhost:${PORT}/uploads/`);
     console.log(`===================================================`);
   });
 }

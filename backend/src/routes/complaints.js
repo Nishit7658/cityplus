@@ -41,6 +41,7 @@ router.get('/', optionalAuth, async (req, res) => {
       SELECT 
         c.id, c.category, c.description, c.reporter_phone, c.status,
         c.confirmation_count, c.severity_score, c.is_recurring, c.reopened_count,
+        c.photo_url, c.photo_after_url,
         c.resolved_at, c.created_at, c.updated_at,
         ST_Y(c.location::geometry) as latitude,
         ST_X(c.location::geometry) as longitude,
@@ -94,6 +95,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       SELECT 
         c.id, c.category, c.description, c.reporter_phone, c.status,
         c.confirmation_count, c.severity_score, c.is_recurring, c.reopened_count,
+        c.photo_url, c.photo_after_url,
         c.resolved_at, c.created_at, c.updated_at,
         ST_Y(c.location::geometry) as latitude,
         ST_X(c.location::geometry) as longitude,
@@ -139,7 +141,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 router.patch('/:id', optionalAuth, validateUpdateComplaint, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, assigned_officer_id } = req.body;
+    const { status, assigned_officer_id, photo_url, photo_after_url } = req.body;
     const actorId = req.user?.id || assigned_officer_id || null;
 
     // Check existing complaint
@@ -160,6 +162,14 @@ router.patch('/:id', optionalAuth, validateUpdateComplaint, async (req, res) => 
       params.push(assigned_officer_id);
       updates.push(`assigned_officer_id = $${params.length}`);
     }
+    if (photo_url !== undefined) {
+      params.push(photo_url);
+      updates.push(`photo_url = $${params.length}`);
+    }
+    if (photo_after_url !== undefined) {
+      params.push(photo_after_url);
+      updates.push(`photo_after_url = $${params.length}`);
+    }
 
     updates.push(`updated_at = NOW()`);
 
@@ -167,7 +177,7 @@ router.patch('/:id', optionalAuth, validateUpdateComplaint, async (req, res) => 
       UPDATE complaints
       SET ${updates.join(', ')}
       WHERE id = $1
-      RETURNING id, category, description, status, confirmation_count, severity_score, is_recurring, reopened_count, assigned_officer_id, ward_id, created_at, updated_at,
+      RETURNING id, category, description, status, confirmation_count, severity_score, is_recurring, reopened_count, assigned_officer_id, ward_id, photo_url, photo_after_url, created_at, updated_at,
                 ST_Y(location::geometry) as latitude, ST_X(location::geometry) as longitude;
     `;
 
@@ -193,12 +203,12 @@ router.patch('/:id', optionalAuth, validateUpdateComplaint, async (req, res) => 
 /**
  * POST /api/complaints/:id/resolve
  * Marks complaint as Resolved, stamps resolved_at, logs officer ID in audit history,
- * and triggers closed-loop verification.
+ * stores optional photo_after_url repair proof, and triggers closed-loop verification.
  */
 router.post('/:id/resolve', optionalAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { officer_id } = req.body;
+    const { officer_id, photo_after_url } = req.body;
     const actorId = req.user?.id || officer_id || null;
 
     const currentRes = await db.query(`SELECT * FROM complaints WHERE id = $1;`, [id]);
@@ -208,16 +218,17 @@ router.post('/:id/resolve', optionalAuth, async (req, res) => {
 
     const complaint = currentRes.rows[0];
 
-    // 1. Stamp resolved_at
+    // 1. Stamp resolved_at & photo_after_url
     const updateRes = await db.query(
       `UPDATE complaints
        SET status = 'Resolved',
+           photo_after_url = COALESCE($2, photo_after_url),
            resolved_at = NOW(),
            updated_at = NOW()
        WHERE id = $1
-       RETURNING id, category, description, reporter_phone, status, confirmation_count, severity_score, is_recurring, reopened_count, problem_spot_id, ward_id, created_at, updated_at,
+       RETURNING id, category, description, reporter_phone, status, confirmation_count, severity_score, is_recurring, reopened_count, problem_spot_id, ward_id, photo_url, photo_after_url, created_at, updated_at,
                  ST_Y(location::geometry) as latitude, ST_X(location::geometry) as longitude;`,
-      [id]
+      [id, photo_after_url || null]
     );
 
     const resolvedComplaint = updateRes.rows[0];
