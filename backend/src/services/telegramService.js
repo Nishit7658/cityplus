@@ -12,6 +12,53 @@ const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 const telegramSessions = new Map();
 
 /**
+ * Send Photo via Telegram Bot API
+ */
+async function sendPhoto(chatId, photoUrl, caption, extra = {}) {
+  if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === 'your_telegram_bot_token_here') {
+    console.log(`[Telegram Simulation] Send Photo to #${chatId} (${photoUrl}): ${caption}`);
+    return { ok: true, result: { message_id: 100 } };
+  }
+
+  return callTelegram('sendPhoto', {
+    chat_id: chatId,
+    photo: photoUrl,
+    caption,
+    parse_mode: 'HTML',
+    ...extra,
+  });
+}
+
+/**
+ * Section 4: Closed-Loop Verification
+ * Outbound inline button message asking user if fix is verified
+ */
+async function sendClosedLoopVerification(chatId, complaintId, category, photoAfterUrl) {
+  const caption = `🔧 <b>VMC Resolution Verification</b>\n\nYour civic grievance report #${complaintId} regarding <b>${category}</b> has been marked as <b>Resolved</b> by VMC engineering crews.\n\n<i>Did this repair meet municipal standards? Please confirm below:</i>`;
+  const replyMarkup = {
+    inline_keyboard: [
+      [
+        { text: '✅ Yes, Verified Fixed', callback_data: `verify_yes_${complaintId}` },
+        { text: '❌ No, Still Broken', callback_data: `verify_no_${complaintId}` },
+      ],
+    ],
+  };
+
+  if (photoAfterUrl) {
+    const fullPhotoUrl = photoAfterUrl.startsWith('http')
+      ? photoAfterUrl
+      : `${process.env.APP_URL || 'http://localhost:5000'}${photoAfterUrl.startsWith('/') ? '' : '/'}${photoAfterUrl}`;
+    try {
+      return await sendPhoto(chatId, fullPhotoUrl, caption, { reply_markup: replyMarkup });
+    } catch {
+      return await sendMessage(chatId, caption, { reply_markup: replyMarkup });
+    }
+  }
+
+  return await sendMessage(chatId, caption, { reply_markup: replyMarkup });
+}
+
+/**
  * Send HTTP request to Telegram Bot API
  */
 async function callTelegram(method, payload) {
@@ -94,26 +141,6 @@ async function sendLocationPrompt(chatId, categoryTitle) {
   return sendMessage(
     chatId,
     `Category selected: <b>${categoryTitle}</b>\n\n📍 Please tap the button below to share your <b>Current GPS Location</b> so VMC field teams can dispatch directly to the spot:`,
-    { reply_markup: keyboard }
-  );
-}
-
-/**
- * Send Closed-Loop Verification to citizen on resolution
- */
-async function sendClosedLoopVerification(chatId, complaintId, category) {
-  const keyboard = {
-    inline_keyboard: [
-      [
-        { text: '✅ Yes, Verified Fixed', callback_data: `verify_yes_${complaintId}` },
-        { text: '❌ No, Still Broken', callback_data: `verify_no_${complaintId}` },
-      ],
-    ],
-  };
-
-  return sendMessage(
-    chatId,
-    `🔔 <b>VMC Resolution Verification</b>\n\nYour civic report <b>#${complaintId}</b> regarding <i>${category}</i> has been marked as <b>Resolved</b> by the zonal engineering team.\n\nDid the crew fix the issue satisfactorily?`,
     { reply_markup: keyboard }
   );
 }

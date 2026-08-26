@@ -275,27 +275,49 @@ router.post('/simulate', async (req, res) => {
 
     // 3. Simulated verification replies ("Yes" / "No")
     if (text.toLowerCase() === 'yes' || text.toLowerCase() === 'confirm yes') {
+      const lastComplaintRes = await db.query(`SELECT id FROM complaints WHERE status = 'Resolved' ORDER BY id DESC LIMIT 1;`);
+      const targetId = (lastComplaintRes.rows && lastComplaintRes.rows[0]?.id) || 105;
+
+      const updateRes = await db.query(
+        `UPDATE complaints SET updated_at = NOW() WHERE id = $1 RETURNING *;`,
+        [targetId]
+      );
+      const verified = (updateRes.rows && updateRes.rows[0]) || { id: targetId, status: 'Resolved' };
+      socketService.emitEvent('complaint:updated', verified);
+
       return res.json({
         success: true,
-        botReply: `Thank you for confirming! Report marked as permanently resolved in VMC records.`,
+        botReply: `✅ Thank you for confirming! Report #${targetId} is permanently closed as Verified in VMC audit records.`,
+        complaint: verified,
       });
     }
 
     if (text.toLowerCase() === 'no' || text.toLowerCase() === 'reject (no)') {
-      // Reopen last complaint in database
-      const lastComplaintRes = await db.query(`SELECT id FROM complaints ORDER BY id DESC LIMIT 1;`);
-      const targetId = lastComplaintRes.rows[0]?.id || 101;
+      // Reopen last resolved complaint in database
+      const lastComplaintRes = await db.query(`SELECT id FROM complaints WHERE status = 'Resolved' ORDER BY id DESC LIMIT 1;`);
+      const targetId = (lastComplaintRes.rows && lastComplaintRes.rows[0]?.id) || 105;
 
       const updateRes = await db.query(
         `UPDATE complaints SET status = 'Pending', reopened_count = reopened_count + 1, updated_at = NOW() WHERE id = $1 RETURNING *;`,
         [targetId]
       );
-      const reopened = updateRes.rows[0] || { id: targetId, status: 'Pending', reopened_count: 1 };
+      const reopened = (updateRes.rows && updateRes.rows[0]) || { id: targetId, status: 'Pending', reopened_count: 1 };
+      
+      try {
+        await db.query(
+          `INSERT INTO status_logs (complaint_id, old_status, new_status) VALUES ($1, 'Resolved', 'Pending');`,
+          [targetId]
+        );
+      } catch {
+        // ignore
+      }
+
       socketService.emitEvent('complaint:reopened', reopened);
+      socketService.emitEvent('complaint:updated', reopened);
 
       return res.json({
         success: true,
-        botReply: `We apologize for the inconvenience. Report #${targetId} has been RE-OPENED and escalated to high priority.`,
+        botReply: `⚠️ We apologize for the inconvenience. Report #${targetId} has been RE-OPENED and escalated to high priority for zonal executive engineers.`,
         complaint: reopened,
       });
     }

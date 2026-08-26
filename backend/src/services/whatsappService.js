@@ -95,7 +95,17 @@ async function sendLocationPrompt(to, categoryTitle) {
  * Section 4: Closed-Loop Verification
  * Outbound quick-reply message asking user if fix is verified
  */
-async function sendClosedLoopVerification(to, complaintId, category) {
+async function sendClosedLoopVerification(to, complaintId, category, photoAfterUrl) {
+  const fullPhotoUrl = photoAfterUrl
+    ? (photoAfterUrl.startsWith('http')
+        ? photoAfterUrl
+        : `${process.env.APP_URL || 'http://localhost:5000'}${photoAfterUrl.startsWith('/') ? '' : '/'}${photoAfterUrl}`)
+    : null;
+
+  const header = fullPhotoUrl
+    ? { type: 'image', image: { link: fullPhotoUrl } }
+    : { type: 'text', text: 'VMC Resolution Verification' };
+
   return postToMeta({
     messaging_product: 'whatsapp',
     recipient_type: 'individual',
@@ -103,13 +113,15 @@ async function sendClosedLoopVerification(to, complaintId, category) {
     type: 'interactive',
     interactive: {
       type: 'button',
-      header: { type: 'text', text: 'VMC Resolution Verification' },
-      body: { text: `Your report #${complaintId} regarding *${category}* has been marked as fixed by VMC officers. Is this correct?` },
+      header,
+      body: {
+        text: `Your civic grievance report #${complaintId} regarding *${category}* has been marked as fixed by VMC engineering crews.\n\nDid this repair meet municipal standards?`,
+      },
       footer: { text: 'Please tap below to confirm' },
       action: {
         buttons: [
-          { type: 'reply', reply: { id: `verify_yes_${complaintId}`, title: 'Yes' } },
-          { type: 'reply', reply: { id: `verify_no_${complaintId}`, title: 'No' } },
+          { type: 'reply', reply: { id: `verify_yes_${complaintId}`, title: 'Yes, Verified' } },
+          { type: 'reply', reply: { id: `verify_no_${complaintId}`, title: 'No, Reopen' } },
         ],
       },
     },

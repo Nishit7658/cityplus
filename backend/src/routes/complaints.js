@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const whatsappService = require('../services/whatsappService');
+const telegramService = require('../services/telegramService');
 const socketService = require('../services/socketService');
 const { optionalAuth, requireAuth } = require('../middleware/auth');
 const { validateCreateComplaint, validateUpdateComplaint } = require('../middleware/validation');
@@ -247,22 +248,37 @@ router.post('/:id/resolve', optionalAuth, async (req, res) => {
       [id, complaint.status, actorId]
     );
 
-    // 2. Trigger outbound verification
+    // 2. Trigger outbound closed-loop citizen verification
     try {
-      await whatsappService.sendClosedLoopVerification(
-        complaint.reporter_phone,
-        complaint.id,
-        complaint.category
-      );
+      if (complaint.reporter_phone) {
+        const phoneStr = String(complaint.reporter_phone);
+        if (phoneStr.startsWith('tg_')) {
+          const chatId = phoneStr.replace('tg_', '');
+          await telegramService.sendClosedLoopVerification(
+            chatId,
+            complaint.id,
+            complaint.category,
+            photo_after_url || resolvedComplaint.photo_after_url
+          );
+        } else {
+          await whatsappService.sendClosedLoopVerification(
+            complaint.reporter_phone,
+            complaint.id,
+            complaint.category,
+            photo_after_url || resolvedComplaint.photo_after_url
+          );
+        }
+      }
     } catch (wsErr) {
-      // Non-blocking notification warning
+      console.warn('⚠️ [Outbound Verification Notice]:', wsErr.message);
     }
 
+    socketService.emitEvent('complaint:resolved', resolvedComplaint);
     socketService.emitEvent('complaint:updated', resolvedComplaint);
 
     return res.json({
       success: true,
-      message: `Complaint #${id} resolved successfully.`,
+      message: `Complaint #${id} marked as resolved. Outbound verification prompt dispatched to citizen.`,
       complaint: resolvedComplaint,
     });
   } catch (error) {

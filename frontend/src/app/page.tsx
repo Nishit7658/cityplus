@@ -324,11 +324,11 @@ export default function OverviewPage() {
           setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
           setSelected(null);
         }}
-        onResolve={async (id, officerId) => {
+        onResolve={async (id, officerId, photoAfterUrl) => {
           const res = await fetch(`${API_URL}/api/complaints/${id}/resolve`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ officer_id: officerId }),
+            body: JSON.stringify({ officer_id: officerId, photo_after_url: photoAfterUrl }),
           });
           if (!res.ok) throw new Error('Resolve failed');
           const data = await res.json();

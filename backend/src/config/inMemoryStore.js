@@ -304,11 +304,18 @@ async function executeInMemoryQuery(text, params = []) {
       return { rows: found ? [found] : [] };
     }
 
-    // Filter by status
-    const statusMatch = sql.match(/c\.status\s*=\s*\$(\d+)|status\s*=\s*\$(\d+)/i);
-    if (statusMatch) {
-      const paramIdx = parseInt(statusMatch[1] || statusMatch[2], 10) - 1;
+    // Filter by status (parameterized or literal string)
+    const statusParamMatch = sql.match(/c\.status\s*=\s*\$(\d+)|status\s*=\s*\$(\d+)/i);
+    const statusLiteralMatch = sql.match(/c\.status\s*=\s*'([^']+)'|status\s*=\s*'([^']+)'/i);
+
+    if (statusParamMatch) {
+      const paramIdx = parseInt(statusParamMatch[1] || statusParamMatch[2], 10) - 1;
       const targetStatus = params[paramIdx];
+      if (targetStatus) {
+        rows = rows.filter((c) => c.status.toLowerCase() === targetStatus.toLowerCase());
+      }
+    } else if (statusLiteralMatch) {
+      const targetStatus = statusLiteralMatch[1] || statusLiteralMatch[2];
       if (targetStatus) {
         rows = rows.filter((c) => c.status.toLowerCase() === targetStatus.toLowerCase());
       }
@@ -502,13 +509,30 @@ async function executeInMemoryQuery(text, params = []) {
 
   // 7. INSERT INTO status_logs
   if (lower.startsWith('insert into status_logs')) {
-    const [complaint_id, old_status, new_status, changed_by] = params;
+    let complaint_id = parseInt(params[0], 10);
+    let old_status = params[1] || 'Pending';
+    let new_status = 'Resolved';
+    let changed_by = null;
+
+    if (lower.includes("'resolved'")) {
+      new_status = 'Resolved';
+      changed_by = params[2] ? parseInt(params[2], 10) : null;
+    } else if (lower.includes("'pending'")) {
+      new_status = 'Pending';
+      changed_by = params[2] ? parseInt(params[2], 10) : null;
+    } else if (params.length >= 4) {
+      new_status = params[2];
+      changed_by = params[3] ? parseInt(params[3], 10) : null;
+    } else if (params.length === 3) {
+      new_status = params[2];
+    }
+
     const newLog = {
       id: STATUS_LOGS.length + 1,
-      complaint_id: parseInt(complaint_id, 10),
+      complaint_id,
       old_status,
       new_status,
-      changed_by: changed_by ? parseInt(changed_by, 10) : null,
+      changed_by,
       changed_at: new Date().toISOString(),
     };
     STATUS_LOGS.push(newLog);
