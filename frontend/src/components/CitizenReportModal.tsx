@@ -30,16 +30,16 @@ const CATEGORIES = [
 ];
 
 const WARDS = [
-  { id: 1, name: 'Ward 1 — Sayajigunj', lat: 22.3112, lng: 73.1878 },
-  { id: 2, name: 'Ward 2 — Akota', lat: 22.2981, lng: 73.1642 },
-  { id: 3, name: 'Ward 3 — Raopura', lat: 22.3025, lng: 73.2054 },
-  { id: 4, name: 'Ward 4 — Karelibaug', lat: 22.3214, lng: 73.1989 },
-  { id: 5, name: 'Ward 5 — Fatehgunj', lat: 22.3168, lng: 73.1895 },
-  { id: 6, name: 'Ward 6 — Manjalpur', lat: 22.2684, lng: 73.1956 },
-  { id: 7, name: 'Ward 7 — Makarpura', lat: 22.2512, lng: 73.1923 },
-  { id: 8, name: 'Ward 8 — Gotri', lat: 22.3125, lng: 73.1412 },
-  { id: 9, name: 'Ward 9 — Gorwa', lat: 22.3341, lng: 73.1624 },
-  { id: 10, name: 'Ward 10 — Waghodia Road', lat: 22.2987, lng: 73.2341 },
+  { id: 1, name: 'Ward 1 — Sayajigunj (MSU, Railway Station, Kala Ghoda)', lat: 22.3112, lng: 73.1878 },
+  { id: 2, name: 'Ward 2 — Akota (Alkapuri, RC Dutt Road, Old Padra Road)', lat: 22.2981, lng: 73.1642 },
+  { id: 3, name: 'Ward 3 — Raopura (Mandvi, Nyayamandir, Panigate, Jubilee Baug)', lat: 22.3025, lng: 73.2054 },
+  { id: 4, name: 'Ward 4 — Karelibaug (Harni, Vadodara Airport, Amit Nagar, VIP Road)', lat: 22.3214, lng: 73.1989 },
+  { id: 5, name: 'Ward 5 — Fatehgunj (Sama, Chhani, Sama-Savli Road, Nizampura)', lat: 22.3168, lng: 73.1895 },
+  { id: 6, name: 'Ward 6 — Manjalpur (Tarsali, Lalbaug, Darbar Chowkdi, Susen)', lat: 22.2684, lng: 73.1956 },
+  { id: 7, name: 'Ward 7 — Makarpura (Maneja, GIDC, Jambuva, Vadsar, ONGC)', lat: 22.2512, lng: 73.1923 },
+  { id: 8, name: 'Ward 8 — Gotri (Sevasi, Bhayli, Vasna Road, Laxmipura, Bil)', lat: 22.3125, lng: 73.1412 },
+  { id: 9, name: 'Ward 9 — Gorwa (Subhanpura, Panchvati, Ellora Park, Undera)', lat: 22.3341, lng: 73.1624 },
+  { id: 10, name: 'Ward 10 — Waghodia Road (Ajwa Road, Kapurai, Soma Talav, Golden Chowkdi)', lat: 22.2987, lng: 73.2341 },
 ];
 
 export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({

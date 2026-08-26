@@ -1,4 +1,4 @@
-import { Complaint, Officer, TransparencyStats } from '@/types';
+import { Complaint, Officer, TransparencyStats, Ward } from '@/types';
 
 export const MOCK_COMPLAINTS: Complaint[] = [
   {
@@ -410,6 +410,19 @@ export const MOCK_OFFICERS: Officer[] = [
   },
 ];
 
+export const MOCK_WARDS: Ward[] = [
+  { id: 1, ward_number: 1, ward_name: 'Ward 1 — Sayajigunj', name: 'Ward 1 — Sayajigunj', population: 185000, area_sq_km: 12.4 },
+  { id: 2, ward_number: 2, ward_name: 'Ward 2 — Akota', name: 'Ward 2 — Akota', population: 195000, area_sq_km: 14.8 },
+  { id: 3, ward_number: 3, ward_name: 'Ward 3 — Raopura', name: 'Ward 3 — Raopura', population: 172000, area_sq_km: 10.2 },
+  { id: 4, ward_number: 4, ward_name: 'Ward 4 — Karelibaug', name: 'Ward 4 — Karelibaug', population: 210000, area_sq_km: 16.5 },
+  { id: 5, ward_number: 5, ward_name: 'Ward 5 — Fatehgunj', name: 'Ward 5 — Fatehgunj', population: 168000, area_sq_km: 11.8 },
+  { id: 6, ward_number: 6, ward_name: 'Ward 6 — Manjalpur', name: 'Ward 6 — Manjalpur', population: 225000, area_sq_km: 18.2 },
+  { id: 7, ward_number: 7, ward_name: 'Ward 7 — Makarpura', name: 'Ward 7 — Makarpura', population: 198000, area_sq_km: 22.4 },
+  { id: 8, ward_number: 8, ward_name: 'Ward 8 — Gotri', name: 'Ward 8 — Gotri', population: 205000, area_sq_km: 19.1 },
+  { id: 9, ward_number: 9, ward_name: 'Ward 9 — Gorwa', name: 'Ward 9 — Gorwa', population: 182000, area_sq_km: 15.6 },
+  { id: 10, ward_number: 10, ward_name: 'Ward 10 — Waghodia Road', name: 'Ward 10 — Waghodia Road', population: 215000, area_sq_km: 21.0 },
+];
+
 export const MOCK_TRANSPARENCY: TransparencyStats = {
   total_complaints: 348,
   resolved_complaints: 291,
@@ -422,9 +435,9 @@ export const MOCK_TRANSPARENCY: TransparencyStats = {
     { ward_name: 'Ward 4 — Karelibaug', total: 49, resolved: 38 },
     { ward_name: 'Ward 5 — Fatehgunj', total: 31, resolved: 28 },
     { ward_name: 'Ward 6 — Manjalpur', total: 35, resolved: 30 },
-    { ward_name: 'Ward 7 — Gotri', total: 29, resolved: 25 },
-    { ward_name: 'Ward 8 — Makarpura', total: 33, resolved: 27 },
+    { ward_name: 'Ward 7 — Makarpura', total: 33, resolved: 27 },
+    { ward_name: 'Ward 8 — Gotri', total: 29, resolved: 25 },
     { ward_name: 'Ward 9 — Gorwa', total: 24, resolved: 21 },
-    { ward_name: 'Ward 10 — Nizampura', total: 22, resolved: 13 },
+    { ward_name: 'Ward 10 — Waghodia Road', total: 22, resolved: 13 },
   ],
 };

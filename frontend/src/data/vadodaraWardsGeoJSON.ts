@@ -1,4 +1,4 @@
-// GeoJSON Polygon Boundary Dataset for Vadodara Municipal Corporation (10 VMC Wards)
+// GeoJSON Polygon Boundary Dataset for Vadodara Municipal Corporation (Complete 10-Ward Continuous Mosaic)
 // RFC 7946 Standard FeatureCollection
 
 export interface WardFeatureProperties {
@@ -13,6 +13,7 @@ export interface WardFeatureProperties {
   population: number;
   area_sq_km: number;
   color: string;
+  key_areas: string;
 }
 
 export interface WardGeoJSONFeature {
@@ -49,17 +50,17 @@ export const VADODARA_WARDS_GEOJSON: WardGeoJSONCollection = {
         population: 185000,
         area_sq_km: 12.4,
         color: '#0284C7',
+        key_areas: 'Sayajigunj, Railway Station, MSU Campus, Kala Ghoda, Sayaji Baug, Pratapgunj, Kadakbazar, Jetalpur Road',
       },
       geometry: {
         type: 'Polygon',
         coordinates: [
           [
-            [73.175, 22.302],
-            [73.198, 22.304],
-            [73.199, 22.318],
-            [73.182, 22.322],
-            [73.172, 22.315],
-            [73.175, 22.302],
+            [73.172, 22.302],
+            [73.198, 22.302],
+            [73.198, 22.320],
+            [73.172, 22.320],
+            [73.172, 22.302],
           ],
         ],
       },
@@ -81,23 +82,24 @@ export const VADODARA_WARDS_GEOJSON: WardGeoJSONCollection = {
         population: 195000,
         area_sq_km: 14.8,
         color: '#2563EB',
+        key_areas: 'Akota, Alkapuri, RC Dutt Road, Productivity Road, Dandia Bazaar, Akota Bridge, Harinagar, BPC Road, Old Padra Road',
       },
       geometry: {
         type: 'Polygon',
         coordinates: [
           [
-            [73.151, 22.285],
-            [73.175, 22.288],
+            [73.145, 22.275],
+            [73.178, 22.275],
             [73.178, 22.308],
-            [73.155, 22.312],
-            [73.148, 22.298],
-            [73.151, 22.285],
+            [73.172, 22.308],
+            [73.145, 22.308],
+            [73.145, 22.275],
           ],
         ],
       },
     },
 
-    // Ward 3: Raopura (Central Zone)
+    // Ward 3: Raopura (Central / Old City Zone)
     {
       type: 'Feature',
       id: 3,
@@ -113,17 +115,17 @@ export const VADODARA_WARDS_GEOJSON: WardGeoJSONCollection = {
         population: 172000,
         area_sq_km: 10.2,
         color: '#D97706',
+        key_areas: 'Raopura, Mandvi, Nyayamandir, Gandhi Nagar Gruh, Lehripura, Jubilee Baug, Champaner Gate, Panigate, Chokhandi',
       },
       geometry: {
         type: 'Polygon',
         coordinates: [
           [
-            [73.195, 22.292],
-            [73.218, 22.295],
-            [73.219, 22.312],
-            [73.198, 22.314],
-            [73.192, 22.302],
-            [73.195, 22.292],
+            [73.198, 22.285],
+            [73.225, 22.285],
+            [73.225, 22.318],
+            [73.198, 22.318],
+            [73.198, 22.285],
           ],
         ],
       },
@@ -145,17 +147,17 @@ export const VADODARA_WARDS_GEOJSON: WardGeoJSONCollection = {
         population: 210000,
         area_sq_km: 16.5,
         color: '#DC2626',
+        key_areas: 'Karelibaug, Amit Nagar, Harni, Vadodara Airport, Sangam Char Rasta, VIP Road, Water Tank, Muktanand Circle',
       },
       geometry: {
         type: 'Polygon',
         coordinates: [
           [
-            [73.188, 22.316],
-            [73.215, 22.318],
-            [73.218, 22.338],
-            [73.192, 22.342],
-            [73.184, 22.328],
-            [73.188, 22.316],
+            [73.188, 22.318],
+            [73.225, 22.318],
+            [73.225, 22.368],
+            [73.188, 22.368],
+            [73.188, 22.318],
           ],
         ],
       },
@@ -177,17 +179,19 @@ export const VADODARA_WARDS_GEOJSON: WardGeoJSONCollection = {
         population: 168000,
         area_sq_km: 11.8,
         color: '#059669',
+        key_areas: 'Fatehgunj, Sama, Sama-Savli Road, Nizampura, Chhani, Chhani Jakatnaka, Abhilasha Char Rasta, TP 13, GSFC',
       },
       geometry: {
         type: 'Polygon',
         coordinates: [
           [
-            [73.178, 22.314],
-            [73.195, 22.315],
-            [73.198, 22.332],
-            [73.179, 22.335],
-            [73.172, 22.324],
-            [73.178, 22.314],
+            [73.165, 22.318],
+            [73.188, 22.318],
+            [73.188, 22.368],
+            [73.145, 22.368],
+            [73.145, 22.338],
+            [73.165, 22.338],
+            [73.165, 22.318],
           ],
         ],
       },
@@ -209,17 +213,17 @@ export const VADODARA_WARDS_GEOJSON: WardGeoJSONCollection = {
         population: 225000,
         area_sq_km: 18.2,
         color: '#7C3AED',
+        key_areas: 'Manjalpur, Tarsali, Lalbaug, Darbar Chowkdi, Kubereshwar Marg, Eva Mall area, GIDC Road, Susen-Tarsali Ring Road',
       },
       geometry: {
         type: 'Polygon',
         coordinates: [
           [
-            [73.182, 22.252],
-            [73.212, 22.256],
-            [73.215, 22.282],
-            [73.185, 22.285],
-            [73.178, 22.268],
-            [73.182, 22.252],
+            [73.178, 22.250],
+            [73.225, 22.250],
+            [73.225, 22.285],
+            [73.178, 22.285],
+            [73.178, 22.250],
           ],
         ],
       },
@@ -241,17 +245,17 @@ export const VADODARA_WARDS_GEOJSON: WardGeoJSONCollection = {
         population: 198000,
         area_sq_km: 22.4,
         color: '#4F46E5',
+        key_areas: 'Makarpura, Makarpura GIDC, Maneja, Air Force Station, Novino Tarsali, Jambuva, Vadsar, Danteshwar, ONGC Colony',
       },
       geometry: {
         type: 'Polygon',
         coordinates: [
           [
-            [73.172, 22.232],
-            [73.215, 22.235],
-            [73.218, 22.258],
-            [73.182, 22.255],
-            [73.168, 22.245],
-            [73.172, 22.232],
+            [73.145, 22.215],
+            [73.225, 22.215],
+            [73.225, 22.250],
+            [73.145, 22.250],
+            [73.145, 22.215],
           ],
         ],
       },
@@ -273,17 +277,17 @@ export const VADODARA_WARDS_GEOJSON: WardGeoJSONCollection = {
         population: 205000,
         area_sq_km: 19.1,
         color: '#0891B2',
+        key_areas: 'Gotri, Vasna Road, Bhayli, Sevasi, Laxmipura, Gotri-Sevasi Road, Sterling Hospital, Yash Complex, New Alkapuri, Bil',
       },
       geometry: {
         type: 'Polygon',
         coordinates: [
           [
-            [73.125, 22.298],
-            [73.155, 22.302],
-            [73.158, 22.328],
-            [73.132, 22.332],
-            [73.121, 22.315],
-            [73.125, 22.298],
+            [73.095, 22.275],
+            [73.145, 22.275],
+            [73.145, 22.338],
+            [73.095, 22.338],
+            [73.095, 22.275],
           ],
         ],
       },
@@ -305,17 +309,20 @@ export const VADODARA_WARDS_GEOJSON: WardGeoJSONCollection = {
         population: 182000,
         area_sq_km: 15.6,
         color: '#EA580C',
+        key_areas: 'Gorwa, Subhanpura, Panchvati, Ellora Park, High Tension Road, Refinery Road, Karodiya, Undera, Alembic Road, IPCL',
       },
       geometry: {
         type: 'Polygon',
         coordinates: [
           [
-            [73.145, 22.322],
-            [73.178, 22.325],
-            [73.179, 22.352],
-            [73.152, 22.355],
-            [73.141, 22.338],
-            [73.145, 22.322],
+            [73.095, 22.338],
+            [73.145, 22.338],
+            [73.145, 22.368],
+            [73.165, 22.368],
+            [73.165, 22.338],
+            [73.172, 22.320],
+            [73.145, 22.308],
+            [73.095, 22.338],
           ],
         ],
       },
@@ -337,17 +344,17 @@ export const VADODARA_WARDS_GEOJSON: WardGeoJSONCollection = {
         population: 215000,
         area_sq_km: 21.0,
         color: '#9333EA',
+        key_areas: 'Waghodia Road, Ajwa Road, Kapurai, Parivar Char Rasta, Bapod, Kendranagar, Soma Talav, Dabhoi Road, Golden Chowkdi',
       },
       geometry: {
         type: 'Polygon',
         coordinates: [
           [
-            [73.218, 22.282],
-            [73.255, 22.288],
-            [73.258, 22.318],
-            [73.222, 22.322],
-            [73.214, 22.302],
-            [73.218, 22.282],
+            [73.225, 22.215],
+            [73.275, 22.215],
+            [73.275, 22.368],
+            [73.225, 22.368],
+            [73.225, 22.215],
           ],
         ],
       },

@@ -20,16 +20,106 @@ function getTelegramApi() {
 const telegramSessions = new Map();
 
 const WARDS_DATA = [
-  { id: 1, name: 'Ward 1 — Sayajigunj', lat: 22.3112, lng: 73.1878, keywords: ['sayajigunj', 'sayaji', 'railway', 'station', 'ward 1', 'ward1', 'msu', 'university', 'kala ghoda'] },
-  { id: 2, name: 'Ward 2 — Akota', lat: 22.2981, lng: 73.1642, keywords: ['akota', 'dandia', 'bazaar', 'ward 2', 'ward2', 'alkapuri', 'rc dutt'] },
-  { id: 3, name: 'Ward 3 — Raopura', lat: 22.3025, lng: 73.2054, keywords: ['raopura', 'mandvi', 'nyayamandir', 'ward 3', 'ward3', 'tower', 'chokhandi'] },
-  { id: 4, name: 'Ward 4 — Karelibaug', lat: 22.3214, lng: 73.1989, keywords: ['karelibaug', 'kareli', 'amit', 'nagar', 'ward 4', 'ward4', 'harni', 'airport'] },
-  { id: 5, name: 'Ward 5 — Fatehgunj', lat: 22.3168, lng: 73.1895, keywords: ['fatehgunj', 'fateh', 'sama', 'chhani', 'ward 5', 'ward5', 'nizampura'] },
-  { id: 6, name: 'Ward 6 — Manjalpur', lat: 22.2684, lng: 73.1956, keywords: ['manjalpur', 'tarsali', 'ward 6', 'ward6', 'lalbaug', 'darbar'] },
-  { id: 7, name: 'Ward 7 — Makarpura', lat: 22.2512, lng: 73.1923, keywords: ['makarpura', 'gidc', 'jambuva', 'ward 7', 'ward7', 'airforce', 'novino'] },
-  { id: 8, name: 'Ward 8 — Gotri', lat: 22.3125, lng: 73.1412, keywords: ['gotri', 'sevasi', 'vasna', 'bhayli', 'ward 8', 'ward8', 'laxmipura'] },
-  { id: 9, name: 'Ward 9 — Gorwa', lat: 22.3341, lng: 73.1624, keywords: ['gorwa', 'subhanpura', 'panchvati', 'ward 9', 'ward9', 'ellora', 'bapod'] },
-  { id: 10, name: 'Ward 10 — Waghodia Road', lat: 22.2987, lng: 73.2341, keywords: ['waghodia', 'kapurai', 'panigate', 'ajwa', 'ward 10', 'ward10', 'parivar'] },
+  {
+    id: 1,
+    name: 'Ward 1 — Sayajigunj',
+    lat: 22.3112,
+    lng: 73.1878,
+    keywords: [
+      'sayajigunj', 'sayaji', 'railway', 'station', 'ward 1', 'ward1', 'msu', 'university', 'kala ghoda',
+      'pratapgunj', 'kadakbazar', 'dairy den', 'natubhai circle', 'jetalpur', 'sayaji baug', 'kamati baug'
+    ]
+  },
+  {
+    id: 2,
+    name: 'Ward 2 — Akota',
+    lat: 22.2981,
+    lng: 73.1642,
+    keywords: [
+      'akota', 'dandia', 'bazaar', 'ward 2', 'ward2', 'alkapuri', 'rc dutt', 'productivity', 'sheetal studio',
+      'akota bridge', 'harinagar', 'bpc road', 'old padra road', 'op road', 'sun pharma', 'chakraputi', 'chapad'
+    ]
+  },
+  {
+    id: 3,
+    name: 'Ward 3 — Raopura',
+    lat: 22.3025,
+    lng: 73.2054,
+    keywords: [
+      'raopura', 'mandvi', 'nyayamandir', 'ward 3', 'ward3', 'tower', 'chokhandi', 'lehripura', 'jubilee baug',
+      'champaner gate', 'gendi gate', 'fatehpura', 'mg road', 'khanderao market', 'sur sagar', 'sursagar'
+    ]
+  },
+  {
+    id: 4,
+    name: 'Ward 4 — Karelibaug',
+    lat: 22.3214,
+    lng: 73.1989,
+    keywords: [
+      'karelibaug', 'kareli', 'amit nagar', 'ward 4', 'ward4', 'harni', 'airport', 'sangam', 'vip road',
+      'muktanand circle', 'bright school', 'water tank', 'anand nagar', 'harni ring road', 'motnath'
+    ]
+  },
+  {
+    id: 5,
+    name: 'Ward 5 — Fatehgunj',
+    lat: 22.3168,
+    lng: 73.1895,
+    keywords: [
+      'fatehgunj', 'fateh', 'sama', 'chhani', 'ward 5', 'ward5', 'nizampura', 'sama savli', 'chhani jakatnaka',
+      'abhilasha', 'tp 13', 'gsfc', 'navrachana', 'chhani village', 'sama canal', 'dumad', 'ranoli'
+    ]
+  },
+  {
+    id: 6,
+    name: 'Ward 6 — Manjalpur',
+    lat: 22.2684,
+    lng: 73.1956,
+    keywords: [
+      'manjalpur', 'tarsali', 'ward 6', 'ward6', 'lalbaug', 'darbar chowkdi', 'eva mall', 'kubereshwar',
+      'shreyas school', 'susen', 'tarsali ring road', 'vrajdham', 'makarpura road'
+    ]
+  },
+  {
+    id: 7,
+    name: 'Ward 7 — Makarpura',
+    lat: 22.2512,
+    lng: 73.1923,
+    keywords: [
+      'makarpura', 'gidc', 'jambuva', 'ward 7', 'ward7', 'air force', 'airforce', 'novino', 'maneja',
+      'vadsar', 'danteshwar', 'ongc colony', 'makarpura palace', 'tarsali bypass', 'por', 'kelanpur'
+    ]
+  },
+  {
+    id: 8,
+    name: 'Ward 8 — Gotri',
+    lat: 22.3125,
+    lng: 73.1412,
+    keywords: [
+      'gotri', 'sevasi', 'vasna', 'bhayli', 'ward 8', 'ward8', 'laxmipura', 'vasna road', 'bhayli road',
+      'sterling hospital', 'yash complex', 'priya cinema', 'new alkapuri', 'bil', 'khanpur', 'ampad'
+    ]
+  },
+  {
+    id: 9,
+    name: 'Ward 9 — Gorwa',
+    lat: 22.3341,
+    lng: 73.1624,
+    keywords: [
+      'gorwa', 'subhanpura', 'panchvati', 'ward 9', 'ward9', 'ellora park', 'high tension', 'refinery road',
+      'karodiya', 'undera', 'alembic road', 'madhavnagar', 'ipcl', 'bapod'
+    ]
+  },
+  {
+    id: 10,
+    name: 'Ward 10 — Waghodia Road',
+    lat: 22.2987,
+    lng: 73.2341,
+    keywords: [
+      'waghodia', 'kapurai', 'panigate', 'ajwa', 'ward 10', 'ward10', 'parivar char rasta', 'kendranagar',
+      'soma talav', 'dabhoi road', 'golden chowkdi', 'ajwa road', 'waghodia road', 'gurukul', 'khatamba'
+    ]
+  },
 ];
 
 function resolveLandmarkCoordinates(text) {
