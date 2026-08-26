@@ -11,11 +11,11 @@ const WARDS = [
   { id: 3, name: 'Ward 3 — Raopura', ward_number: 3, lat: 22.3025, lng: 73.2054 },
   { id: 4, name: 'Ward 4 — Karelibaug', ward_number: 4, lat: 22.3214, lng: 73.1989 },
   { id: 5, name: 'Ward 5 — Fatehgunj', ward_number: 5, lat: 22.3168, lng: 73.1895 },
-  { id: 6, name: 'Ward 6 — Manjalpur', ward_number: 6, lat: 22.2680, lng: 73.1950 },
-  { id: 7, name: 'Ward 7 — Gotri', ward_number: 7, lat: 22.3150, lng: 73.1480 },
-  { id: 8, name: 'Ward 8 — Makarpura', ward_number: 8, lat: 22.2450, lng: 73.1880 },
-  { id: 9, name: 'Ward 9 — Gorwa', ward_number: 9, lat: 22.3380, lng: 73.1620 },
-  { id: 10, name: 'Ward 10 — Nizampura', ward_number: 10, lat: 22.3340, lng: 73.1820 },
+  { id: 6, name: 'Ward 6 — Manjalpur', ward_number: 6, lat: 22.2684, lng: 73.1956 },
+  { id: 7, name: 'Ward 7 — Makarpura', ward_number: 7, lat: 22.2512, lng: 73.1923 },
+  { id: 8, name: 'Ward 8 — Gotri', ward_number: 8, lat: 22.3125, lng: 73.1412 },
+  { id: 9, name: 'Ward 9 — Gorwa', ward_number: 9, lat: 22.3341, lng: 73.1624 },
+  { id: 10, name: 'Ward 10 — Waghodia Road', ward_number: 10, lat: 22.2987, lng: 73.2341 },
 ];
 
 const OFFICERS = [

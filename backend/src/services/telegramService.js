@@ -342,9 +342,11 @@ async function handleTelegramUpdate(update) {
           photoUrl: session.photo_url || null,
         });
 
+        const assignedWard = WARDS_DATA.find((w) => w.id === result.complaint.ward_id) || WARDS_DATA[0];
+
         await sendMessage(
           chatId,
-          `✅ <b>${result.message}</b>\n\n📍 <i>Coordinates: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}</i>\n🏢 Designated Ward jurisdiction assigned.`
+          `✅ <b>${result.message}</b>\n\n📍 <b>GPS Coordinates:</b> ${latitude.toFixed(5)}, ${longitude.toFixed(5)}\n🏢 <b>Assigned Ward:</b> ${assignedWard.name}\n📋 <b>Ticket ID:</b> #${result.complaint.id}`
         );
 
         telegramSessions.set(chatId, { state: 'START', category: null });
