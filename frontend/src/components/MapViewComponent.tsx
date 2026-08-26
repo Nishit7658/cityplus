@@ -1,17 +1,20 @@
 'use client';
 
 // E.2 / C.7 — Map View Component
-// High-visibility civic badge markers with robust Leaflet lifecycle handling
+// High-visibility civic badge markers, 10-Ward Geographic Polygons, and 18m Spatial Clustering
 // CARTO Positron Light Tiles, Stored XSS sanitization, safe layer cleanup
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
 import { Complaint } from '@/types';
 import { getCategoryColor } from './CategoryIcon';
+import { VADODARA_WARDS_GEOJSON, WardGeoJSONFeature } from '@/data/vadodaraWardsGeoJSON';
 
 interface MapViewComponentProps {
   complaints?: Complaint[];
   onSelectComplaint?: (complaint: Complaint) => void;
+  onSelectWard?: (wardId: number | string) => void;
+  selectedWard?: number | string;
   center?: [number, number];
   zoom?: number;
   showHeatmap?: boolean;
@@ -34,6 +37,7 @@ function buildCustomMarkerHtml(complaint: Complaint): string {
   const catColor = getCategoryColor(complaint.category);
   const isCritical = complaint.confirmation_count >= 8 && complaint.status !== 'Resolved';
   const isResolved = complaint.status === 'Resolved';
+  const isClustered = complaint.confirmation_count >= 4;
 
   const borderColor = isResolved ? '#15803D' : isCritical ? '#B91C1C' : catColor;
   const badgeBg = isResolved ? '#F0FDF4' : '#FFFFFF';
@@ -95,9 +99,14 @@ function buildCustomMarkerHtml(complaint: Complaint): string {
     ? `<div style="position:absolute;top:-4px;left:-4px;width:40px;height:40px;border-radius:10px;border:2px solid #B91C1C;animation:pulse-dot 1800ms ease-in-out infinite;opacity:0.6;pointer-events:none;"></div>`
     : '';
 
+  const clusterPill = isClustered && !isResolved
+    ? `<div style="position:absolute;top:-6px;right:-8px;background:#0B2545;color:#FFFFFF;border:1.5px solid #FFFFFF;border-radius:10px;font-size:9px;font-weight:800;font-family:'IBM Plex Mono',monospace;padding:1px 5px;box-shadow:0 1px 4px rgba(0,0,0,0.3);">${complaint.confirmation_count}×</div>`
+    : '';
+
   return `
     <div style="position:relative;width:32px;height:42px;cursor:pointer;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.22));">
       ${pulseHtml}
+      ${clusterPill}
       <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible;">
         <path d="M10 27 L16 41 L22 27 Z" fill="${borderColor}"/>
         <rect x="1.5" y="1.5" width="29" height="28" rx="6" fill="${badgeBg}" stroke="${borderColor}" stroke-width="2"/>
@@ -110,6 +119,8 @@ function buildCustomMarkerHtml(complaint: Complaint): string {
 export const MapViewComponent: React.FC<MapViewComponentProps> = ({
   complaints = [],
   onSelectComplaint,
+  onSelectWard,
+  selectedWard,
   center = [22.3072, 73.1812],
   zoom = 13,
   showHeatmap = false,
@@ -117,8 +128,10 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const heatmapLayerRef = useRef<L.Layer | null>(null);
+  const wardsLayerRef = useRef<L.GeoJSON | null>(null);
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
   const [activeLayer, setActiveLayer] = useState<'streets' | 'satellite'>('streets');
+  const [showWards, setShowWards] = useState<boolean>(true);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
   const safeComplaints = useMemo(() => {
@@ -169,12 +182,91 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
         markersGroupRef.current.clearLayers();
         markersGroupRef.current = null;
       }
+      if (wardsLayerRef.current) {
+        wardsLayerRef.current.clearLayers();
+        wardsLayerRef.current = null;
+      }
       map.remove();
       mapRef.current = null;
     };
   }, [center, zoom]);
 
-  // 2. Render Markers & Synchronize Layers safely
+  // 2. Render Geographic Ward Boundary Polygons
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (wardsLayerRef.current) {
+      map.removeLayer(wardsLayerRef.current);
+      wardsLayerRef.current = null;
+    }
+
+    if (showWards) {
+      const geoLayer = L.geoJSON(VADODARA_WARDS_GEOJSON as unknown as GeoJSON.FeatureCollection, {
+        style: (feature) => {
+          const feat = feature as unknown as WardGeoJSONFeature;
+          const isSelected = selectedWard && String(selectedWard) === String(feat.properties.id);
+          const color = feat.properties.color || '#0284C7';
+
+          return {
+            color: isSelected ? '#0B2545' : color,
+            weight: isSelected ? 2.5 : 1.5,
+            fillColor: color,
+            fillOpacity: isSelected ? 0.22 : 0.08,
+            dashArray: isSelected ? '4, 4' : 'none',
+          };
+        },
+        onEachFeature: (feature, layer) => {
+          const feat = feature as unknown as WardGeoJSONFeature;
+          const props = feat.properties;
+
+          // Count live complaints in this ward
+          const wardTickets = safeComplaints.filter((c) => c.ward_id === props.id);
+          const pendingCount = wardTickets.filter((c) => c.status !== 'Resolved').length;
+
+          // Rich Ward Tooltip
+          layer.bindTooltip(
+            `
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;padding:3px 2px;">
+              <div style="font-size:12px;font-weight:700;color:#0B2545;">📍 ${props.name}</div>
+              <div style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:#64748B;margin-top:2px;">
+                Zone: <strong>${props.zone}</strong> • Active: <strong style="color:${pendingCount > 0 ? '#B91C1C' : '#15803D'};">${pendingCount} tickets</strong>
+              </div>
+            </div>
+            `,
+            { sticky: true, opacity: 0.96 }
+          );
+
+          layer.on({
+            mouseover: (e) => {
+              const target = e.target as L.Path;
+              target.setStyle({
+                weight: 2.5,
+                fillOpacity: 0.24,
+              });
+            },
+            mouseout: (e) => {
+              const target = e.target as L.Path;
+              const isSelected = selectedWard && String(selectedWard) === String(props.id);
+              target.setStyle({
+                weight: isSelected ? 2.5 : 1.5,
+                fillOpacity: isSelected ? 0.22 : 0.08,
+              });
+            },
+            click: () => {
+              if (onSelectWard) {
+                onSelectWard(props.id);
+              }
+            },
+          });
+        },
+      }).addTo(map);
+
+      wardsLayerRef.current = geoLayer;
+    }
+  }, [showWards, selectedWard, safeComplaints, onSelectWard]);
+
+  // 3. Render Markers & Synchronize Layers safely
   useEffect(() => {
     const map = mapRef.current;
     const group = markersGroupRef.current;
@@ -252,6 +344,13 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
             ${safeDescription}
           </div>
           ${
+            c.confirmation_count >= 4
+              ? `<div style="font-size:11px;font-weight:700;color:#0369A1;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:4px;padding:4px 8px;margin-bottom:8px;">
+              📍 18m Spatial Cluster (${c.confirmation_count} citizens merged)
+            </div>`
+              : ''
+          }
+          ${
             c.is_recurring
               ? `<div style="font-size:11px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:4px;padding:4px 8px;margin-bottom:10px;">
               ⚠️ Recurring hotspot (${Number(c.total_cycles) || 2}× cycles)
@@ -318,12 +417,25 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
           background: '#F1F5F9',
         }}
       />
-      <div className="absolute top-3 right-3 z-[1000] flex gap-1 bg-white/95 backdrop-blur-xs p-1 rounded-md border border-slate-200 shadow-xs">
+      {/* Docked Map GIS Toolbar */}
+      <div className="absolute top-3 right-3 z-[1000] flex gap-1.5 bg-white/95 backdrop-blur-xs p-1.5 rounded-lg border border-slate-200 shadow-sm">
+        <button
+          onClick={() => setShowWards((v) => !v)}
+          className={`text-xs font-bold px-3 py-1.5 rounded-md border transition-all cursor-pointer flex items-center gap-1.5 ${
+            showWards
+              ? 'bg-[#0B2545] text-white border-[#0B2545] shadow-2xs'
+              : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+          }`}
+        >
+          <span>🌐</span> 10 Wards {showWards ? '✓' : ''}
+        </button>
+
         <button
           onClick={toggleLayer}
-          className="text-xs font-bold px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+          className="text-xs font-bold px-3 py-1.5 rounded-md border border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5"
         >
-          {activeLayer === 'streets' ? '🛰️ Satellite' : '🗺️ Map'}
+          <span>{activeLayer === 'streets' ? '🛰️' : '🗺️'}</span>
+          <span>{activeLayer === 'streets' ? 'Satellite' : 'Map'}</span>
         </button>
       </div>
     </div>

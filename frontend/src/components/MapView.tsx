@@ -11,6 +11,8 @@ import { useLanguage } from '@/context/LanguageContext';
 interface MapViewProps {
   complaints?: Complaint[];
   onSelectComplaint?: (complaint: Complaint) => void;
+  onSelectWard?: (wardId: number | string) => void;
+  selectedWard?: number | string;
   center?: [number, number];
   zoom?: number;
   height?: number | string;
@@ -46,6 +48,8 @@ const DynamicMap = dynamic(
 export const MapView: React.FC<MapViewProps> = ({
   complaints = [],
   onSelectComplaint,
+  onSelectWard,
+  selectedWard,
   center,
   zoom,
   height,
@@ -53,7 +57,6 @@ export const MapView: React.FC<MapViewProps> = ({
 }) => {
   const [showHeatmap, setShowHeatmap] = useState(initialHeatmap);
   const [showPins, setShowPins] = useState(true);
-  const [showWards, setShowWards] = useState(false);
   const safeComplaints = Array.isArray(complaints) ? complaints : [];
   const { t } = useLanguage();
 
@@ -72,12 +75,14 @@ export const MapView: React.FC<MapViewProps> = ({
       <DynamicMap
         complaints={showPins ? safeComplaints : []}
         onSelectComplaint={onSelectComplaint}
+        onSelectWard={onSelectWard}
+        selectedWard={selectedWard}
         center={center}
         zoom={zoom}
         showHeatmap={showHeatmap}
       />
 
-      {/* Floating control cluster, bottom-right (Pins / Heat / Wards) */}
+      {/* Floating control cluster, bottom-right (Pins / Heat) */}
       <div
         style={{
           position: 'absolute',
@@ -120,21 +125,6 @@ export const MapView: React.FC<MapViewProps> = ({
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="4" />
             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-          </svg>
-        </button>
-
-        {/* Wards boundary toggle */}
-        <button
-          onClick={() => setShowWards((w) => !w)}
-          title={t('map.toggle_wards')}
-          className={`w-9 h-9 rounded-md border-none flex items-center justify-center cursor-pointer transition-colors ${
-            showWards ? 'bg-[#0B2545] text-white' : 'bg-transparent text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-            <line x1="8" y1="2" x2="8" y2="18" />
-            <line x1="16" y1="6" x2="16" y2="22" />
           </svg>
         </button>
       </div>

@@ -32,7 +32,7 @@ export default function MapPage() {
 
   const { lastEvent } = useSocket();
   const { language, t } = useLanguage();
-  const { selectedWard } = useWard();
+  const { selectedWard, setSelectedWard } = useWard();
 
   const CATEGORY_FILTERS: FilterOption[] = [
     { key: 'pothole',            label: t('cat.pothole') },
@@ -221,7 +221,13 @@ export default function MapPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
           {/* Map Viewport */}
           <div className="lg:col-span-8 bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden h-[620px] relative">
-            <MapView complaints={filtered} onSelectComplaint={setSelected} height={620} />
+            <MapView
+              complaints={filtered}
+              onSelectComplaint={setSelected}
+              onSelectWard={(wId) => setSelectedWard(String(wId))}
+              selectedWard={selectedWard}
+              height={620}
+            />
           </div>
 
           {/* Clean Item Sidebar */}

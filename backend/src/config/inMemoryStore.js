@@ -388,16 +388,22 @@ async function executeInMemoryQuery(text, params = []) {
     return { rows };
   }
 
-  // 3. SELECT from wards (including group by / aggregations for transparency)
+  // 3. SELECT from wards (including group by / aggregations for transparency & wards list)
   if (lower.startsWith('select') && lower.includes('from wards')) {
-    if (lower.includes('group by')) {
+    if (lower.includes('group by') || lower.includes('count(')) {
       const rows = WARDS.map((w) => {
         const wardComplaints = COMPLAINTS.filter((c) => c.ward_id === w.id);
         const wardResolved = wardComplaints.filter((c) => c.status === 'Resolved').length;
+        const wardPending = wardComplaints.length - wardResolved;
         return {
+          id: w.id,
+          name: w.name,
           ward_name: w.name,
           total: wardComplaints.length,
+          total_complaints: wardComplaints.length,
           resolved: wardResolved,
+          resolved_complaints: wardResolved,
+          pending_complaints: wardPending,
         };
       });
       return { rows };

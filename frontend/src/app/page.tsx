@@ -43,7 +43,7 @@ export default function OverviewPage() {
   const [selected, setSelected]     = useState<Complaint | null>(null);
   const { lastEvent } = useSocket();
   const { language, t } = useLanguage();
-  const { selectedWard } = useWard();
+  const { selectedWard, setSelectedWard } = useWard();
 
   useEffect(() => {
     Promise.all([
@@ -236,6 +236,8 @@ export default function OverviewPage() {
               <MapView
                 complaints={safe}
                 onSelectComplaint={setSelected}
+                onSelectWard={(wId) => setSelectedWard(String(wId))}
+                selectedWard={selectedWard}
                 height={480}
               />
             </div>
