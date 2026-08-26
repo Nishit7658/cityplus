@@ -4,18 +4,48 @@ const socketService = require('./socketService');
 const db = require('../config/db');
 require('dotenv').config();
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+function getBotToken() {
+  return process.env.TELEGRAM_BOT_TOKEN || '';
+}
+
+function getTelegramApi() {
+  return `https://api.telegram.org/bot${getBotToken()}`;
+}
 
 // State tracking for Telegram users
 // States: 'START' | 'CATEGORY' | 'LOCATION'
 const telegramSessions = new Map();
 
+const WARDS_DATA = [
+  { id: 1, name: 'Ward 1 — Sayajigunj', lat: 22.3112, lng: 73.1878, keywords: ['sayajigunj', 'sayaji', 'railway', 'station', 'ward 1', 'ward1', 'msu', 'university', 'kala ghoda'] },
+  { id: 2, name: 'Ward 2 — Akota', lat: 22.2981, lng: 73.1642, keywords: ['akota', 'dandia', 'bazaar', 'ward 2', 'ward2', 'alkapuri', 'rc dutt'] },
+  { id: 3, name: 'Ward 3 — Raopura', lat: 22.3025, lng: 73.2054, keywords: ['raopura', 'mandvi', 'nyayamandir', 'ward 3', 'ward3', 'tower', 'chokhandi'] },
+  { id: 4, name: 'Ward 4 — Karelibaug', lat: 22.3214, lng: 73.1989, keywords: ['karelibaug', 'kareli', 'amit', 'nagar', 'ward 4', 'ward4', 'harni', 'airport'] },
+  { id: 5, name: 'Ward 5 — Fatehgunj', lat: 22.3168, lng: 73.1895, keywords: ['fatehgunj', 'fateh', 'sama', 'chhani', 'ward 5', 'ward5', 'nizampura'] },
+  { id: 6, name: 'Ward 6 — Manjalpur', lat: 22.2684, lng: 73.1956, keywords: ['manjalpur', 'tarsali', 'ward 6', 'ward6', 'lalbaug', 'darbar'] },
+  { id: 7, name: 'Ward 7 — Makarpura', lat: 22.2512, lng: 73.1923, keywords: ['makarpura', 'gidc', 'jambuva', 'ward 7', 'ward7', 'airforce', 'novino'] },
+  { id: 8, name: 'Ward 8 — Gotri', lat: 22.3125, lng: 73.1412, keywords: ['gotri', 'sevasi', 'vasna', 'bhayli', 'ward 8', 'ward8', 'laxmipura'] },
+  { id: 9, name: 'Ward 9 — Gorwa', lat: 22.3341, lng: 73.1624, keywords: ['gorwa', 'subhanpura', 'panchvati', 'ward 9', 'ward9', 'ellora', 'bapod'] },
+  { id: 10, name: 'Ward 10 — Waghodia Road', lat: 22.2987, lng: 73.2341, keywords: ['waghodia', 'kapurai', 'panigate', 'ajwa', 'ward 10', 'ward10', 'parivar'] },
+];
+
+function resolveLandmarkCoordinates(text) {
+  if (!text) return { matched: false };
+  const lower = text.toLowerCase().trim();
+  for (const w of WARDS_DATA) {
+    if (w.keywords.some((k) => lower.includes(k))) {
+      return { matched: true, lat: w.lat, lng: w.lng, name: w.name, wardId: w.id };
+    }
+  }
+  return { matched: false };
+}
+
 /**
  * Send Photo via Telegram Bot API
  */
 async function sendPhoto(chatId, photoUrl, caption, extra = {}) {
-  if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === 'your_telegram_bot_token_here') {
+  const token = getBotToken();
+  if (!token || token === 'your_telegram_bot_token_here') {
     console.log(`[Telegram Simulation] Send Photo to #${chatId} (${photoUrl}): ${caption}`);
     return { ok: true, result: { message_id: 100 } };
   }
@@ -62,13 +92,14 @@ async function sendClosedLoopVerification(chatId, complaintId, category, photoAf
  * Send HTTP request to Telegram Bot API
  */
 async function callTelegram(method, payload) {
-  if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === 'your_telegram_bot_token_here') {
+  const token = getBotToken();
+  if (!token || token === 'your_telegram_bot_token_here') {
     console.log(`[Telegram Simulation] ${method}:`, JSON.stringify(payload, null, 2));
     return { ok: true, simulated: true };
   }
 
   try {
-    const response = await axios.post(`${TELEGRAM_API}/${method}`, payload);
+    const response = await axios.post(`${getTelegramApi()}/${method}`, payload);
     return response.data;
   } catch (error) {
     console.error(`[Telegram API Error - ${method}]:`, error.response ? error.response.data : error.message);
@@ -99,15 +130,15 @@ async function sendCategoryMenu(chatId) {
         { text: '💧 Water Leakage', callback_data: 'cat_water_leak' },
       ],
       [
-        { text: '💡 Broken Streetlight', callback_data: 'cat_broken_streetlight' },
-        { text: '🗑️ Garbage Overflow', callback_data: 'cat_garbage_overflow' },
+        { text: '💡 Streetlight', callback_data: 'cat_broken_streetlight' },
+        { text: '🗑️ Garbage Dump', callback_data: 'cat_garbage_overflow' },
       ],
       [
         { text: '⚠️ Open Manhole', callback_data: 'cat_open_manhole' },
         { text: '⚡ Exposed Wiring', callback_data: 'cat_exposed_wiring' },
       ],
       [
-        { text: '🔥 Gas Pipeline Leak', callback_data: 'cat_gas_leak' },
+        { text: '🔥 Gas Pipeline', callback_data: 'cat_gas_leak' },
         { text: '🚦 Traffic Signal', callback_data: 'cat_traffic_signal' },
       ],
     ],
@@ -115,34 +146,58 @@ async function sendCategoryMenu(chatId) {
 
   return sendMessage(
     chatId,
-    `🏛️ <b>Vadodara Municipal Corporation (VMC)</b>\n<i>Citizen Grievance Redressal Portal</i>\n\nWelcome! Please select the type of civic issue you would like to report:`,
+    `🏛️ <b>Vadodara Municipal Corporation (VMC)</b>\n<i>Citizen Grievance Redressal Portal</i>\n\nWelcome! Please tap the type of civic issue you want to report:`,
     { reply_markup: keyboard }
   );
 }
 
 /**
- * Request GPS Location using native Telegram location sharing button
+ * Request Location using native GPS button + 10-Ward Picker Keyboard
  */
 async function sendLocationPrompt(chatId, categoryTitle) {
-  const keyboard = {
-    keyboard: [
+  const inlineWards = {
+    inline_keyboard: [
       [
-        {
-          text: '📍 Share Current Location',
-          request_location: true,
-        },
+        { text: '📍 Ward 1 (Sayajigunj)', callback_data: 'ward_1' },
+        { text: '📍 Ward 2 (Akota)', callback_data: 'ward_2' },
       ],
+      [
+        { text: '📍 Ward 3 (Raopura)', callback_data: 'ward_3' },
+        { text: '📍 Ward 4 (Karelibaug)', callback_data: 'ward_4' },
+      ],
+      [
+        { text: '📍 Ward 5 (Fatehgunj)', callback_data: 'ward_5' },
+        { text: '📍 Ward 6 (Manjalpur)', callback_data: 'ward_6' },
+      ],
+      [
+        { text: '📍 Ward 7 (Makarpura)', callback_data: 'ward_7' },
+        { text: '📍 Ward 8 (Gotri)', callback_data: 'ward_8' },
+      ],
+      [
+        { text: '📍 Ward 9 (Gorwa)', callback_data: 'ward_9' },
+        { text: '📍 Ward 10 (Waghodia)', callback_data: 'ward_10' },
+      ],
+    ],
+  };
+
+  const replyKeyboard = {
+    keyboard: [
+      [{ text: '📍 Share My Current GPS Location', request_location: true }],
       [{ text: '❌ Cancel' }],
     ],
     resize_keyboard: true,
     one_time_keyboard: true,
   };
 
-  return sendMessage(
+  await sendMessage(
     chatId,
-    `Category selected: <b>${categoryTitle}</b>\n\n📍 Please tap the button below to share your <b>Current GPS Location</b> so VMC field teams can dispatch directly to the spot:`,
-    { reply_markup: keyboard }
+    `Issue: <b>${categoryTitle}</b>\n\n📌 <b>How to set your location:</b>\n\n1️⃣ <b>Tap your Ward button below</b> 👇\n2️⃣ <b>Or tap "📍 Share GPS Location"</b> (on mobile)\n3️⃣ <b>Or type your area/landmark</b> (e.g. <i>Sayajigunj, Akota, Gotri, MSU, Alkapuri</i>)`,
+    { reply_markup: inlineWards }
   );
+
+  return sendMessage(chatId, '👇 Mobile GPS button:', {
+    reply_markup: replyKeyboard,
+  });
 }
 
 /**
@@ -150,11 +205,12 @@ async function sendLocationPrompt(chatId, categoryTitle) {
  */
 async function handleTelegramUpdate(update) {
   try {
-    // 1. Handle Inline Button Callback Queries (Category / Verification)
+    // 1. Handle Inline Button Callback Queries (Category / Ward / Verification)
     if (update.callback_query) {
       const cb = update.callback_query;
       const chatId = cb.message.chat.id;
       const data = cb.data;
+      const session = telegramSessions.get(chatId) || { state: 'START', category: null };
 
       // Closed-Loop Verification: Yes
       if (data.startsWith('verify_yes_')) {
@@ -211,6 +267,38 @@ async function handleTelegramUpdate(update) {
         await sendLocationPrompt(chatId, categoryTitle);
         return;
       }
+
+      // Ward Selection Button
+      if (data.startsWith('ward_')) {
+        const wardId = parseInt(data.replace('ward_', ''), 10);
+        const ward = WARDS_DATA.find((w) => w.id === wardId) || WARDS_DATA[0];
+        const category = session.category || 'Pothole';
+        const senderName = cb.from.first_name ? `${cb.from.first_name} ${cb.from.last_name || ''}`.trim() : `User ${chatId}`;
+
+        const result = await gisService.processIncomingReport({
+          latitude: ward.lat,
+          longitude: ward.lng,
+          category,
+          reporterPhone: `tg_${chatId}`,
+          description: `Telegram report in ${ward.name} from ${senderName} (@${cb.from.username || chatId})`,
+          photoUrl: session.photo_url || null,
+        });
+
+        await sendMessage(
+          chatId,
+          `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${ward.name}\n⚡ <b>Coordinates:</b> ${ward.lat}, ${ward.lng}\n🏢 Assigned to Ward ${ward.id} engineering squad.`,
+          { reply_markup: { remove_keyboard: true } }
+        );
+
+        telegramSessions.set(chatId, { state: 'START', category: null });
+
+        if (result.action === 'created') {
+          socketService.emitEvent('complaint:created', result.complaint);
+        } else {
+          socketService.emitEvent('complaint:updated', result.complaint);
+        }
+        return;
+      }
     }
 
     // 2. Handle Messages
@@ -220,7 +308,7 @@ async function handleTelegramUpdate(update) {
       const session = telegramSessions.get(chatId) || { state: 'START', category: null };
 
       // Handle Cancel Button
-      if (msg.text === '❌ Cancel') {
+      if (msg.text === '❌ Cancel' || msg.text === '/cancel') {
         telegramSessions.set(chatId, { state: 'START', category: null });
         await sendMessage(chatId, 'Report cancelled. Send /start or /report whenever you wish to report an issue.', {
           reply_markup: { remove_keyboard: true },
@@ -238,7 +326,7 @@ async function handleTelegramUpdate(update) {
 
         await sendMessage(
           chatId,
-          `📸 <b>Photo evidence received successfully!</b>\n\nNow please tap <b>📍 Share Current Location</b> below to complete registration.`
+          `📸 <b>Photo evidence received successfully!</b>\n\nPlease select your <b>Ward</b> or tap <b>📍 Share GPS Location</b> below to complete registration.`
         );
         return;
       }
@@ -275,36 +363,13 @@ async function handleTelegramUpdate(update) {
         return;
       }
 
-const VADODARA_LANDMARKS = [
-  { keywords: ['sayajigunj', 'sayaji', 'railway', 'station', 'ward 1', 'ward1', 'msu', 'university'], lat: 22.3112, lng: 73.1878, ward: 'Ward 1 — Sayajigunj' },
-  { keywords: ['akota', 'dandia', 'bazaar', 'ward 2', 'ward2', 'alkapuri'], lat: 22.2981, lng: 73.1642, ward: 'Ward 2 — Akota' },
-  { keywords: ['raopura', 'mandvi', 'nyayamandir', 'ward 3', 'ward3', 'tower'], lat: 22.3025, lng: 73.2054, ward: 'Ward 3 — Raopura' },
-  { keywords: ['karelibaug', 'kareli', 'amit', 'nagar', 'ward 4', 'ward4'], lat: 22.3214, lng: 73.1989, ward: 'Ward 4 — Karelibaug' },
-  { keywords: ['fatehgunj', 'fateh', 'sama', 'chhani', 'ward 5', 'ward5', 'nizampura'], lat: 22.3168, lng: 73.1895, ward: 'Ward 5 — Fatehgunj' },
-  { keywords: ['manjalpur', 'tarsali', 'ward 6', 'ward6', 'lalbaug'], lat: 22.2684, lng: 73.1956, ward: 'Ward 6 — Manjalpur' },
-  { keywords: ['makarpura', 'gidc', 'jambuva', 'ward 7', 'ward7', 'airforce'], lat: 22.2512, lng: 73.1923, ward: 'Ward 7 — Makarpura' },
-  { keywords: ['gotri', 'sevasi', 'vasna', 'bhayli', 'ward 8', 'ward8'], lat: 22.3125, lng: 73.1412, ward: 'Ward 8 — Gotri' },
-  { keywords: ['gorwa', 'subhanpura', 'panchvati', 'ward 9', 'ward9', 'ellora'], lat: 22.3341, lng: 73.1624, ward: 'Ward 9 — Gorwa' },
-  { keywords: ['waghodia', 'kapurai', 'panigate', 'ajwa', 'ward 10', 'ward10'], lat: 22.2987, lng: 73.2341, ward: 'Ward 10 — Waghodia Road' },
-];
-
-function resolveLandmarkCoordinates(text) {
-  if (!text) return { lat: 22.3072, lng: 73.1812, name: 'Vadodara Central' };
-  const lower = text.toLowerCase();
-  for (const lm of VADODARA_LANDMARKS) {
-    if (lm.keywords.some((k) => lower.includes(k))) {
-      return { lat: lm.lat, lng: lm.lng, name: lm.ward };
-    }
-  }
-  return { lat: 22.3072, lng: 73.1812, name: 'Vadodara Municipal Area' };
-}
-
       // Handle Commands / Text
       if (msg.text) {
         const text = msg.text.trim();
         const lower = text.toLowerCase();
 
-        if (lower === '/start' || lower === '/report' || lower === 'hi' || lower === 'help') {
+        // System reset commands
+        if (['/start', '/report', '/restart', '/reset', '/menu', 'hi', 'hello', 'help'].includes(lower)) {
           telegramSessions.set(chatId, { state: 'CATEGORY', category: null });
           await sendCategoryMenu(chatId);
           return;
@@ -313,32 +378,41 @@ function resolveLandmarkCoordinates(text) {
         // If user typed their location or address manually
         if (session.state === 'LOCATION' || session.category) {
           const loc = resolveLandmarkCoordinates(text);
-          const category = session.category || 'Pothole';
-          const senderName = msg.from.first_name ? `${msg.from.first_name} ${msg.from.last_name || ''}`.trim() : `User ${chatId}`;
+          if (loc.matched) {
+            const category = session.category || 'Pothole';
+            const senderName = msg.from.first_name ? `${msg.from.first_name} ${msg.from.last_name || ''}`.trim() : `User ${chatId}`;
 
-          const result = await gisService.processIncomingReport({
-            latitude: loc.lat,
-            longitude: loc.lng,
-            category,
-            reporterPhone: `tg_${chatId}`,
-            description: `Telegram report: "${text}" from ${senderName} (@${msg.from.username || chatId})`,
-            photoUrl: session.photo_url || null,
-          });
+            const result = await gisService.processIncomingReport({
+              latitude: loc.lat,
+              longitude: loc.lng,
+              category,
+              reporterPhone: `tg_${chatId}`,
+              description: `Telegram report: "${text}" from ${senderName} (@${msg.from.username || chatId})`,
+              photoUrl: session.photo_url || null,
+            });
 
-          await sendMessage(
-            chatId,
-            `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${loc.name} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})\n🏢 Assigned to VMC Field Response Team.`,
-            { reply_markup: { remove_keyboard: true } }
-          );
+            await sendMessage(
+              chatId,
+              `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${loc.name} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})\n🏢 Assigned to VMC response team.`,
+              { reply_markup: { remove_keyboard: true } }
+            );
 
-          telegramSessions.set(chatId, { state: 'START', category: null });
+            telegramSessions.set(chatId, { state: 'START', category: null });
 
-          if (result.action === 'created') {
-            socketService.emitEvent('complaint:created', result.complaint);
+            if (result.action === 'created') {
+              socketService.emitEvent('complaint:created', result.complaint);
+            } else {
+              socketService.emitEvent('complaint:updated', result.complaint);
+            }
+            return;
           } else {
-            socketService.emitEvent('complaint:updated', result.complaint);
+            // Not matched - ask user to pick ward or send GPS instead of creating random complaint!
+            await sendMessage(
+              chatId,
+              `⚠️ Location <b>"${text}"</b> was not recognized in Vadodara.\n\nPlease <b>tap your Ward button above</b>, tap <b>📍 Share GPS Location</b>, or type a known area (e.g. <i>Sayajigunj, Akota, Gotri, Raopura, Karelibaug, Manjalpur</i>).`
+            );
+            return;
           }
-          return;
         }
 
         // Default greeting
@@ -359,8 +433,16 @@ let lastUpdateId = 0;
 
 async function startPolling() {
   if (process.env.NODE_ENV === 'test') return;
-  if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === 'your_telegram_bot_token_here') {
+  const token = getBotToken();
+  if (!token || token === 'your_telegram_bot_token_here') {
     return;
+  }
+
+  // Clear any existing webhook to ensure getUpdates receives all messages
+  try {
+    await axios.post(`${getTelegramApi()}/deleteWebhook`, { drop_pending_updates: false });
+  } catch {
+    // safe fallback
   }
 
   pollingActive = true;
@@ -368,21 +450,23 @@ async function startPolling() {
 
   while (pollingActive) {
     try {
-      const res = await axios.get(`${TELEGRAM_API}/getUpdates`, {
+      const res = await axios.get(`${getTelegramApi()}/getUpdates`, {
         params: {
           offset: lastUpdateId + 1,
-          timeout: 25,
+          timeout: 20,
         },
-        timeout: 30000,
+        timeout: 25000,
       });
 
       if (res.data && res.data.ok && Array.isArray(res.data.result)) {
         for (const update of res.data.result) {
           lastUpdateId = update.update_id;
+          console.log(`📩 [Telegram Bot] Received update #${update.update_id}:`, JSON.stringify(update.message ? update.message.text || 'media/location' : update.callback_query ? update.callback_query.data : 'update'));
           await handleTelegramUpdate(update);
         }
       }
     } catch (err) {
+      console.error('[Telegram Polling Error]:', err.message);
       await new Promise((r) => setTimeout(r, 4000));
     }
   }
