@@ -275,21 +275,69 @@ async function handleTelegramUpdate(update) {
         return;
       }
 
+const VADODARA_LANDMARKS = [
+  { keywords: ['sayajigunj', 'sayaji', 'railway', 'station', 'ward 1', 'ward1', 'msu', 'university'], lat: 22.3112, lng: 73.1878, ward: 'Ward 1 — Sayajigunj' },
+  { keywords: ['akota', 'dandia', 'bazaar', 'ward 2', 'ward2', 'alkapuri'], lat: 22.2981, lng: 73.1642, ward: 'Ward 2 — Akota' },
+  { keywords: ['raopura', 'mandvi', 'nyayamandir', 'ward 3', 'ward3', 'tower'], lat: 22.3025, lng: 73.2054, ward: 'Ward 3 — Raopura' },
+  { keywords: ['karelibaug', 'kareli', 'amit', 'nagar', 'ward 4', 'ward4'], lat: 22.3214, lng: 73.1989, ward: 'Ward 4 — Karelibaug' },
+  { keywords: ['fatehgunj', 'fateh', 'sama', 'chhani', 'ward 5', 'ward5', 'nizampura'], lat: 22.3168, lng: 73.1895, ward: 'Ward 5 — Fatehgunj' },
+  { keywords: ['manjalpur', 'tarsali', 'ward 6', 'ward6', 'lalbaug'], lat: 22.2684, lng: 73.1956, ward: 'Ward 6 — Manjalpur' },
+  { keywords: ['makarpura', 'gidc', 'jambuva', 'ward 7', 'ward7', 'airforce'], lat: 22.2512, lng: 73.1923, ward: 'Ward 7 — Makarpura' },
+  { keywords: ['gotri', 'sevasi', 'vasna', 'bhayli', 'ward 8', 'ward8'], lat: 22.3125, lng: 73.1412, ward: 'Ward 8 — Gotri' },
+  { keywords: ['gorwa', 'subhanpura', 'panchvati', 'ward 9', 'ward9', 'ellora'], lat: 22.3341, lng: 73.1624, ward: 'Ward 9 — Gorwa' },
+  { keywords: ['waghodia', 'kapurai', 'panigate', 'ajwa', 'ward 10', 'ward10'], lat: 22.2987, lng: 73.2341, ward: 'Ward 10 — Waghodia Road' },
+];
+
+function resolveLandmarkCoordinates(text) {
+  if (!text) return { lat: 22.3072, lng: 73.1812, name: 'Vadodara Central' };
+  const lower = text.toLowerCase();
+  for (const lm of VADODARA_LANDMARKS) {
+    if (lm.keywords.some((k) => lower.includes(k))) {
+      return { lat: lm.lat, lng: lm.lng, name: lm.ward };
+    }
+  }
+  return { lat: 22.3072, lng: 73.1812, name: 'Vadodara Municipal Area' };
+}
+
       // Handle Commands / Text
       if (msg.text) {
-        const text = msg.text.trim().toLowerCase();
+        const text = msg.text.trim();
+        const lower = text.toLowerCase();
 
-        if (text === '/start' || text === '/report' || text === 'hi' || text === 'help') {
+        if (lower === '/start' || lower === '/report' || lower === 'hi' || lower === 'help') {
           telegramSessions.set(chatId, { state: 'CATEGORY', category: null });
           await sendCategoryMenu(chatId);
           return;
         }
 
-        if (session.state === 'LOCATION') {
+        // If user typed their location or address manually
+        if (session.state === 'LOCATION' || session.category) {
+          const loc = resolveLandmarkCoordinates(text);
+          const category = session.category || 'Pothole';
+          const senderName = msg.from.first_name ? `${msg.from.first_name} ${msg.from.last_name || ''}`.trim() : `User ${chatId}`;
+
+          const result = await gisService.processIncomingReport({
+            latitude: loc.lat,
+            longitude: loc.lng,
+            category,
+            reporterPhone: `tg_${chatId}`,
+            description: `Telegram report: "${text}" from ${senderName} (@${msg.from.username || chatId})`,
+            photoUrl: session.photo_url || null,
+          });
+
           await sendMessage(
             chatId,
-            `Please tap the <b>📍 Share Current Location</b> button or send a Telegram location attachment.`
+            `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${loc.name} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})\n🏢 Assigned to VMC Field Response Team.`,
+            { reply_markup: { remove_keyboard: true } }
           );
+
+          telegramSessions.set(chatId, { state: 'START', category: null });
+
+          if (result.action === 'created') {
+            socketService.emitEvent('complaint:created', result.complaint);
+          } else {
+            socketService.emitEvent('complaint:updated', result.complaint);
+          }
           return;
         }
 

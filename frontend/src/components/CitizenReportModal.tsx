@@ -3,7 +3,7 @@
 
 // Citizen Grievance Intake Modal
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
-// Full Trilingual i18n, Photo Evidence Upload & 18m Spatial Clustering
+// Full Trilingual i18n, Live GPS Geolocation, Manual Coordinate Picker & Photo Upload
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -60,6 +60,13 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successComplaint, setSuccessComplaint] = useState<Complaint | null>(null);
 
+  // Advanced Location Mode (Ward Preset, Live Browser GPS, or Manual Coordinates)
+  const [locationMode, setLocationMode] = useState<'ward' | 'gps' | 'custom'>('ward');
+  const [customLat, setCustomLat] = useState<string>('22.3112');
+  const [customLng, setCustomLng] = useState<string>('73.1878');
+  const [gpsStatus, setGpsStatus] = useState<'idle' | 'locating' | 'success' | 'error'>('idle');
+  const [gpsMessage, setGpsMessage] = useState<string | null>(null);
+
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -70,6 +77,48 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  // Handle Live Browser GPS Geolocation
+  const handleGetLiveLocation = () => {
+    if (!navigator.geolocation) {
+      setGpsStatus('error');
+      setGpsMessage('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setGpsStatus('locating');
+    setGpsMessage(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = parseFloat(pos.coords.latitude.toFixed(6));
+        const lng = parseFloat(pos.coords.longitude.toFixed(6));
+        setCustomLat(String(lat));
+        setCustomLng(String(lng));
+
+        // Auto-match nearest VMC Ward
+        let nearestWard = WARDS[0];
+        let minDistance = Infinity;
+        WARDS.forEach((w) => {
+          const dist = Math.hypot(w.lat - lat, w.lng - lng);
+          if (dist < minDistance) {
+            minDistance = dist;
+            nearestWard = w;
+          }
+        });
+
+        setWardId(nearestWard.id);
+        setLocationMode('gps');
+        setGpsStatus('success');
+        setGpsMessage(`Live GPS locked: ${lat}, ${lng} (Matched ${nearestWard.name})`);
+      },
+      (err) => {
+        setGpsStatus('error');
+        setGpsMessage(err.message || 'Unable to retrieve GPS coordinates. Please select a Ward.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -110,6 +159,19 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
     }
 
     const selectedWard = WARDS.find((w) => w.id === wardId) || WARDS[0];
+    
+    // Choose coordinate source based on location mode
+    let targetLat = selectedWard.lat;
+    let targetLng = selectedWard.lng;
+
+    if (locationMode === 'gps' || locationMode === 'custom') {
+      const pLat = parseFloat(customLat);
+      const pLng = parseFloat(customLng);
+      if (!isNaN(pLat) && !isNaN(pLng)) {
+        targetLat = pLat;
+        targetLng = pLng;
+      }
+    }
 
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -122,8 +184,8 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
           category,
           description: description.trim(),
           reporter_phone: phone.trim() || '+91 98250 00000',
-          latitude: selectedWard.lat,
-          longitude: selectedWard.lng,
+          latitude: targetLat,
+          longitude: targetLng,
           ward_id: selectedWard.id,
           photo_url: photoUrl || undefined,
         }),
@@ -155,6 +217,9 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
     setDescription('');
     setPhone('');
     setPhotoUrl(null);
+    setLocationMode('ward');
+    setGpsStatus('idle');
+    setGpsMessage(null);
     setErrorMessage(null);
     setSuccessComplaint(null);
     onClose();
@@ -215,6 +280,9 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
                   <strong>{t('queue.th_ward')}:</strong> {t(`ward.${successComplaint.ward_id}`, `Ward ${successComplaint.ward_id}`)}
                 </div>
                 <div>
+                  <strong>Coordinates:</strong> <span className="font-mono text-slate-900">{successComplaint.latitude?.toFixed(4)}, {successComplaint.longitude?.toFixed(4)}</span>
+                </div>
+                <div>
                   <strong>{t('queue.th_score')}:</strong> {successComplaint.severity_score || 50} (Auto-calculated GIS index)
                 </div>
                 <div>
@@ -262,22 +330,97 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
                 </div>
               </div>
 
-              {/* 2. Ward Selector */}
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
-                  {language === 'gu' ? '૨. વહીવટી વોર્ડ વિસ્તાર *' : language === 'hi' ? '२. प्रशासनिक वार्ड क्षेत्र *' : '2. Administrative Ward Jurisdiction *'}
-                </label>
-                <select
-                  value={wardId}
-                  onChange={(e) => setWardId(Number(e.target.value))}
-                  className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-slate-50 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:border-[#133E87]"
-                >
-                  {WARDS.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      📍 {t(`ward.${w.id}`, w.name)}
-                    </option>
-                  ))}
-                </select>
+              {/* 2. Enhanced Location Mode & Picker */}
+              <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#0B2545] block">
+                    {language === 'gu' ? '૨. ઘટના સ્થળ અને લોકેશન *' : language === 'hi' ? '२. घटना स्थल और स्थान *' : '2. Incident Spot & Location *'}
+                  </label>
+                  
+                  {/* Mode Pills */}
+                  <div className="flex bg-white rounded border border-slate-300 p-0.5 text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setLocationMode('ward')}
+                      className={`px-2 py-0.5 rounded cursor-pointer ${locationMode === 'ward' ? 'bg-[#0B2545] text-white' : 'text-slate-600'}`}
+                    >
+                      Ward
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLocationMode('custom')}
+                      className={`px-2 py-0.5 rounded cursor-pointer ${locationMode === 'custom' ? 'bg-[#0B2545] text-white' : 'text-slate-600'}`}
+                    >
+                      Coords
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live GPS Geolocation CTA Button */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleGetLiveLocation}
+                    disabled={gpsStatus === 'locating'}
+                    className="w-full py-2 px-3 rounded-lg bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-900 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>📍</span>
+                    <span>{gpsStatus === 'locating' ? 'Locating via GPS...' : 'Auto-Detect My Current GPS Location'}</span>
+                  </button>
+                  {gpsMessage && (
+                    <p className={`text-[11px] font-semibold mt-1.5 ${gpsStatus === 'error' ? 'text-red-600' : 'text-emerald-700'}`}>
+                      {gpsStatus === 'error' ? '⚠️ ' : '✓ '}{gpsMessage}
+                    </p>
+                  )}
+                </div>
+
+                {/* Location Selection UI based on Mode */}
+                {locationMode === 'custom' ? (
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-500 block mb-1">Latitude</span>
+                      <input
+                        type="number"
+                        step="0.0001"
+                        value={customLat}
+                        onChange={(e) => setCustomLat(e.target.value)}
+                        className="w-full h-8 px-2 rounded border border-slate-300 bg-white text-xs font-mono"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-500 block mb-1">Longitude</span>
+                      <input
+                        type="number"
+                        step="0.0001"
+                        value={customLng}
+                        onChange={(e) => setCustomLng(e.target.value)}
+                        className="w-full h-8 px-2 rounded border border-slate-300 bg-white text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <select
+                      value={wardId}
+                      onChange={(e) => {
+                        const id = Number(e.target.value);
+                        setWardId(id);
+                        const match = WARDS.find((w) => w.id === id);
+                        if (match) {
+                          setCustomLat(String(match.lat));
+                          setCustomLng(String(match.lng));
+                        }
+                      }}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-300 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#133E87]"
+                    >
+                      {WARDS.map((w) => (
+                        <option key={w.id} value={w.id}>
+                          📍 {t(`ward.${w.id}`, w.name)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* 3. Description */}
@@ -317,7 +460,7 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
               {/* 5. Photo Evidence Upload */}
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-600 block mb-1.5">
-                  {language === 'gu' ? '૫. ફોટો પુરાવો (વૈકલ્પિક)' : language === 'hi' ? '५. फोटो प्रमाण (वैकल्पिक)' : '5. Photo Evidence (Optional)'}
+                  {language === 'gu' ? '૫. ફોટો પુરાવો (વૈકલ્પિક)' : language === 'hi' ? '५. फोटो प्रमाण (વૈકલ્પિક)' : '5. Photo Evidence (Optional)'}
                 </label>
                 <input
                   ref={fileInputRef}
