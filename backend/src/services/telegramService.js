@@ -16,7 +16,7 @@ function getTelegramApi() {
 }
 
 // State tracking for Telegram users
-// States: 'START' | 'CATEGORY' | 'LOCATION'
+// States: 'START' | 'CATEGORY' | 'LOCATION' | 'PHOTO'
 const telegramSessions = new Map();
 
 const WARDS_DATA = [
@@ -154,7 +154,7 @@ async function sendMessage(chatId, text, extra = {}) {
 }
 
 /**
- * Send category selection menu (Inline Keyboard only - Never locks typing)
+ * STEP 1: Send Greeting & Category Selection Menu
  */
 async function sendCategoryMenu(chatId) {
   const keyboard = {
@@ -180,14 +180,13 @@ async function sendCategoryMenu(chatId) {
 
   return sendMessage(
     chatId,
-    `🏛️ <b>Vadodara Municipal Corporation (VMC)</b>\n<i>Citizen Grievance Redressal Portal</i>\n\nWelcome! Please tap the type of civic issue you want to report:`,
+    `👋 <b>Namaste / Hello!</b>\nWelcome to <b>Vadodara Municipal Corporation (VMC)</b> Citizen Grievance Portal.\n\nPlease select the type of civic issue you would like to report:`,
     { reply_markup: keyboard }
   );
 }
 
 /**
- * Request Location using 100% Inline Ward Keyboard & Location text prompt
- * (Never uses custom reply_keyboard so regular chat input is NEVER blocked)
+ * STEP 2: Request Location
  */
 async function sendLocationPrompt(chatId, categoryTitle) {
   const inlineWards = {
@@ -213,16 +212,75 @@ async function sendLocationPrompt(chatId, categoryTitle) {
         { text: '📍 Ward 10 (Waghodia)', callback_data: 'ward_10' },
       ],
       [
-        { text: '❌ Cancel Report', callback_data: 'cancel_report' },
+        { text: '❌ Cancel', callback_data: 'cancel_report' },
       ],
     ],
   };
 
   return sendMessage(
     chatId,
-    `Issue: <b>${categoryTitle}</b>\n\n📌 <b>Please choose your Ward/Location:</b>\n\n1️⃣ <b>Tap your Ward button below</b> 👇\n2️⃣ <b>Or type your landmark</b> (e.g. <i>Sayajigunj, Akota, Gotri, MSU, Alkapuri</i>)\n3️⃣ <b>Or attach a Location Pin</b> via Telegram Paperclip (📎 ➔ Location)`,
+    `Issue selected: <b>${categoryTitle}</b>\n\n📍 <b>Please tell us where this problem is located:</b>\n\n1️⃣ <b>Tap your Ward button below</b> 👇\n2️⃣ <b>Or type your landmark/area</b> (e.g. <i>Sayajigunj, Akota, Gotri, MSU, Alkapuri</i>)\n3️⃣ <b>Or attach a Location Pin</b> (📎 ➔ Location)`,
     { reply_markup: inlineWards }
   );
+}
+
+/**
+ * STEP 3: Request Photo Evidence (Optional with Skip button)
+ */
+async function sendPhotoPrompt(chatId, session) {
+  const keyboard = {
+    inline_keyboard: [
+      [
+        { text: '⏭️ Skip Photo & Register', callback_data: 'skip_photo' },
+      ],
+      [
+        { text: '❌ Cancel', callback_data: 'cancel_report' },
+      ],
+    ],
+  };
+
+  return sendMessage(
+    chatId,
+    `📍 <b>Location Set:</b> ${session.locationName || 'Ward Assigned'}\n⚡ <b>Coordinates:</b> ${session.lat.toFixed(4)}, ${session.lng.toFixed(4)}\n\n📷 <b>Attach Photo Evidence (Optional):</b>\n• <b>Send a photo</b> of the issue using Telegram camera/gallery 📷\n• Or tap <b>"⏭️ Skip Photo & Register"</b> to submit directly without a photo:`,
+    { reply_markup: keyboard }
+  );
+}
+
+/**
+ * STEP 4: Finalize Registration and Send Final Confirmation
+ */
+async function finalizeComplaintRegistration(chatId, session, senderName, username) {
+  const result = await gisService.processIncomingReport({
+    latitude: session.lat,
+    longitude: session.lng,
+    category: session.category || 'Pothole',
+    reporterPhone: `tg_${chatId}`,
+    description: `Telegram report in ${session.locationName || 'Vadodara'} from ${senderName} (@${username || chatId})`,
+    photoUrl: session.photo_url || null,
+  });
+
+  const complaint = result.complaint;
+  const photoStatus = session.photo_url ? '📸 Photo Attached ✓' : '📷 No Photo Attached';
+
+  await sendMessage(
+    chatId,
+    `🎉 <b>Your Complaint is Successfully Registered!</b>\n\n` +
+    `📋 <b>Ticket ID:</b> #${complaint.id}\n` +
+    `🕳️ <b>Issue:</b> ${complaint.category}\n` +
+    `📍 <b>Location:</b> ${session.locationName || `Ward ${complaint.ward_id}`}\n` +
+    `⚡ <b>Coordinates:</b> ${session.lat.toFixed(5)}, ${session.lng.toFixed(5)}\n` +
+    `🏢 <b>Assigned Team:</b> VMC Field Response Squad\n` +
+    `🖼️ <b>Evidence:</b> ${photoStatus}\n\n` +
+    `⏱️ <i>You will receive live status notifications here as VMC crews inspect and resolve your issue.</i>`
+  );
+
+  telegramSessions.set(chatId, { state: 'START', category: null, lat: null, lng: null, locationName: null, photo_url: null });
+
+  if (result.action === 'created') {
+    socketService.emitEvent('complaint:created', result.complaint);
+  } else {
+    socketService.emitEvent('complaint:updated', result.complaint);
+  }
 }
 
 /**
@@ -230,17 +288,19 @@ async function sendLocationPrompt(chatId, categoryTitle) {
  */
 async function handleTelegramUpdate(update) {
   try {
-    // 1. Handle Inline Button Callback Queries (Category / Ward / Verification / Cancel)
+    // 1. Handle Inline Button Callback Queries
     if (update.callback_query) {
       const cb = update.callback_query;
       const chatId = cb.message.chat.id;
       const data = cb.data;
-      const session = telegramSessions.get(chatId) || { state: 'START', category: null };
+      const session = telegramSessions.get(chatId) || { state: 'START' };
+      const senderName = cb.from.first_name ? `${cb.from.first_name} ${cb.from.last_name || ''}`.trim() : `User ${chatId}`;
+      const username = cb.from.username || '';
 
       // Cancel Report
       if (data === 'cancel_report') {
-        telegramSessions.set(chatId, { state: 'START', category: null });
-        await sendMessage(chatId, '❌ Report cancelled. Send /start or /report anytime to file a grievance.');
+        telegramSessions.set(chatId, { state: 'START', category: null, lat: null, lng: null, locationName: null, photo_url: null });
+        await sendMessage(chatId, '❌ Report cancelled. Send /start or "hi" anytime to file a grievance.');
         return;
       }
 
@@ -280,203 +340,175 @@ async function handleTelegramUpdate(update) {
         return;
       }
 
-      // Category Selection
+      // STEP 1 -> STEP 2: Category Selected -> Ask for Location
       if (data.startsWith('cat_')) {
         const categoryKey = data.replace('cat_', '');
         const categoryMap = {
-          pothole: 'Pothole',
-          water_leak: 'Water Leak',
+          pothole: 'Road Pothole',
+          water_leak: 'Water Leakage',
           broken_streetlight: 'Broken Streetlight',
-          garbage_overflow: 'Garbage Overflow',
+          garbage_overflow: 'Garbage Dump',
           open_manhole: 'Open Manhole',
           exposed_wiring: 'Exposed Wiring',
-          gas_leak: 'Gas Leak',
+          gas_leak: 'Gas Pipeline',
           traffic_signal: 'Traffic Signal',
         };
         const categoryTitle = categoryMap[categoryKey] || categoryKey;
 
-        telegramSessions.set(chatId, { ...session, state: 'LOCATION', category: categoryTitle });
+        session.state = 'LOCATION';
+        session.category = categoryTitle;
+        telegramSessions.set(chatId, session);
+
         await sendLocationPrompt(chatId, categoryTitle);
         return;
       }
 
-      // Ward Selection Button
+      // STEP 2 -> STEP 3: Ward Selected -> Ask for Photo
       if (data.startsWith('ward_')) {
         const wardId = parseInt(data.replace('ward_', ''), 10);
         const ward = WARDS_DATA.find((w) => w.id === wardId) || WARDS_DATA[0];
-        const category = session.category || 'Pothole';
-        const senderName = cb.from.first_name ? `${cb.from.first_name} ${cb.from.last_name || ''}`.trim() : `User ${chatId}`;
 
-        const result = await gisService.processIncomingReport({
-          latitude: ward.lat,
-          longitude: ward.lng,
-          category,
-          reporterPhone: `tg_${chatId}`,
-          description: `Telegram report in ${ward.name} from ${senderName} (@${cb.from.username || chatId})`,
-          photoUrl: session.photo_url || null,
-        });
+        session.state = 'PHOTO';
+        session.lat = ward.lat;
+        session.lng = ward.lng;
+        session.locationName = ward.name;
+        session.wardId = ward.id;
+        telegramSessions.set(chatId, session);
 
-        await sendMessage(
-          chatId,
-          `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${ward.name}\n⚡ <b>Coordinates:</b> ${ward.lat}, ${ward.lng}\n🏢 Assigned to Ward ${ward.id} engineering squad.\n📋 <b>Ticket ID:</b> #${result.complaint.id}${session.photo_url ? '\n📸 <b>Photo Evidence:</b> Attached ✓' : ''}`
-        );
-
-        telegramSessions.set(chatId, { state: 'START', category: null, photo_url: null });
-
-        if (result.action === 'created') {
-          socketService.emitEvent('complaint:created', result.complaint);
-        } else {
-          socketService.emitEvent('complaint:updated', result.complaint);
+        // If user had already attached photo, finalize immediately
+        if (session.photo_url) {
+          await finalizeComplaintRegistration(chatId, session, senderName, username);
+          return;
         }
+
+        await sendPhotoPrompt(chatId, session);
+        return;
+      }
+
+      // STEP 3 -> STEP 4: Skip Photo -> Finalize Registration
+      if (data === 'skip_photo') {
+        if (!session.lat || !session.lng) {
+          session.lat = 22.3112;
+          session.lng = 73.1878;
+          session.locationName = 'Ward 1 — Sayajigunj';
+        }
+        await finalizeComplaintRegistration(chatId, session, senderName, username);
         return;
       }
     }
 
-    // 2. Handle Messages
+    // 2. Handle Incoming Messages (Text, Photo, Location)
     if (update.message) {
       const msg = update.message;
       const chatId = msg.chat.id;
-      const session = telegramSessions.get(chatId) || { state: 'START', category: null };
+      const session = telegramSessions.get(chatId) || { state: 'START' };
+      const senderName = msg.from.first_name ? `${msg.from.first_name} ${msg.from.last_name || ''}`.trim() : `User ${chatId}`;
+      const username = msg.from.username || '';
 
-      // Handle Cancel Button
-      if (msg.text === '❌ Cancel' || msg.text === '/cancel') {
-        telegramSessions.set(chatId, { state: 'START', category: null, photo_url: null });
-        await sendMessage(chatId, 'Report cancelled. Send /start or /report whenever you wish to report an issue.');
+      // Reset / Greeting commands
+      if (msg.text) {
+        const text = msg.text.trim();
+        const lower = text.toLowerCase();
+
+        if (['/start', '/report', '/restart', '/reset', '/menu', 'hi', 'hello', 'hey', 'start'].includes(lower)) {
+          telegramSessions.set(chatId, { state: 'CATEGORY', category: null, lat: null, lng: null, locationName: null, photo_url: null });
+          await sendCategoryMenu(chatId);
+          return;
+        }
+
+        if (['/cancel', 'cancel', '❌ cancel', '/exit'].includes(lower)) {
+          telegramSessions.set(chatId, { state: 'START', category: null, lat: null, lng: null, locationName: null, photo_url: null });
+          await sendMessage(chatId, '❌ Report cancelled. Send "hi" or /start anytime to begin.');
+          return;
+        }
+      }
+
+      // Handle GPS Location Pin (STEP 2 -> STEP 3)
+      if (msg.location) {
+        const latitude = msg.location.latitude;
+        const longitude = msg.location.longitude;
+        const inMemoryStore = require('../config/inMemoryStore');
+        const nearestWard = inMemoryStore.findNearestWard(latitude, longitude);
+
+        session.state = 'PHOTO';
+        session.lat = latitude;
+        session.lng = longitude;
+        session.locationName = nearestWard ? nearestWard.name : 'GPS Location';
+        session.category = session.category || 'Road Pothole';
+        telegramSessions.set(chatId, session);
+
+        if (session.photo_url) {
+          await finalizeComplaintRegistration(chatId, session, senderName, username);
+          return;
+        }
+
+        await sendPhotoPrompt(chatId, session);
         return;
       }
 
-      // Handle Photo Evidence
+      // Handle Photo Evidence Upload (STEP 3 -> STEP 4)
       if (msg.photo && msg.photo.length > 0) {
         const storageService = require('./storageService');
         const bestPhoto = msg.photo[msg.photo.length - 1];
         const photoUrl = await storageService.saveTelegramPhoto(bestPhoto.file_id);
         session.photo_url = photoUrl;
-        telegramSessions.set(chatId, session);
 
-        const caption = msg.caption ? msg.caption.trim() : '';
-        const loc = resolveLandmarkCoordinates(caption);
-
-        // If caption contains landmark, register immediately
-        if (loc.matched) {
-          const category = session.category || 'Pothole';
-          const senderName = msg.from.first_name ? `${msg.from.first_name} ${msg.from.last_name || ''}`.trim() : `User ${chatId}`;
-
-          const result = await gisService.processIncomingReport({
-            latitude: loc.lat,
-            longitude: loc.lng,
-            category,
-            reporterPhone: `tg_${chatId}`,
-            description: caption ? `Telegram photo report: "${caption}" from ${senderName}` : `Photo evidence report from ${senderName}`,
-            photoUrl: photoUrl,
-          });
-
-          await sendMessage(
-            chatId,
-            `📸 <b>Photo Attached & Grievance Registered!</b>\n\n✅ <b>${result.message}</b>\n📍 <b>Location:</b> ${loc.name}\n📋 <b>Ticket ID:</b> #${result.complaint.id}`
-          );
-
-          telegramSessions.set(chatId, { state: 'START', category: null, photo_url: null });
-
-          if (result.action === 'created') {
-            socketService.emitEvent('complaint:created', result.complaint);
-          } else {
-            socketService.emitEvent('complaint:updated', result.complaint);
-          }
+        // If location is already known, finalize registration directly!
+        if (session.lat && session.lng) {
+          await finalizeComplaintRegistration(chatId, session, senderName, username);
           return;
         }
 
-        if (session.category) {
-          await sendMessage(chatId, `📸 <b>Photo evidence received!</b>\nNow tap your Ward button below to complete filing:`);
-          await sendLocationPrompt(chatId, session.category);
-        } else {
-          await sendMessage(chatId, `📸 <b>Photo evidence received!</b>\nPlease select the issue category below:`);
+        // If location is not yet selected, save photo and ask for category/location
+        telegramSessions.set(chatId, session);
+        if (!session.category) {
+          session.state = 'CATEGORY';
+          await sendMessage(chatId, '📸 <b>Photo received!</b>\nPlease select what issue is shown in the photo:');
           await sendCategoryMenu(chatId);
-        }
-        return;
-      }
-
-      // Handle GPS Location Message
-      if (msg.location) {
-        const latitude = msg.location.latitude;
-        const longitude = msg.location.longitude;
-        const category = session.category || 'Pothole';
-        const senderName = msg.from.first_name ? `${msg.from.first_name} ${msg.from.last_name || ''}`.trim() : `User ${chatId}`;
-
-        const result = await gisService.processIncomingReport({
-          latitude,
-          longitude,
-          category,
-          reporterPhone: `tg_${chatId}`,
-          description: `Telegram report from ${senderName} (@${msg.from.username || chatId})`,
-          photoUrl: session.photo_url || null,
-        });
-
-        const assignedWard = WARDS_DATA.find((w) => w.id === result.complaint.ward_id) || WARDS_DATA[0];
-
-        await sendMessage(
-          chatId,
-          `✅ <b>${result.message}</b>\n\n📍 <b>GPS Coordinates:</b> ${latitude.toFixed(5)}, ${longitude.toFixed(5)}\n🏢 <b>Assigned Ward:</b> ${assignedWard.name}\n📋 <b>Ticket ID:</b> #${result.complaint.id}${session.photo_url ? '\n📸 <b>Photo Evidence:</b> Attached ✓' : ''}`
-        );
-
-        telegramSessions.set(chatId, { state: 'START', category: null, photo_url: null });
-
-        if (result.action === 'created') {
-          socketService.emitEvent('complaint:created', result.complaint);
         } else {
-          socketService.emitEvent('complaint:updated', result.complaint);
+          session.state = 'LOCATION';
+          await sendMessage(chatId, '📸 <b>Photo received!</b>\nPlease select the location:');
+          await sendLocationPrompt(chatId, session.category);
         }
         return;
       }
 
-      // Handle Commands / Text
+      // Handle Text Location or general text input
       if (msg.text) {
         const text = msg.text.trim();
-        const lower = text.toLowerCase();
 
-        // System reset commands
-        if (['/start', '/report', '/restart', '/reset', '/menu', '/exit', 'hi', 'hello', 'help'].includes(lower)) {
-          telegramSessions.set(chatId, { state: 'CATEGORY', category: null });
-          await sendCategoryMenu(chatId);
-          return;
-        }
-
-        // If user typed their location or address manually
+        // If waiting for Location
         if (session.state === 'LOCATION' || session.category) {
           const loc = resolveLandmarkCoordinates(text);
           if (loc.matched) {
-            const category = session.category || 'Pothole';
-            const senderName = msg.from.first_name ? `${msg.from.first_name} ${msg.from.last_name || ''}`.trim() : `User ${chatId}`;
+            session.state = 'PHOTO';
+            session.lat = loc.lat;
+            session.lng = loc.lng;
+            session.locationName = loc.name;
+            session.wardId = loc.wardId;
+            telegramSessions.set(chatId, session);
 
-            const result = await gisService.processIncomingReport({
-              latitude: loc.lat,
-              longitude: loc.lng,
-              category,
-              reporterPhone: `tg_${chatId}`,
-              description: `Telegram report: "${text}" from ${senderName} (@${msg.from.username || chatId})`,
-              photoUrl: session.photo_url || null,
-            });
-
-            await sendMessage(
-              chatId,
-              `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${loc.name} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})\n🏢 Assigned to VMC response team.\n📋 <b>Ticket ID:</b> #${result.complaint.id}${session.photo_url ? '\n📸 <b>Photo Evidence:</b> Attached ✓' : ''}`
-            );
-
-            telegramSessions.set(chatId, { state: 'START', category: null, photo_url: null });
-
-            if (result.action === 'created') {
-              socketService.emitEvent('complaint:created', result.complaint);
-            } else {
-              socketService.emitEvent('complaint:updated', result.complaint);
+            if (session.photo_url) {
+              await finalizeComplaintRegistration(chatId, session, senderName, username);
+              return;
             }
+
+            await sendPhotoPrompt(chatId, session);
             return;
           } else {
-            // Not matched - ask user to pick ward or send GPS instead of creating random complaint!
             await sendMessage(
               chatId,
-              `⚠️ Location <b>"${text}"</b> was not recognized in Vadodara.\n\nPlease <b>tap your Ward button above</b> or type a known area (e.g. <i>Sayajigunj, Akota, Gotri, Raopura, Karelibaug, Manjalpur</i>).`
+              `⚠️ Location <b>"${text}"</b> was not recognized in Vadodara.\n\nPlease <b>tap your Ward button</b> above or send a GPS location pin:`
             );
             return;
           }
+        }
+
+        // If waiting for Photo and user typed text instead of uploading photo
+        if (session.state === 'PHOTO') {
+          // Finalize without photo
+          await finalizeComplaintRegistration(chatId, session, senderName, username);
+          return;
         }
 
         // Default greeting
@@ -544,6 +576,7 @@ module.exports = {
   sendMessage,
   sendCategoryMenu,
   sendLocationPrompt,
+  sendPhotoPrompt,
   sendClosedLoopVerification,
   handleTelegramUpdate,
   startPolling,
