@@ -1,8 +1,8 @@
 'use client';
 
 // E.2 / C.7 — Map View Component
-// High-visibility civic badge markers, 10-Ward Geographic Polygons, and 18m Spatial Clustering
-// CARTO Positron Light Tiles, Stored XSS sanitization, safe layer cleanup
+// High-visibility civic badge markers, 10-Ward Geographic Polygons, 18m Spatial Clustering
+// Clean Top-Right Unified GIS Toolbar with Zero Bottom-Right Control Overlaps
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
@@ -132,7 +132,13 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
   const [activeLayer, setActiveLayer] = useState<'streets' | 'satellite'>('streets');
   const [showWards, setShowWards] = useState<boolean>(true);
+  const [showPins, setShowPins] = useState<boolean>(true);
+  const [isHeatmapActive, setIsHeatmapActive] = useState<boolean>(showHeatmap);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+
+  useEffect(() => {
+    setIsHeatmapActive(showHeatmap);
+  }, [showHeatmap]);
 
   const safeComplaints = useMemo(() => {
     return Array.isArray(complaints) ? complaints : [];
@@ -165,6 +171,7 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
     }).addTo(map);
     tileLayerRef.current = streetLayer;
 
+    // Clean, unobstructed Bottom-Right Zoom Controls
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     L.control
       .attribution({
@@ -281,7 +288,7 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
       heatmapLayerRef.current = null;
     }
 
-    if (showHeatmap && safeComplaints.length > 0 && typeof (L as unknown as { heatLayer?: unknown }).heatLayer === 'function') {
+    if (isHeatmapActive && safeComplaints.length > 0 && typeof (L as unknown as { heatLayer?: unknown }).heatLayer === 'function') {
       const heatPoints = safeComplaints
         .filter((c) => c && typeof c.latitude === 'number' && typeof c.longitude === 'number' && !isNaN(c.latitude) && !isNaN(c.longitude))
         .map((c) => [c.latitude, c.longitude, (c.severity_score || 50) / 100]);
@@ -303,76 +310,78 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
 
     const validCoordinates: [number, number][] = [];
 
-    safeComplaints.forEach((c) => {
-      if (!c || typeof c.latitude !== 'number' || typeof c.longitude !== 'number' || isNaN(c.latitude) || isNaN(c.longitude)) return;
+    if (showPins) {
+      safeComplaints.forEach((c) => {
+        if (!c || typeof c.latitude !== 'number' || typeof c.longitude !== 'number' || isNaN(c.latitude) || isNaN(c.longitude)) return;
 
-      validCoordinates.push([c.latitude, c.longitude]);
+        validCoordinates.push([c.latitude, c.longitude]);
 
-      const customIcon = L.divIcon({
-        html: buildCustomMarkerHtml(c),
-        className: 'leaflet-custom-marker',
-        iconSize: [32, 42],
-        iconAnchor: [16, 41],
-        popupAnchor: [0, -41],
+        const customIcon = L.divIcon({
+          html: buildCustomMarkerHtml(c),
+          className: 'leaflet-custom-marker',
+          iconSize: [32, 42],
+          iconAnchor: [16, 41],
+          popupAnchor: [0, -41],
+        });
+
+        const marker = L.marker([c.latitude, c.longitude], {
+          icon: customIcon,
+          zIndexOffset: c.confirmation_count >= 8 ? 1000 : 500,
+          title: `${c.category || 'Issue'} #${c.id}`,
+        });
+
+        const safeCategory = escapeHtml((c.category || '').replace(/_/g, ' '));
+        const safeDescription = escapeHtml(c.description || 'Civic infrastructure report.');
+        const safeStatus = escapeHtml(c.status);
+
+        const popupHtml = `
+          <div style="padding:12px;min-width:210px;font-family:'Plus Jakarta Sans',sans-serif;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:13px;font-weight:700;text-transform:capitalize;color:#0B2545;">
+                ${safeCategory} #${c.id}
+              </span>
+              <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:${
+                c.status === 'Resolved' ? '#F0FDF4' : '#EFF6FF'
+              };color:${c.status === 'Resolved' ? '#15803D' : '#1E40AF'};border:1px solid ${
+                c.status === 'Resolved' ? '#BBF7D0' : '#BFDBFE'
+              };">
+                ${safeStatus}
+              </span>
+            </div>
+            <div style="font-size:12px;color:#475569;line-height:1.45;margin-bottom:10px;">
+              ${safeDescription}
+            </div>
+            ${
+              c.confirmation_count >= 4
+                ? `<div style="font-size:11px;font-weight:700;color:#0369A1;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:4px;padding:4px 8px;margin-bottom:8px;">
+                📍 18m Spatial Cluster (${c.confirmation_count} citizens merged)
+              </div>`
+                : ''
+            }
+            ${
+              c.is_recurring
+                ? `<div style="font-size:11px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:4px;padding:4px 8px;margin-bottom:10px;">
+                ⚠️ Recurring hotspot (${Number(c.total_cycles) || 2}× cycles)
+              </div>`
+                : ''
+            }
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748B;font-family:'IBM Plex Mono',monospace;border-top:1px solid #E2E8F0;padding-top:8px;">
+              <span>👥 ${Number(c.confirmation_count) || 1} verified</span>
+              <span>⚡ Score: ${Number(c.severity_score) || 0}</span>
+            </div>
+          </div>
+        `;
+
+        marker.bindPopup(popupHtml, { maxWidth: 280 });
+
+        if (onSelectComplaint) {
+          marker.on('click', () => onSelectComplaint(c));
+        }
+
+        // Add to LayerGroup cleanly in single synchronous pass
+        marker.addTo(group);
       });
-
-      const marker = L.marker([c.latitude, c.longitude], {
-        icon: customIcon,
-        zIndexOffset: c.confirmation_count >= 8 ? 1000 : 500,
-        title: `${c.category || 'Issue'} #${c.id}`,
-      });
-
-      const safeCategory = escapeHtml((c.category || '').replace(/_/g, ' '));
-      const safeDescription = escapeHtml(c.description || 'Civic infrastructure report.');
-      const safeStatus = escapeHtml(c.status);
-
-      const popupHtml = `
-        <div style="padding:12px;min-width:210px;font-family:'Plus Jakarta Sans',sans-serif;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <span style="font-size:13px;font-weight:700;text-transform:capitalize;color:#0B2545;">
-              ${safeCategory} #${c.id}
-            </span>
-            <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:${
-              c.status === 'Resolved' ? '#F0FDF4' : '#EFF6FF'
-            };color:${c.status === 'Resolved' ? '#15803D' : '#1E40AF'};border:1px solid ${
-              c.status === 'Resolved' ? '#BBF7D0' : '#BFDBFE'
-            };">
-              ${safeStatus}
-            </span>
-          </div>
-          <div style="font-size:12px;color:#475569;line-height:1.45;margin-bottom:10px;">
-            ${safeDescription}
-          </div>
-          ${
-            c.confirmation_count >= 4
-              ? `<div style="font-size:11px;font-weight:700;color:#0369A1;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:4px;padding:4px 8px;margin-bottom:8px;">
-              📍 18m Spatial Cluster (${c.confirmation_count} citizens merged)
-            </div>`
-              : ''
-          }
-          ${
-            c.is_recurring
-              ? `<div style="font-size:11px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:4px;padding:4px 8px;margin-bottom:10px;">
-              ⚠️ Recurring hotspot (${Number(c.total_cycles) || 2}× cycles)
-            </div>`
-              : ''
-          }
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748B;font-family:'IBM Plex Mono',monospace;border-top:1px solid #E2E8F0;padding-top:8px;">
-            <span>👥 ${Number(c.confirmation_count) || 1} verified</span>
-            <span>⚡ Score: ${Number(c.severity_score) || 0}</span>
-          </div>
-        </div>
-      `;
-
-      marker.bindPopup(popupHtml, { maxWidth: 280 });
-
-      if (onSelectComplaint) {
-        marker.on('click', () => onSelectComplaint(c));
-      }
-
-      // Add to LayerGroup cleanly in single synchronous pass
-      marker.addTo(group);
-    });
+    }
 
     // Auto fit map bounds if valid coordinates exist
     if (validCoordinates.length > 0 && mapContainerRef.current) {
@@ -383,7 +392,7 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
         // Safe fallback
       }
     }
-  }, [safeComplaints, onSelectComplaint, showHeatmap]);
+  }, [safeComplaints, onSelectComplaint, isHeatmapActive, showPins]);
 
   const toggleLayer = () => {
     const map = mapRef.current;
@@ -417,22 +426,59 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
           background: '#F1F5F9',
         }}
       />
-      {/* Docked Map GIS Toolbar */}
-      <div className="absolute top-3 right-3 z-[1000] flex gap-1.5 bg-white/95 backdrop-blur-xs p-1.5 rounded-lg border border-slate-200 shadow-sm">
+      {/* Unified Docked Map GIS Toolbar (Top-Right: Zero Overlap with Bottom-Right Zoom Controls) */}
+      <div className="absolute top-3 right-3 z-[1000] flex items-center gap-1.5 bg-white/95 backdrop-blur-xs p-1.5 rounded-lg border border-slate-200 shadow-sm flex-wrap">
+        {/* 10 Wards Toggle */}
         <button
+          type="button"
           onClick={() => setShowWards((v) => !v)}
-          className={`text-xs font-bold px-3 py-1.5 rounded-md border transition-all cursor-pointer flex items-center gap-1.5 ${
+          className={`text-xs font-bold px-2.5 py-1.5 rounded-md border transition-all cursor-pointer flex items-center gap-1.5 ${
             showWards
               ? 'bg-[#0B2545] text-white border-[#0B2545] shadow-2xs'
               : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
           }`}
+          title="Toggle 10-Ward Polygons"
         >
-          <span>🌐</span> 10 Wards {showWards ? '✓' : ''}
+          <span>🌐</span>
+          <span>Wards {showWards ? '✓' : ''}</span>
         </button>
 
+        {/* Incident Pins Toggle */}
         <button
+          type="button"
+          onClick={() => setShowPins((v) => !v)}
+          className={`text-xs font-bold px-2.5 py-1.5 rounded-md border transition-all cursor-pointer flex items-center gap-1.5 ${
+            showPins
+              ? 'bg-[#0B2545] text-white border-[#0B2545] shadow-2xs'
+              : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+          }`}
+          title="Toggle Incident Pins"
+        >
+          <span>📍</span>
+          <span>Pins {showPins ? '✓' : ''}</span>
+        </button>
+
+        {/* Heatmap Toggle */}
+        <button
+          type="button"
+          onClick={() => setIsHeatmapActive((v) => !v)}
+          className={`text-xs font-bold px-2.5 py-1.5 rounded-md border transition-all cursor-pointer flex items-center gap-1.5 ${
+            isHeatmapActive
+              ? 'bg-[#B45309] text-white border-[#B45309] shadow-2xs'
+              : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+          }`}
+          title="Toggle Thermal Density Heatmap"
+        >
+          <span>🔥</span>
+          <span>Heatmap {isHeatmapActive ? '✓' : ''}</span>
+        </button>
+
+        {/* Base Map Switcher */}
+        <button
+          type="button"
           onClick={toggleLayer}
-          className="text-xs font-bold px-3 py-1.5 rounded-md border border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5"
+          className="text-xs font-bold px-2.5 py-1.5 rounded-md border border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5"
+          title="Switch Map Tiles"
         >
           <span>{activeLayer === 'streets' ? '🛰️' : '🗺️'}</span>
           <span>{activeLayer === 'streets' ? 'Satellite' : 'Map'}</span>

@@ -4,7 +4,7 @@
 // Vadodara Municipal Corporation (VMC)
 
 import dynamic from 'next/dynamic';
-import React, { useState } from 'react';
+import React from 'react';
 import { Complaint } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -53,10 +53,8 @@ export const MapView: React.FC<MapViewProps> = ({
   center,
   zoom,
   height,
-  showHeatmap: initialHeatmap = false,
+  showHeatmap = false,
 }) => {
-  const [showHeatmap, setShowHeatmap] = useState(initialHeatmap);
-  const [showPins, setShowPins] = useState(true);
   const safeComplaints = Array.isArray(complaints) ? complaints : [];
   const { t } = useLanguage();
 
@@ -73,7 +71,7 @@ export const MapView: React.FC<MapViewProps> = ({
       }}
     >
       <DynamicMap
-        complaints={showPins ? safeComplaints : []}
+        complaints={safeComplaints}
         onSelectComplaint={onSelectComplaint}
         onSelectWard={onSelectWard}
         selectedWard={selectedWard}
@@ -81,53 +79,6 @@ export const MapView: React.FC<MapViewProps> = ({
         zoom={zoom}
         showHeatmap={showHeatmap}
       />
-
-      {/* Floating control cluster, bottom-right (Pins / Heat) */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 16,
-          right: 16,
-          zIndex: 20,
-          background: 'rgba(255,255,255,0.95)',
-          backdropFilter: 'blur(8px)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-hover)',
-          border: '1px solid var(--color-border)',
-          padding: 6,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-        }}
-      >
-        {/* Pins toggle */}
-        <button
-          onClick={() => setShowPins((p) => !p)}
-          title={t('map.toggle_pins')}
-          className={`w-9 h-9 rounded-md border-none flex items-center justify-center cursor-pointer transition-colors ${
-            showPins ? 'bg-[#0B2545] text-white' : 'bg-transparent text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-        </button>
-
-        {/* Heatmap toggle */}
-        <button
-          onClick={() => setShowHeatmap((h) => !h)}
-          title={t('map.toggle_heatmap')}
-          className={`w-9 h-9 rounded-md border-none flex items-center justify-center cursor-pointer transition-colors ${
-            showHeatmap ? 'bg-[#0B2545] text-white' : 'bg-transparent text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="4" />
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-          </svg>
-        </button>
-      </div>
 
       {/* Bottom-left legend chip */}
       <div
