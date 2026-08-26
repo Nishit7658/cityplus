@@ -307,31 +307,47 @@ async function sendLocationPrompt(chatId, categoryTitle) {
     ],
   };
 
-  return sendMessage(
+  const gpsReplyKeyboard = {
+    keyboard: [
+      [{ text: '📍 Share Live / Current GPS Location', request_location: true }],
+      [{ text: '❌ Cancel' }],
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: true,
+  };
+
+  await sendMessage(
     chatId,
-    `Issue selected: <b>${categoryTitle}</b>\n\n📍 <b>Please tell us where this problem is located:</b>\n\n1️⃣ <b>Tap your Ward button below</b> 👇\n2️⃣ <b>Or type your landmark/area</b> (e.g. <i>Sayajigunj, Akota, Gotri, MSU, Alkapuri</i>)\n3️⃣ <b>Or attach a Location Pin</b> (📎 ➔ Location)`,
+    `Issue selected: <b>${categoryTitle}</b>\n\n📍 <b>Please choose your Location:</b>\n\n1️⃣ <b>Tap "📍 Share Live / Current GPS Location"</b> button below 👇\n2️⃣ <b>Or tap your Ward button</b>\n3️⃣ <b>Or type your area/landmark</b> (e.g. <i>Sayajigunj, Akota, Gotri, MSU, Alkapuri</i>)`,
     { reply_markup: inlineWards }
   );
+
+  return sendMessage(chatId, '👇 Tap below to send 1-click GPS location from your phone:', {
+    reply_markup: gpsReplyKeyboard,
+  });
 }
 
 /**
- * STEP 3: Request Photo Evidence (Optional with Skip button)
+ * STEP 3: Request Photo Evidence (Optional with Skip button & Camera Guide)
  */
 async function sendPhotoPrompt(chatId, session) {
   const keyboard = {
     inline_keyboard: [
       [
+        { text: '📷 How to Send Photo (Tap 📎/📷)', callback_data: 'prompt_photo_help' },
+      ],
+      [
         { text: '⏭️ Skip Photo & Register', callback_data: 'skip_photo' },
       ],
       [
-        { text: '❌ Cancel', callback_data: 'cancel_report' },
+        { text: '❌ Cancel Report', callback_data: 'cancel_report' },
       ],
     ],
   };
 
   return sendMessage(
     chatId,
-    `📍 <b>Location Set:</b> ${session.locationName || 'Ward Assigned'}\n⚡ <b>Coordinates:</b> ${session.lat.toFixed(4)}, ${session.lng.toFixed(4)}\n\n📷 <b>Attach Photo Evidence (Optional):</b>\n• <b>Send a photo</b> of the issue using Telegram camera/gallery 📷\n• Or tap <b>"⏭️ Skip Photo & Register"</b> to submit directly without a photo:`,
+    `📍 <b>Location Set:</b> ${session.locationName || 'Ward Assigned'}\n⚡ <b>Coordinates:</b> ${session.lat.toFixed(4)}, ${session.lng.toFixed(4)}\n\n📷 <b>Attach Photo Evidence (Optional):</b>\n• <b>1️⃣ Take / Send Photo:</b> Tap the <b>Camera 📷</b> or <b>Paperclip 📎</b> at the bottom of your screen.\n• <b>2️⃣ Skip:</b> Tap <b>"⏭️ Skip Photo & Register"</b> to submit directly:`,
     { reply_markup: keyboard }
   );
 }
@@ -361,7 +377,8 @@ async function finalizeComplaintRegistration(chatId, session, senderName, userna
     `⚡ <b>Coordinates:</b> ${session.lat.toFixed(5)}, ${session.lng.toFixed(5)}\n` +
     `🏢 <b>Assigned Team:</b> VMC Field Response Squad\n` +
     `🖼️ <b>Evidence:</b> ${photoStatus}\n\n` +
-    `⏱️ <i>You will receive live status notifications here as VMC crews inspect and resolve your issue.</i>`
+    `⏱️ <i>You will receive live status notifications here as VMC crews inspect and resolve your issue.</i>`,
+    { reply_markup: { remove_keyboard: true } }
   );
 
   telegramSessions.set(chatId, { state: 'START', category: null, lat: null, lng: null, locationName: null, photo_url: null });
@@ -472,6 +489,15 @@ async function handleTelegramUpdate(update) {
         }
 
         await sendPhotoPrompt(chatId, session);
+        return;
+      }
+
+      // Photo Help Button
+      if (data === 'prompt_photo_help') {
+        await sendMessage(
+          chatId,
+          `📸 <b>To Send Photo Evidence:</b>\n\n1️⃣ Tap the <b>Camera 📷</b> or <b>Paperclip 📎</b> icon at the bottom of this chat.\n2️⃣ Snap a picture or choose from gallery.\n3️⃣ Tap <b>Send</b> — your complaint will be instantly registered with the photo!`
+        );
         return;
       }
 
