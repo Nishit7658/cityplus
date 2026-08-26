@@ -261,7 +261,7 @@ async function handleTelegramUpdate(update) {
         };
         const categoryTitle = categoryMap[categoryKey] || categoryKey;
 
-        telegramSessions.set(chatId, { state: 'LOCATION', category: categoryTitle });
+        telegramSessions.set(chatId, { ...session, state: 'LOCATION', category: categoryTitle });
         await sendLocationPrompt(chatId, categoryTitle);
         return;
       }
@@ -284,10 +284,10 @@ async function handleTelegramUpdate(update) {
 
         await sendMessage(
           chatId,
-          `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${ward.name}\n⚡ <b>Coordinates:</b> ${ward.lat}, ${ward.lng}\n🏢 Assigned to Ward ${ward.id} engineering squad.`
+          `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${ward.name}\n⚡ <b>Coordinates:</b> ${ward.lat}, ${ward.lng}\n🏢 Assigned to Ward ${ward.id} engineering squad.\n📋 <b>Ticket ID:</b> #${result.complaint.id}${session.photo_url ? '\n📸 <b>Photo Evidence:</b> Attached ✓' : ''}`
         );
 
-        telegramSessions.set(chatId, { state: 'START', category: null });
+        telegramSessions.set(chatId, { state: 'START', category: null, photo_url: null });
 
         if (result.action === 'created') {
           socketService.emitEvent('complaint:created', result.complaint);
@@ -306,7 +306,7 @@ async function handleTelegramUpdate(update) {
 
       // Handle Cancel Button
       if (msg.text === '❌ Cancel' || msg.text === '/cancel') {
-        telegramSessions.set(chatId, { state: 'START', category: null });
+        telegramSessions.set(chatId, { state: 'START', category: null, photo_url: null });
         await sendMessage(chatId, 'Report cancelled. Send /start or /report whenever you wish to report an issue.');
         return;
       }
@@ -319,10 +319,45 @@ async function handleTelegramUpdate(update) {
         session.photo_url = photoUrl;
         telegramSessions.set(chatId, session);
 
-        await sendMessage(
-          chatId,
-          `📸 <b>Photo evidence received successfully!</b>\n\nPlease select your <b>Ward</b> button below or type your area.`
-        );
+        const caption = msg.caption ? msg.caption.trim() : '';
+        const loc = resolveLandmarkCoordinates(caption);
+
+        // If caption contains landmark, register immediately
+        if (loc.matched) {
+          const category = session.category || 'Pothole';
+          const senderName = msg.from.first_name ? `${msg.from.first_name} ${msg.from.last_name || ''}`.trim() : `User ${chatId}`;
+
+          const result = await gisService.processIncomingReport({
+            latitude: loc.lat,
+            longitude: loc.lng,
+            category,
+            reporterPhone: `tg_${chatId}`,
+            description: caption ? `Telegram photo report: "${caption}" from ${senderName}` : `Photo evidence report from ${senderName}`,
+            photoUrl: photoUrl,
+          });
+
+          await sendMessage(
+            chatId,
+            `📸 <b>Photo Attached & Grievance Registered!</b>\n\n✅ <b>${result.message}</b>\n📍 <b>Location:</b> ${loc.name}\n📋 <b>Ticket ID:</b> #${result.complaint.id}`
+          );
+
+          telegramSessions.set(chatId, { state: 'START', category: null, photo_url: null });
+
+          if (result.action === 'created') {
+            socketService.emitEvent('complaint:created', result.complaint);
+          } else {
+            socketService.emitEvent('complaint:updated', result.complaint);
+          }
+          return;
+        }
+
+        if (session.category) {
+          await sendMessage(chatId, `📸 <b>Photo evidence received!</b>\nNow tap your Ward button below to complete filing:`);
+          await sendLocationPrompt(chatId, session.category);
+        } else {
+          await sendMessage(chatId, `📸 <b>Photo evidence received!</b>\nPlease select the issue category below:`);
+          await sendCategoryMenu(chatId);
+        }
         return;
       }
 
@@ -346,10 +381,10 @@ async function handleTelegramUpdate(update) {
 
         await sendMessage(
           chatId,
-          `✅ <b>${result.message}</b>\n\n📍 <b>GPS Coordinates:</b> ${latitude.toFixed(5)}, ${longitude.toFixed(5)}\n🏢 <b>Assigned Ward:</b> ${assignedWard.name}\n📋 <b>Ticket ID:</b> #${result.complaint.id}`
+          `✅ <b>${result.message}</b>\n\n📍 <b>GPS Coordinates:</b> ${latitude.toFixed(5)}, ${longitude.toFixed(5)}\n🏢 <b>Assigned Ward:</b> ${assignedWard.name}\n📋 <b>Ticket ID:</b> #${result.complaint.id}${session.photo_url ? '\n📸 <b>Photo Evidence:</b> Attached ✓' : ''}`
         );
 
-        telegramSessions.set(chatId, { state: 'START', category: null });
+        telegramSessions.set(chatId, { state: 'START', category: null, photo_url: null });
 
         if (result.action === 'created') {
           socketService.emitEvent('complaint:created', result.complaint);
@@ -389,10 +424,10 @@ async function handleTelegramUpdate(update) {
 
             await sendMessage(
               chatId,
-              `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${loc.name} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})\n🏢 Assigned to VMC response team.`
+              `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${loc.name} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})\n🏢 Assigned to VMC response team.\n📋 <b>Ticket ID:</b> #${result.complaint.id}${session.photo_url ? '\n📸 <b>Photo Evidence:</b> Attached ✓' : ''}`
             );
 
-            telegramSessions.set(chatId, { state: 'START', category: null });
+            telegramSessions.set(chatId, { state: 'START', category: null, photo_url: null });
 
             if (result.action === 'created') {
               socketService.emitEvent('complaint:created', result.complaint);
