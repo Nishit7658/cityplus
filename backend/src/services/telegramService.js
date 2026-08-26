@@ -331,16 +331,13 @@ async function sendLocationPrompt(chatId, categoryTitle) {
 }
 
 /**
- * STEP 3: Request Photo Evidence (Optional with Skip button & Camera Actions)
+ * STEP 3: Request Photo Evidence (Optional)
  */
 async function sendPhotoPrompt(chatId, session) {
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '📷 Take Photo Now (Tap 📎 or 📷)', callback_data: 'action_take_photo' },
-      ],
-      [
-        { text: '⏭️ Skip Photo & Register Directly', callback_data: 'skip_photo' },
+        { text: '⏭️ Skip Photo & Register Now', callback_data: 'skip_photo' },
       ],
       [
         { text: '❌ Cancel Report', callback_data: 'cancel_report' },
@@ -350,7 +347,7 @@ async function sendPhotoPrompt(chatId, session) {
 
   return sendMessage(
     chatId,
-    `📍 <b>Location Set:</b> ${session.locationName || 'Ward Assigned'}\n⚡ <b>Coordinates:</b> ${session.lat.toFixed(4)}, ${session.lng.toFixed(4)}\n\n📷 <b>Attach Photo Evidence (Optional):</b>\n\n• <b>1️⃣ Take / Send Photo:</b> Tap <b>"📷 Take Photo Now"</b> below or tap the <b>Camera 📷 / Paperclip 📎</b> button.\n• <b>2️⃣ Skip:</b> Tap <b>"⏭️ Skip Photo & Register Directly"</b> to submit without a photo.`,
+    `📍 <b>Location Set:</b> ${session.locationName || 'Ward Assigned'}\n⚡ <b>Coordinates:</b> ${session.lat.toFixed(4)}, ${session.lng.toFixed(4)}\n\n📷 <b>Attach Photo Evidence (Optional):</b>\n• <b>Snap a live photo</b> using the <b>Camera 📷</b> or <b>Paperclip 📎</b>\n• Or tap <b>"⏭️ Skip Photo & Register Now"</b> below to file immediately without a photo:`,
     { reply_markup: keyboard }
   );
 }
