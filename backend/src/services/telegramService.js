@@ -120,7 +120,7 @@ async function sendMessage(chatId, text, extra = {}) {
 }
 
 /**
- * Send category selection menu (Inline Keyboard)
+ * Send category selection menu (Inline Keyboard only - Never locks typing)
  */
 async function sendCategoryMenu(chatId) {
   const keyboard = {
@@ -152,7 +152,8 @@ async function sendCategoryMenu(chatId) {
 }
 
 /**
- * Request Location using native GPS button + 10-Ward Picker Keyboard
+ * Request Location using 100% Inline Ward Keyboard & Location text prompt
+ * (Never uses custom reply_keyboard so regular chat input is NEVER blocked)
  */
 async function sendLocationPrompt(chatId, categoryTitle) {
   const inlineWards = {
@@ -177,27 +178,17 @@ async function sendLocationPrompt(chatId, categoryTitle) {
         { text: '📍 Ward 9 (Gorwa)', callback_data: 'ward_9' },
         { text: '📍 Ward 10 (Waghodia)', callback_data: 'ward_10' },
       ],
+      [
+        { text: '❌ Cancel Report', callback_data: 'cancel_report' },
+      ],
     ],
   };
 
-  const replyKeyboard = {
-    keyboard: [
-      [{ text: '📍 Share My Current GPS Location', request_location: true }],
-      [{ text: '❌ Cancel' }],
-    ],
-    resize_keyboard: true,
-    one_time_keyboard: true,
-  };
-
-  await sendMessage(
+  return sendMessage(
     chatId,
-    `Issue: <b>${categoryTitle}</b>\n\n📌 <b>How to set your location:</b>\n\n1️⃣ <b>Tap your Ward button below</b> 👇\n2️⃣ <b>Or tap "📍 Share GPS Location"</b> (on mobile)\n3️⃣ <b>Or type your area/landmark</b> (e.g. <i>Sayajigunj, Akota, Gotri, MSU, Alkapuri</i>)`,
+    `Issue: <b>${categoryTitle}</b>\n\n📌 <b>Please choose your Ward/Location:</b>\n\n1️⃣ <b>Tap your Ward button below</b> 👇\n2️⃣ <b>Or type your landmark</b> (e.g. <i>Sayajigunj, Akota, Gotri, MSU, Alkapuri</i>)\n3️⃣ <b>Or attach a Location Pin</b> via Telegram Paperclip (📎 ➔ Location)`,
     { reply_markup: inlineWards }
   );
-
-  return sendMessage(chatId, '👇 Mobile GPS button:', {
-    reply_markup: replyKeyboard,
-  });
 }
 
 /**
@@ -205,12 +196,19 @@ async function sendLocationPrompt(chatId, categoryTitle) {
  */
 async function handleTelegramUpdate(update) {
   try {
-    // 1. Handle Inline Button Callback Queries (Category / Ward / Verification)
+    // 1. Handle Inline Button Callback Queries (Category / Ward / Verification / Cancel)
     if (update.callback_query) {
       const cb = update.callback_query;
       const chatId = cb.message.chat.id;
       const data = cb.data;
       const session = telegramSessions.get(chatId) || { state: 'START', category: null };
+
+      // Cancel Report
+      if (data === 'cancel_report') {
+        telegramSessions.set(chatId, { state: 'START', category: null });
+        await sendMessage(chatId, '❌ Report cancelled. Send /start or /report anytime to file a grievance.');
+        return;
+      }
 
       // Closed-Loop Verification: Yes
       if (data.startsWith('verify_yes_')) {
@@ -286,8 +284,7 @@ async function handleTelegramUpdate(update) {
 
         await sendMessage(
           chatId,
-          `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${ward.name}\n⚡ <b>Coordinates:</b> ${ward.lat}, ${ward.lng}\n🏢 Assigned to Ward ${ward.id} engineering squad.`,
-          { reply_markup: { remove_keyboard: true } }
+          `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${ward.name}\n⚡ <b>Coordinates:</b> ${ward.lat}, ${ward.lng}\n🏢 Assigned to Ward ${ward.id} engineering squad.`
         );
 
         telegramSessions.set(chatId, { state: 'START', category: null });
@@ -310,9 +307,7 @@ async function handleTelegramUpdate(update) {
       // Handle Cancel Button
       if (msg.text === '❌ Cancel' || msg.text === '/cancel') {
         telegramSessions.set(chatId, { state: 'START', category: null });
-        await sendMessage(chatId, 'Report cancelled. Send /start or /report whenever you wish to report an issue.', {
-          reply_markup: { remove_keyboard: true },
-        });
+        await sendMessage(chatId, 'Report cancelled. Send /start or /report whenever you wish to report an issue.');
         return;
       }
 
@@ -326,7 +321,7 @@ async function handleTelegramUpdate(update) {
 
         await sendMessage(
           chatId,
-          `📸 <b>Photo evidence received successfully!</b>\n\nPlease select your <b>Ward</b> or tap <b>📍 Share GPS Location</b> below to complete registration.`
+          `📸 <b>Photo evidence received successfully!</b>\n\nPlease select your <b>Ward</b> button below or type your area.`
         );
         return;
       }
@@ -349,8 +344,7 @@ async function handleTelegramUpdate(update) {
 
         await sendMessage(
           chatId,
-          `✅ <b>${result.message}</b>\n\n📍 <i>Coordinates: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}</i>\n🏢 Designated Ward jurisdiction assigned.`,
-          { reply_markup: { remove_keyboard: true } }
+          `✅ <b>${result.message}</b>\n\n📍 <i>Coordinates: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}</i>\n🏢 Designated Ward jurisdiction assigned.`
         );
 
         telegramSessions.set(chatId, { state: 'START', category: null });
@@ -369,7 +363,7 @@ async function handleTelegramUpdate(update) {
         const lower = text.toLowerCase();
 
         // System reset commands
-        if (['/start', '/report', '/restart', '/reset', '/menu', 'hi', 'hello', 'help'].includes(lower)) {
+        if (['/start', '/report', '/restart', '/reset', '/menu', '/exit', 'hi', 'hello', 'help'].includes(lower)) {
           telegramSessions.set(chatId, { state: 'CATEGORY', category: null });
           await sendCategoryMenu(chatId);
           return;
@@ -393,8 +387,7 @@ async function handleTelegramUpdate(update) {
 
             await sendMessage(
               chatId,
-              `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${loc.name} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})\n🏢 Assigned to VMC response team.`,
-              { reply_markup: { remove_keyboard: true } }
+              `✅ <b>${result.message}</b>\n\n📍 <b>Location:</b> ${loc.name} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})\n🏢 Assigned to VMC response team.`
             );
 
             telegramSessions.set(chatId, { state: 'START', category: null });
@@ -409,7 +402,7 @@ async function handleTelegramUpdate(update) {
             // Not matched - ask user to pick ward or send GPS instead of creating random complaint!
             await sendMessage(
               chatId,
-              `⚠️ Location <b>"${text}"</b> was not recognized in Vadodara.\n\nPlease <b>tap your Ward button above</b>, tap <b>📍 Share GPS Location</b>, or type a known area (e.g. <i>Sayajigunj, Akota, Gotri, Raopura, Karelibaug, Manjalpur</i>).`
+              `⚠️ Location <b>"${text}"</b> was not recognized in Vadodara.\n\nPlease <b>tap your Ward button above</b> or type a known area (e.g. <i>Sayajigunj, Akota, Gotri, Raopura, Karelibaug, Manjalpur</i>).`
             );
             return;
           }
