@@ -1,16 +1,13 @@
 'use client';
 
 // E.2 / C.7 — Map View Component
-// High-visibility civic badge markers visible at ALL zoom levels (zoomed in & zoomed out)
-// CARTO Positron tiles + CSS warm filter sepia(8%) saturate(85%) hue-rotate(-6deg)
-// Pixel-accurate iconAnchor prevents position drift during zoom in/out
-// Auto fit-bounds frames all municipal areas and problem spots
-// Stored XSS protection: Sanitized HTML strings and escapeHtml utility
+// High-visibility civic badge markers with robust Leaflet lifecycle handling
+// CARTO Positron Light Tiles, Stored XSS sanitization, safe layer cleanup
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
 import { Complaint } from '@/types';
-import { getCategoryColor, getSeverityColor } from './CategoryIcon';
+import { getCategoryColor } from './CategoryIcon';
 
 interface MapViewComponentProps {
   complaints?: Complaint[];
@@ -38,8 +35,8 @@ function buildCustomMarkerHtml(complaint: Complaint): string {
   const isCritical = complaint.confirmation_count >= 8 && complaint.status !== 'Resolved';
   const isResolved = complaint.status === 'Resolved';
 
-  const borderColor = isResolved ? '#3E8E5B' : isCritical ? '#B33B2E' : catColor;
-  const badgeBg = isResolved ? '#F0F9F4' : '#FFFFFF';
+  const borderColor = isResolved ? '#15803D' : isCritical ? '#B91C1C' : catColor;
+  const badgeBg = isResolved ? '#F0FDF4' : '#FFFFFF';
 
   // Crisp category icons centered at (16, 16)
   const iconSvgs: Record<string, string> = {
@@ -85,31 +82,25 @@ function buildCustomMarkerHtml(complaint: Complaint): string {
     `,
     traffic_signal: `
       <rect x="13" y="8" width="6" height="13" rx="1.5" stroke="${borderColor}" stroke-width="1.5" fill="${borderColor}25"/>
-      <circle cx="16" cy="10.5" r="1.2" fill="#B33B2E"/>
-      <circle cx="16" cy="14.5" r="1.2" fill="#D89A2C"/>
-      <circle cx="16" cy="18.5" r="1.2" fill="#3E8E5B"/>
+      <circle cx="16" cy="10.5" r="1.2" fill="#B91C1C"/>
+      <circle cx="16" cy="14.5" r="1.2" fill="#D97706"/>
+      <circle cx="16" cy="18.5" r="1.2" fill="#15803D"/>
     `,
   };
 
   const normKey = (complaint.category || '').toLowerCase().replace(/\s+/g, '_');
   const iconInner = iconSvgs[normKey] || iconSvgs['pothole'];
 
-  // Sonar pulse halo around badge for critical complaints
   const pulseHtml = isCritical
-    ? `<div style="position:absolute;top:-4px;left:-4px;width:40px;height:40px;border-radius:12px;border:2.5px solid #B33B2E;animation:pulse-dot 1800ms ease-in-out infinite;opacity:0.6;pointer-events:none;"></div>`
+    ? `<div style="position:absolute;top:-4px;left:-4px;width:40px;height:40px;border-radius:10px;border:2px solid #B91C1C;animation:pulse-dot 1800ms ease-in-out infinite;opacity:0.6;pointer-events:none;"></div>`
     : '';
 
-  // Standalone SVG pin: Total dimensions 32px wide by 42px tall
-  // Needle anchor tip is exactly at (16, 41)
   return `
-    <div class="marker-inner-drop" style="position:relative;width:32px;height:42px;cursor:pointer;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.28));">
+    <div style="position:relative;width:32px;height:42px;cursor:pointer;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.22));">
       ${pulseHtml}
       <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible;">
-        <!-- Downward triangle tail pointing to (16, 41) -->
         <path d="M10 27 L16 41 L22 27 Z" fill="${borderColor}"/>
-        <!-- Rounded square badge -->
-        <rect x="1.5" y="1.5" width="29" height="28" rx="8" fill="${badgeBg}" stroke="${borderColor}" stroke-width="2.5"/>
-        <!-- Inner Category Icon -->
+        <rect x="1.5" y="1.5" width="29" height="28" rx="6" fill="${badgeBg}" stroke="${borderColor}" stroke-width="2"/>
         ${iconInner}
       </svg>
     </div>
@@ -127,16 +118,17 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
   const mapRef = useRef<L.Map | null>(null);
   const heatmapLayerRef = useRef<L.Layer | null>(null);
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
-  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
   const [activeLayer, setActiveLayer] = useState<'streets' | 'satellite'>('streets');
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
 
-  const safeComplaints = Array.isArray(complaints) ? complaints : [];
+  const safeComplaints = useMemo(() => {
+    return Array.isArray(complaints) ? complaints : [];
+  }, [complaints]);
 
   // 1. Initialize Leaflet Map Instance
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
 
-    // Fix default marker asset paths in Next.js bundle
     delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: '/marker-icon-2x.png',
@@ -150,15 +142,15 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
       zoomControl: false,
       attributionControl: false,
       scrollWheelZoom: true,
-      fadeAnimation: true,
+      fadeAnimation: false,
       zoomAnimation: true,
     });
 
-    // High-readability CARTO Positron Light Cartography
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
       subdomains: 'abcd',
     }).addTo(map);
+    tileLayerRef.current = streetLayer;
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     L.control
@@ -173,30 +165,30 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
     mapRef.current = map;
 
     return () => {
-      timeoutsRef.current.forEach((t) => clearTimeout(t));
-      timeoutsRef.current = [];
+      if (markersGroupRef.current) {
+        markersGroupRef.current.clearLayers();
+        markersGroupRef.current = null;
+      }
       map.remove();
       mapRef.current = null;
     };
   }, [center, zoom]);
 
-  // 2. Render Markers & Fit Bounds
+  // 2. Render Markers & Synchronize Layers safely
   useEffect(() => {
     const map = mapRef.current;
     const group = markersGroupRef.current;
     if (!map || !group) return;
 
-    // Clear previous timeouts & markers
-    timeoutsRef.current.forEach((t) => clearTimeout(t));
-    timeoutsRef.current = [];
     group.clearLayers();
 
     if (heatmapLayerRef.current) {
-      map.removeLayer(heatmapLayerRef.current);
+      if (map.hasLayer(heatmapLayerRef.current)) {
+        map.removeLayer(heatmapLayerRef.current);
+      }
       heatmapLayerRef.current = null;
     }
 
-    // Optional Heatmap layer for hotspots view
     if (showHeatmap && safeComplaints.length > 0 && typeof (L as unknown as { heatLayer?: unknown }).heatLayer === 'function') {
       const heatPoints = safeComplaints
         .filter((c) => c && typeof c.latitude === 'number' && typeof c.longitude === 'number' && !isNaN(c.latitude) && !isNaN(c.longitude))
@@ -209,7 +201,7 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
             radius: 35,
             blur: 25,
             maxZoom: 16,
-            gradient: { 0.2: '#0B4A40', 0.5: '#D97D53', 0.8: '#C05B32', 1.0: '#B33B2E' },
+            gradient: { 0.2: '#0B2545', 0.5: '#1D4ED8', 0.8: '#B45309', 1.0: '#B91C1C' },
           }
         );
         heat.addTo(map);
@@ -219,12 +211,11 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
 
     const validCoordinates: [number, number][] = [];
 
-    safeComplaints.forEach((c, i) => {
+    safeComplaints.forEach((c) => {
       if (!c || typeof c.latitude !== 'number' || typeof c.longitude !== 'number' || isNaN(c.latitude) || isNaN(c.longitude)) return;
 
       validCoordinates.push([c.latitude, c.longitude]);
 
-      // Pixel-perfect anchor: tip is at x: 16 (half width), y: 41 (bottom point)
       const customIcon = L.divIcon({
         html: buildCustomMarkerHtml(c),
         className: 'leaflet-custom-marker',
@@ -244,29 +235,31 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
       const safeStatus = escapeHtml(c.status);
 
       const popupHtml = `
-        <div style="padding:14px;min-width:220px;font-family:'Public Sans',sans-serif;">
+        <div style="padding:12px;min-width:210px;font-family:'Plus Jakarta Sans',sans-serif;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <span style="font-size:13px;font-weight:700;text-transform:capitalize;color:#22221F;">
+            <span style="font-size:13px;font-weight:700;text-transform:capitalize;color:#0B2545;">
               ${safeCategory} #${c.id}
             </span>
-            <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:${
-              c.status === 'Resolved' ? '#EDF3EE' : '#EAF0F4'
-            };color:${c.status === 'Resolved' ? '#3E8E5B' : '#5C7A94'};">
+            <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;background:${
+              c.status === 'Resolved' ? '#F0FDF4' : '#EFF6FF'
+            };color:${c.status === 'Resolved' ? '#15803D' : '#1E40AF'};border:1px solid ${
+              c.status === 'Resolved' ? '#BBF7D0' : '#BFDBFE'
+            };">
               ${safeStatus}
             </span>
           </div>
-          <div style="font-size:12px;color:#6B6659;line-height:1.45;margin-bottom:10px;">
+          <div style="font-size:12px;color:#475569;line-height:1.45;margin-bottom:10px;">
             ${safeDescription}
           </div>
           ${
             c.is_recurring
-              ? `<div style="font-size:11px;font-weight:600;color:#C05B32;background:#F7E3D8;border-radius:6px;padding:5px 8px;margin-bottom:10px;">
-              ⚠️ Recurring spot — ${Number(c.total_cycles) || 2}× in ${Number(c.months_span) || 6} months
+              ? `<div style="font-size:11px;font-weight:700;color:#B45309;background:#FFFBEB;border:1px solid #FDE68A;border-radius:4px;padding:4px 8px;margin-bottom:10px;">
+              ⚠️ Recurring hotspot (${Number(c.total_cycles) || 2}× cycles)
             </div>`
               : ''
           }
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:#6B6659;font-family:'IBM Plex Mono',monospace;border-top:1px solid #E8E2D6;padding-top:8px;">
-            <span>👥 ${Number(c.confirmation_count) || 1} confirmed</span>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748B;font-family:'IBM Plex Mono',monospace;border-top:1px solid #E2E8F0;padding-top:8px;">
+            <span>👥 ${Number(c.confirmation_count) || 1} verified</span>
             <span>⚡ Score: ${Number(c.severity_score) || 0}</span>
           </div>
         </div>
@@ -278,33 +271,42 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
         marker.on('click', () => onSelectComplaint(c));
       }
 
-      if (i < 40) {
-        const t = setTimeout(() => {
-          if (mapRef.current) {
-            marker.addTo(mapRef.current);
-          }
-        }, i * 12);
-        timeoutsRef.current.push(t);
-      } else {
-        marker.addTo(map);
-      }
+      // Add to LayerGroup cleanly in single synchronous pass
+      marker.addTo(group);
     });
 
-    // Auto fit map viewport to encompass ALL complaints across the city
-    if (validCoordinates.length > 0) {
+    // Auto fit map bounds if valid coordinates exist
+    if (validCoordinates.length > 0 && mapContainerRef.current) {
       try {
         const bounds = L.latLngBounds(validCoordinates);
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+        map.fitBounds(bounds, { padding: [35, 35], maxZoom: 14, animate: false });
       } catch (err) {
-        console.warn('[MapView] Fit bounds error:', err);
+        // Safe fallback
       }
     }
   }, [safeComplaints, onSelectComplaint, showHeatmap]);
 
   const toggleLayer = () => {
-    if (!mapRef.current) return;
+    const map = mapRef.current;
+    if (!map) return;
     const next = activeLayer === 'streets' ? 'satellite' : 'streets';
     setActiveLayer(next);
+
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+    }
+
+    if (next === 'satellite') {
+      tileLayerRef.current = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 19 }
+      ).addTo(map);
+    } else {
+      tileLayerRef.current = L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        { maxZoom: 19, subdomains: 'abcd' }
+      ).addTo(map);
+    }
   };
 
   return (
@@ -316,10 +318,10 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
           background: '#F1F5F9',
         }}
       />
-      <div className="absolute top-3 right-3 z-[1000] flex gap-1 bg-white/90 backdrop-blur-xs p-1 rounded-md border border-slate-200 shadow-xs">
+      <div className="absolute top-3 right-3 z-[1000] flex gap-1 bg-white/95 backdrop-blur-xs p-1 rounded-md border border-slate-200 shadow-xs">
         <button
           onClick={toggleLayer}
-          className="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+          className="text-xs font-bold px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
         >
           {activeLayer === 'streets' ? '🛰️ Satellite' : '🗺️ Map'}
         </button>
