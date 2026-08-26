@@ -4,6 +4,7 @@
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Officer } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 import { useWard } from '@/context/WardContext';
@@ -188,6 +189,15 @@ export default function OfficersPage() {
                       <span className="font-mono text-slate-800 font-bold">{officer.phone || '—'}</span>
                     </div>
                   </div>
+
+                  <div className="mt-3 pt-2">
+                    <Link
+                      href={`/queue?officer_id=${officer.id}`}
+                      className="w-full text-center py-1.5 rounded bg-slate-100 hover:bg-[#0B2545] hover:text-white text-[#0B2545] text-xs font-bold transition-colors block"
+                    >
+                      📋 View Assigned Orders ({activeCount})
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between bg-slate-50 -mx-5 -mb-5 p-3 rounded-b-lg">
@@ -222,6 +232,7 @@ export default function OfficersPage() {
                 <th className="px-4 py-3.5">{t('officers.th_phone')}</th>
                 <th className="px-4 py-3.5 text-center">{t('officers.th_active_tasks')}</th>
                 <th className="px-4 py-3.5 text-center">{t('officers.th_resolved')}</th>
+                <th className="px-6 py-3.5 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
@@ -250,6 +261,14 @@ export default function OfficersPage() {
                       <span className="font-mono font-bold text-[#15803D] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                         {resolvedCount}
                       </span>
+                    </td>
+                    <td className="px-6 py-3.5 text-right">
+                      <Link
+                        href={`/queue?officer_id=${officer.id}`}
+                        className="px-3 py-1 bg-slate-100 hover:bg-[#0B2545] hover:text-white text-slate-800 font-semibold rounded text-xs transition-colors inline-block"
+                      >
+                        📋 Orders
+                      </Link>
                     </td>
                   </tr>
                 );

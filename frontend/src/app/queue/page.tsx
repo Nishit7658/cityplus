@@ -1,9 +1,10 @@
 'use client';
 
-// F.3 — Task / Grievance Queue Page with Full Trilingual i18n & Filter Badges
+// F.3 — Task / Grievance Queue Page with Full Trilingual i18n, Filter Badges & Officer Filter
 // Vadodara Municipal Corporation (VMC) / Government of Gujarat
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { TaskQueueTable } from '@/components/TaskQueueTable';
 import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
 import { useSocket } from '@/components/SocketProvider';
@@ -19,7 +20,7 @@ interface StatusFilter {
   label: string;
 }
 
-export default function QueuePage() {
+function QueueContent() {
   const [complaints, setComplaints] = useState<Complaint[]>(MOCK_COMPLAINTS);
   const [officers, setOfficers]     = useState<Officer[]>(MOCK_OFFICERS);
   const [selected, setSelected]     = useState<Complaint | null>(null);
@@ -28,6 +29,10 @@ export default function QueuePage() {
   const { lastEvent } = useSocket();
   const { t } = useLanguage();
   const { selectedWard } = useWard();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const officerIdParam = searchParams.get('officer_id');
 
   const STATUS_FILTERS: StatusFilter[] = [
     { key: 'Pending',     label: t('status.pending') },
@@ -82,10 +87,10 @@ export default function QueuePage() {
 
   const rawSafe = Array.isArray(complaints) ? complaints : MOCK_COMPLAINTS;
 
-  // Filter by Global WardContext
-  const safe = selectedWard === 'all'
-    ? rawSafe
-    : rawSafe.filter((c) => String(c.ward_id) === String(selectedWard));
+  // Filter by Global WardContext & Officer Filter
+  const safe = rawSafe
+    .filter((c) => (selectedWard === 'all' ? true : String(c.ward_id) === String(selectedWard)))
+    .filter((c) => (officerIdParam ? String(c.assigned_officer_id) === String(officerIdParam) : true));
 
   const filtered = safe.filter((c) =>
     activeStatuses.length === 0 || activeStatuses.includes(c.status)
@@ -95,6 +100,8 @@ export default function QueuePage() {
   const assigned   = safe.filter((c) => c.status === 'Assigned').length;
   const inProgress = safe.filter((c) => c.status === 'In Progress').length;
   const resolved   = safe.filter((c) => c.status === 'Resolved').length;
+
+  const assignedOfficer = officerIdParam ? officers.find((o) => String(o.id) === String(officerIdParam)) : null;
 
   return (
     <>
@@ -178,6 +185,18 @@ export default function QueuePage() {
               </button>
             );
           })}
+
+          {assignedOfficer && (
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-900 px-3 py-1 rounded text-xs font-semibold">
+              <span>👤 Filtered by: <strong>{assignedOfficer.name}</strong> (#{assignedOfficer.id})</span>
+              <button
+                onClick={() => router.push('/queue')}
+                className="text-blue-600 hover:text-blue-950 font-bold ml-1 cursor-pointer"
+              >
+                ✕ Clear
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Queue Table Container */}
@@ -217,5 +236,13 @@ export default function QueuePage() {
         }}
       />
     </>
+  );
+}
+
+export default function QueuePage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-xs text-slate-500 font-mono">Loading Grievance Queue...</div>}>
+      <QueueContent />
+    </Suspense>
   );
 }

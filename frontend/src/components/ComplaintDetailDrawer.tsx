@@ -53,7 +53,7 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
       setResolutionPhotoUrl(complaint.photo_after_url ?? null);
       setErrorMessage(null);
     }
-  }, [complaint?.id, complaint?.assigned_officer_id, complaint?.photo_after_url]);
+  }, [complaint]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

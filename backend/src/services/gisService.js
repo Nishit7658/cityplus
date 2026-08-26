@@ -68,7 +68,7 @@ async function assignGeographicWard(lat, lng) {
  * 2. Checks problem_spots for persistent location history
  * 3. Creates complaint or increments confirmation_count atomically
  */
-async function processIncomingReport({ latitude, longitude, category, reporterPhone, description }) {
+async function processIncomingReport({ latitude, longitude, category, reporterPhone, description, photoUrl }) {
   const normCategory = normalizeCategory(category);
   const lat = parseFloat(latitude) || 22.3072;
   const lng = parseFloat(longitude) || 73.1812;

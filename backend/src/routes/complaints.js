@@ -4,6 +4,7 @@ const db = require('../config/db');
 const whatsappService = require('../services/whatsappService');
 const telegramService = require('../services/telegramService');
 const socketService = require('../services/socketService');
+const gisService = require('../services/gisService');
 const { optionalAuth, requireAuth } = require('../middleware/auth');
 const { validateCreateComplaint, validateUpdateComplaint } = require('../middleware/validation');
 
@@ -79,6 +80,50 @@ router.get('/', optionalAuth, async (req, res) => {
     return res.json(sanitized);
   } catch (error) {
     console.error('[GET /api/complaints Error]:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/complaints
+ * Public citizen grievance submission endpoint with GIS clustering & photo evidence
+ */
+router.post('/', validateCreateComplaint, async (req, res) => {
+  try {
+    const { category, description, reporter_phone, latitude, longitude, photo_url } = req.body;
+
+    const phone = (reporter_phone || '+91 98250 00000').trim();
+    const lat = latitude ? parseFloat(latitude) : 22.3072;
+    const lng = longitude ? parseFloat(longitude) : 73.1812;
+
+    const result = await gisService.processIncomingReport({
+      latitude: lat,
+      longitude: lng,
+      category,
+      reporterPhone: phone,
+      description: description || `Public citizen report (${category})`,
+      photoUrl: photo_url || null,
+    });
+
+    if (result.action === 'created') {
+      socketService.emitEvent('complaint:created', result.complaint);
+      return res.status(201).json({
+        success: true,
+        action: result.action,
+        message: result.message,
+        complaint: result.complaint,
+      });
+    } else {
+      socketService.emitEvent('complaint:updated', result.complaint);
+      return res.status(200).json({
+        success: true,
+        action: result.action,
+        message: result.message,
+        complaint: result.complaint,
+      });
+    }
+  } catch (error) {
+    console.error('[POST /api/complaints Error]:', error);
     return res.status(500).json({ error: error.message });
   }
 });

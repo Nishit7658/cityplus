@@ -485,7 +485,7 @@ async function executeInMemoryQuery(text, params = []) {
   // 6. INSERT INTO complaints
   if (lower.startsWith('insert into complaints')) {
     const newId = nextComplaintId++;
-    const [category, description, reporter_phone, lng, lat, initialSeverity, is_recurring, problem_spot_id, ward_id] = params;
+    const [category, description, reporter_phone, lng, lat, initialSeverity, is_recurring, problem_spot_id, ward_id, photo_url] = params;
 
     const assignedWard = ward_id ? WARDS.find((w) => w.id === ward_id) : findNearestWard(lat, lng);
 
@@ -496,7 +496,7 @@ async function executeInMemoryQuery(text, params = []) {
       reporter_phone,
       latitude: parseFloat(lat),
       longitude: parseFloat(lng),
-      ward_id: assignedWard.id,
+      ward_id: assignedWard ? assignedWard.id : 1,
       status: 'Pending',
       confirmation_count: 1,
       severity_score: initialSeverity || 50,
@@ -504,6 +504,8 @@ async function executeInMemoryQuery(text, params = []) {
       problem_spot_id: problem_spot_id || null,
       assigned_officer_id: null,
       reopened_count: 0,
+      photo_url: photo_url || null,
+      photo_after_url: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       resolved_at: null,

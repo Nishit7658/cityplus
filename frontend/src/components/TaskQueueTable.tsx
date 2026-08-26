@@ -1,6 +1,6 @@
 'use client';
 
-// F.3 — Task Queue Table/Grid with Trilingual i18n
+// F.3 — Task Queue Table/Grid with Trilingual i18n, Real-Time Search & CSV Work Order Export
 // Vadodara Municipal Corporation (VMC)
 
 import React, { useState } from 'react';
@@ -39,6 +39,7 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({
   const activeNewIds = newComplaintIds.length > 0 ? newComplaintIds : newIds;
   const safe = Array.isArray(complaints) ? complaints : [];
   const [sort, setSort] = useState<SortKey>('priority');
+  const [searchQuery, setSearchQuery] = useState('');
   const { language, t } = useLanguage();
 
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -80,7 +81,41 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({
     },
   ];
 
-  const sorted = sortComplaints(safe, sort);
+  // Real-time search filter
+  const filteredBySearch = safe.filter((c) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      String(c.id).includes(q) ||
+      (c.category || '').toLowerCase().includes(q) ||
+      (c.description || '').toLowerCase().includes(q) ||
+      (c.ward_name || '').toLowerCase().includes(q)
+    );
+  });
+
+  const sorted = sortComplaints(filteredBySearch, sort);
+
+  const exportCSV = () => {
+    const headers = ['ID', 'Category', 'Description', 'Ward', 'Status', 'Severity Score', 'Confirmations', 'Created At'];
+    const rows = sorted.map((c) => [
+      c.id,
+      `"${(c.category || '').replace(/"/g, '""')}"`,
+      `"${(c.description || '').replace(/"/g, '""')}"`,
+      `"Ward ${c.ward_id || 1}"`,
+      `"${c.status || 'Pending'}"`,
+      c.severity_score || 0,
+      c.confirmation_count || 1,
+      `"${c.created_at}"`,
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `VMC_Work_Orders_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const getStatusBadge = (status: string) => {
     const statusKey = (status || '').toLowerCase().replace(/ /g, '_');
@@ -116,30 +151,54 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-2xs overflow-hidden">
-      {/* Table Top Controls */}
-      <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50">
-        <div>
-          <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider">
+      {/* Table Top Controls: Search, Sort & CSV Export */}
+      <div className="p-4 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-50">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold uppercase text-[#0B2545] tracking-wider shrink-0">
             {t('queue.table_header')} ({sorted.length})
           </span>
+
+          {/* Real-time search */}
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search ID, category, or notes..."
+              className="h-8 pl-8 pr-3 text-xs rounded border border-slate-300 bg-white focus:outline-none focus:border-[#133E87] w-60"
+            />
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+          </div>
         </div>
 
-        {/* Sort Controls */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-500">{t('queue.sort_by')}:</span>
-          <div className="flex bg-white rounded border border-slate-300 p-0.5">
-            {SORT_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => setSort(opt.key)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded cursor-pointer transition-colors ${
-                  sort === opt.key ? 'bg-[#0B2545] text-white' : 'text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+        {/* Sort Controls & CSV Export */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-slate-500">{t('queue.sort_by')}:</span>
+            <div className="flex bg-white rounded border border-slate-300 p-0.5">
+              {SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setSort(opt.key)}
+                  className={`px-2.5 py-1 text-xs font-semibold rounded cursor-pointer transition-colors ${
+                    sort === opt.key ? 'bg-[#0B2545] text-white' : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* 1-Click CSV Export */}
+          <button
+            onClick={exportCSV}
+            className="h-8 px-3 rounded border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            title="Download CSV Work Orders for Field Officers"
+          >
+            <span>📥</span>
+            <span>Export CSV</span>
+          </button>
         </div>
       </div>
 
