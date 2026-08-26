@@ -13,7 +13,7 @@ try {
   pool = new Pool({
     connectionString,
     ssl: isProduction ? { rejectUnauthorized: false } : false,
-    connectionTimeoutMillis: 2500,
+    connectionTimeoutMillis: process.env.NODE_ENV === 'test' ? 200 : 2500,
     idleTimeoutMillis: 10000,
     max: 20,
   });

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const { signToken, requireAuth } = require('../middleware/auth');
 const db = require('../config/db');
 
@@ -32,11 +33,21 @@ const SEEDED_USERS = [
     ward_id: 1,
     password: 'VmcGov2026!',
   },
+  {
+    id: 3,
+    email: 'officer.patel@vmc.gov.in',
+    name: 'Rajesh Patel (EE)',
+    role: 'officer',
+    department: 'Road & Building Dept',
+    ward_id: 1,
+    password: 'VmcGov2026!',
+  },
 ];
 
 /**
  * POST /api/auth/login
  * Staff authentication endpoint returning JWT token
+ * Checks PostgreSQL users table with bcrypt password_hash, or falls back to SEEDED_USERS.
  */
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -45,9 +56,37 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
 
-  // Check matching user
+  const normalizedEmail = email.trim().toLowerCase();
+
+  try {
+    // 1. Try querying PostgreSQL users table
+    const result = await db.query('SELECT * FROM users WHERE LOWER(email) = $1 LIMIT 1', [normalizedEmail]);
+    if (result && result.rows && result.rows.length > 0) {
+      const dbUser = result.rows[0];
+      const isMatch = await bcrypt.compare(password, dbUser.password_hash);
+      if (isMatch) {
+        const token = signToken(dbUser);
+        return res.json({
+          success: true,
+          token,
+          user: {
+            id: dbUser.id,
+            name: dbUser.name,
+            email: dbUser.email,
+            role: dbUser.role,
+            department: dbUser.department,
+            ward_id: dbUser.ward_id,
+          },
+        });
+      }
+    }
+  } catch (err) {
+    // If DB query fails or table does not exist, fall through to SEEDED_USERS
+  }
+
+  // 2. Fallback to SEEDED_USERS
   const user = SEEDED_USERS.find(
-    (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password
+    (u) => u.email.toLowerCase() === normalizedEmail && u.password === password
   );
 
   if (!user) {
