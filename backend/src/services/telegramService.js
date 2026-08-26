@@ -1,4 +1,7 @@
+const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
+const FormData = require('form-data');
 const gisService = require('./gisService');
 const socketService = require('./socketService');
 const db = require('../config/db');
@@ -41,18 +44,56 @@ function resolveLandmarkCoordinates(text) {
 }
 
 /**
- * Send Photo via Telegram Bot API
+ * Send Photo via Telegram Bot API (Supports local files via binary stream and remote URLs)
  */
-async function sendPhoto(chatId, photoUrl, caption, extra = {}) {
+async function sendPhoto(chatId, photoPathOrUrl, caption, extra = {}) {
   const token = getBotToken();
   if (!token || token === 'your_telegram_bot_token_here') {
-    console.log(`[Telegram Simulation] Send Photo to #${chatId} (${photoUrl}): ${caption}`);
+    console.log(`[Telegram Simulation] Send Photo to #${chatId} (${photoPathOrUrl}): ${caption}`);
     return { ok: true, result: { message_id: 100 } };
+  }
+
+  // Check if it's a local file in /uploads
+  let localFilePath = null;
+  if (typeof photoPathOrUrl === 'string') {
+    if (photoPathOrUrl.startsWith('/uploads/') || photoPathOrUrl.startsWith('uploads/')) {
+      const filename = photoPathOrUrl.replace(/^\/?uploads\//, '');
+      const fullPath = path.join(__dirname, '../../uploads', filename);
+      if (fs.existsSync(fullPath)) {
+        localFilePath = fullPath;
+      }
+    } else if (fs.existsSync(photoPathOrUrl)) {
+      localFilePath = photoPathOrUrl;
+    }
+  }
+
+  // If local file exists, send actual binary file stream to Telegram
+  if (localFilePath) {
+    try {
+      const form = new FormData();
+      form.append('chat_id', String(chatId));
+      form.append('photo', fs.createReadStream(localFilePath));
+      if (caption) form.append('caption', caption);
+      form.append('parse_mode', 'HTML');
+      if (extra && extra.reply_markup) {
+        form.append('reply_markup', typeof extra.reply_markup === 'string' ? extra.reply_markup : JSON.stringify(extra.reply_markup));
+      }
+
+      const response = await axios.post(`${getTelegramApi()}/sendPhoto`, form, {
+        headers: form.getHeaders(),
+        timeout: 25000,
+      });
+      console.log(`📸 [Telegram Bot] Sent local photo "${path.basename(localFilePath)}" to chat #${chatId}`);
+      return response.data;
+    } catch (err) {
+      console.error('[Telegram sendPhoto Local File Upload Error]:', err.response ? err.response.data : err.message);
+      return await sendMessage(chatId, caption, extra);
+    }
   }
 
   return callTelegram('sendPhoto', {
     chat_id: chatId,
-    photo: photoUrl,
+    photo: photoPathOrUrl,
     caption,
     parse_mode: 'HTML',
     ...extra,
@@ -75,14 +116,7 @@ async function sendClosedLoopVerification(chatId, complaintId, category, photoAf
   };
 
   if (photoAfterUrl) {
-    const fullPhotoUrl = photoAfterUrl.startsWith('http')
-      ? photoAfterUrl
-      : `${process.env.APP_URL || 'http://localhost:5000'}${photoAfterUrl.startsWith('/') ? '' : '/'}${photoAfterUrl}`;
-    try {
-      return await sendPhoto(chatId, fullPhotoUrl, caption, { reply_markup: replyMarkup });
-    } catch {
-      return await sendMessage(chatId, caption, { reply_markup: replyMarkup });
-    }
+    return await sendPhoto(chatId, photoAfterUrl, caption, { reply_markup: replyMarkup });
   }
 
   return await sendMessage(chatId, caption, { reply_markup: replyMarkup });

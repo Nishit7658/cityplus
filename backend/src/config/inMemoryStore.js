@@ -466,6 +466,24 @@ async function executeInMemoryQuery(text, params = []) {
       }
     }
 
+    if (lower.includes('photo_after_url')) {
+      const photoAfterParam = params.find(
+        (p, idx) => idx !== parseInt(idMatch[1], 10) - 1 && typeof p === 'string' && (p.startsWith('/uploads') || p.startsWith('http'))
+      );
+      if (photoAfterParam) {
+        complaint.photo_after_url = photoAfterParam;
+      }
+    }
+
+    if (lower.includes('photo_url')) {
+      const photoParam = params.find(
+        (p, idx) => idx !== parseInt(idMatch[1], 10) - 1 && typeof p === 'string' && (p.startsWith('/uploads') || p.startsWith('http'))
+      );
+      if (photoParam) {
+        complaint.photo_url = photoParam;
+      }
+    }
+
     if (lower.includes('confirmation_count = $')) {
       complaint.confirmation_count = params[0];
       complaint.severity_score = params[1];
