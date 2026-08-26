@@ -114,7 +114,13 @@ export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
       },
       (err) => {
         setGpsStatus('error');
-        setGpsMessage(err.message || 'Unable to retrieve GPS coordinates. Please select a Ward.');
+        if (err.code === 1) {
+          setGpsMessage('Location permission denied. Please click the Lock 🔒 / Settings icon in your address bar to Allow Location, or select your Ward below.');
+        } else if (err.code === 2) {
+          setGpsMessage('Device GPS / Location is turned OFF. Please turn ON Location in your device settings, or select your Ward below.');
+        } else {
+          setGpsMessage(err.message || 'Unable to retrieve GPS coordinates. Please select your Ward below.');
+        }
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );

@@ -302,7 +302,10 @@ async function sendLocationPrompt(chatId, categoryTitle) {
         { text: '📍 Ward 10 (Waghodia)', callback_data: 'ward_10' },
       ],
       [
-        { text: '❌ Cancel', callback_data: 'cancel_report' },
+        { text: '⚙️ My Location is OFF (How to Turn On / Quick Help)', callback_data: 'location_off_help' },
+      ],
+      [
+        { text: '❌ Cancel Report', callback_data: 'cancel_report' },
       ],
     ],
   };
@@ -318,7 +321,7 @@ async function sendLocationPrompt(chatId, categoryTitle) {
 
   await sendMessage(
     chatId,
-    `Issue selected: <b>${categoryTitle}</b>\n\n📍 <b>Please choose your Location:</b>\n\n1️⃣ <b>Tap "📍 Share Live / Current GPS Location"</b> button below 👇\n2️⃣ <b>Or tap your Ward button</b>\n3️⃣ <b>Or type your area/landmark</b> (e.g. <i>Sayajigunj, Akota, Gotri, MSU, Alkapuri</i>)`,
+    `Issue selected: <b>${categoryTitle}</b>\n\n📍 <b>Please choose your Location:</b>\n\n1️⃣ <b>Tap "📍 Share Live / Current GPS Location"</b> button below 👇\n2️⃣ <b>Or tap your Ward button</b>\n3️⃣ <b>Or type your area/landmark</b> (e.g. <i>Sayajigunj, Akota, Gotri, MSU, Alkapuri</i>)\n\n<i>💡 If your phone location is OFF, tap your Ward button above or tap "⚙️ My Location is OFF" below.</i>`,
     { reply_markup: inlineWards }
   );
 
@@ -328,16 +331,16 @@ async function sendLocationPrompt(chatId, categoryTitle) {
 }
 
 /**
- * STEP 3: Request Photo Evidence (Optional with Skip button & Camera Guide)
+ * STEP 3: Request Photo Evidence (Optional with Skip button & Camera Actions)
  */
 async function sendPhotoPrompt(chatId, session) {
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '📷 How to Send Photo (Tap 📎/📷)', callback_data: 'prompt_photo_help' },
+        { text: '📷 Take Photo Now (Tap 📎 or 📷)', callback_data: 'action_take_photo' },
       ],
       [
-        { text: '⏭️ Skip Photo & Register', callback_data: 'skip_photo' },
+        { text: '⏭️ Skip Photo & Register Directly', callback_data: 'skip_photo' },
       ],
       [
         { text: '❌ Cancel Report', callback_data: 'cancel_report' },
@@ -347,7 +350,7 @@ async function sendPhotoPrompt(chatId, session) {
 
   return sendMessage(
     chatId,
-    `📍 <b>Location Set:</b> ${session.locationName || 'Ward Assigned'}\n⚡ <b>Coordinates:</b> ${session.lat.toFixed(4)}, ${session.lng.toFixed(4)}\n\n📷 <b>Attach Photo Evidence (Optional):</b>\n• <b>1️⃣ Take / Send Photo:</b> Tap the <b>Camera 📷</b> or <b>Paperclip 📎</b> at the bottom of your screen.\n• <b>2️⃣ Skip:</b> Tap <b>"⏭️ Skip Photo & Register"</b> to submit directly:`,
+    `📍 <b>Location Set:</b> ${session.locationName || 'Ward Assigned'}\n⚡ <b>Coordinates:</b> ${session.lat.toFixed(4)}, ${session.lng.toFixed(4)}\n\n📷 <b>Attach Photo Evidence (Optional):</b>\n\n• <b>1️⃣ Take / Send Photo:</b> Tap <b>"📷 Take Photo Now"</b> below or tap the <b>Camera 📷 / Paperclip 📎</b> button.\n• <b>2️⃣ Skip:</b> Tap <b>"⏭️ Skip Photo & Register Directly"</b> to submit without a photo.`,
     { reply_markup: keyboard }
   );
 }
@@ -492,11 +495,23 @@ async function handleTelegramUpdate(update) {
         return;
       }
 
-      // Photo Help Button
-      if (data === 'prompt_photo_help') {
+      // Location OFF Help Guide
+      if (data === 'location_off_help') {
         await sendMessage(
           chatId,
-          `📸 <b>To Send Photo Evidence:</b>\n\n1️⃣ Tap the <b>Camera 📷</b> or <b>Paperclip 📎</b> icon at the bottom of this chat.\n2️⃣ Snap a picture or choose from gallery.\n3️⃣ Tap <b>Send</b> — your complaint will be instantly registered with the photo!`
+          `⚙️ <b>How to Turn ON Location on Your Device:</b>\n\n` +
+          `📱 <b>Android:</b> Swipe down from top ➔ Tap <b>Location 📍</b> icon to Turn ON (or Settings ➔ Location ➔ Turn On).\n` +
+          `🍏 <b>iPhone / iOS:</b> Go to <b>Settings ➔ Privacy & Security ➔ Location Services ➔ Turn ON</b>.\n\n` +
+          `💡 <b>Fastest Option:</b> You don't even need GPS turned on! Simply <b>tap your Ward button</b> in the menu above to proceed immediately!`
+        );
+        return;
+      }
+
+      // Take Photo Action Button
+      if (data === 'action_take_photo' || data === 'prompt_photo_help') {
+        await sendMessage(
+          chatId,
+          `📸 <b>Ready to Take / Attach Photo:</b>\n\n1️⃣ Tap the <b>Camera 📷</b> or <b>Paperclip 📎</b> icon next to the message bar.\n2️⃣ Snap a live photo of the issue or choose from your gallery.\n3️⃣ Tap <b>Send</b> — your complaint will be registered immediately with the photo attached!`
         );
         return;
       }
