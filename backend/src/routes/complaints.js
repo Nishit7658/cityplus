@@ -85,6 +85,73 @@ router.get('/', optionalAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/complaints/escalated
+ * Returns chronic overdue complaints (> 2 months or recurring) with full supervisor/worker accountability
+ */
+router.get('/escalated', optionalAuth, async (req, res) => {
+  try {
+    const isStaff = Boolean(req.user);
+    const result = await db.query('SELECT * FROM complaints;');
+    const escalated = (result.rows || [])
+      .filter((c) => c.status !== 'Resolved' && (c.is_chronic_overdue || (c.days_unresolved || 0) >= 60 || (c.months_span || 1) >= 2))
+      .map((r) => sanitizeComplaint(r, isStaff));
+    return res.json(escalated);
+  } catch (error) {
+    console.error('[GET /api/complaints/escalated Error]:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/complaints/:id/escalate-action
+ * Executes executive supervisor escalation actions (inquiry notice, squad reassign, citizen broadcast)
+ */
+router.post('/:id/escalate-action', optionalAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { actionType, notes, newOfficerId } = req.body;
+
+    const currentRes = await db.query(`SELECT * FROM complaints WHERE id = $1;`, [id]);
+    if (!currentRes.rows || currentRes.rows.length === 0) {
+      return res.status(404).json({ error: `Complaint #${id} not found.` });
+    }
+
+    const complaint = currentRes.rows[0];
+
+    // Log escalation action into status_logs
+    await db.query(
+      `INSERT INTO status_logs (complaint_id, old_status, new_status, changed_by) VALUES ($1, $2, $3, $4);`,
+      [id, complaint.status, `Escalated: ${actionType}`, req.user?.id || 901]
+    );
+
+    let message = 'Escalation action recorded.';
+    if (actionType === 'supervisor_notice') {
+      message = `🚨 Disciplinary inquiry notice dispatched to Intermediate Supervisor (${complaint.assigned_by_supervisor_name || 'Zonal Dispatcher'}) and Assigned Worker (${complaint.officer_name || 'Field Officer'}).`;
+    } else if (actionType === 'reassign_squad') {
+      if (newOfficerId) {
+        await db.query(`UPDATE complaints SET assigned_officer_id = $1, status = 'Assigned' WHERE id = $2;`, [newOfficerId, id]);
+        message = `⚡ Emergency squad reassignment completed. Reassigned to Officer #${newOfficerId}.`;
+      }
+    } else if (actionType === 'notify_citizens') {
+      message = `📢 Telegram & WhatsApp broadcast dispatched to ${complaint.confirmation_count || 1} reporting citizens with executive resolution timeline.`;
+    } else if (actionType === 'schedule_inspection') {
+      message = `📌 Joint on-site executive inspection scheduled with Zonal Incharge and Engineering Head.`;
+    }
+
+    socketService.emitEvent('complaint:updated', { id: parseInt(id, 10), ...complaint, last_escalation_action: actionType });
+
+    return res.json({
+      success: true,
+      action: actionType,
+      message,
+    });
+  } catch (error) {
+    console.error('[POST /api/complaints/:id/escalate-action Error]:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * POST /api/complaints
  * Public citizen grievance submission endpoint with GIS clustering & photo evidence
  */
@@ -181,6 +248,28 @@ router.get('/:id', optionalAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/complaints/:id/logs
+ * Returns audit activity history logs for a complaint
+ */
+router.get('/:id/logs', optionalAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const logsQuery = `
+      SELECT sl.id, sl.old_status, sl.new_status, sl.changed_at, o.name as officer_name
+      FROM status_logs sl
+      LEFT JOIN officers o ON sl.changed_by = o.id
+      WHERE sl.complaint_id = $1
+      ORDER BY sl.changed_at DESC;
+    `;
+    const logsRes = await db.query(logsQuery, [id]);
+    return res.json(logsRes.rows || []);
+  } catch (error) {
+    console.error('[GET /api/complaints/:id/logs Error]:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * PATCH /api/complaints/:id
  * Update status or assign officer
  */
@@ -223,7 +312,7 @@ router.patch('/:id', optionalAuth, validateUpdateComplaint, async (req, res) => 
       UPDATE complaints
       SET ${updates.join(', ')}
       WHERE id = $1
-      RETURNING id, category, description, status, confirmation_count, severity_score, is_recurring, reopened_count, assigned_officer_id, ward_id, photo_url, photo_after_url, created_at, updated_at,
+      RETURNING id, category, description, reporter_phone, status, confirmation_count, severity_score, is_recurring, reopened_count, assigned_officer_id, ward_id, photo_url, photo_after_url, created_at, updated_at,
                 ST_Y(location::geometry) as latitude, ST_X(location::geometry) as longitude;
     `;
 

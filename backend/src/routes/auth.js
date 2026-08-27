@@ -1,10 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
 const { signToken, requireAuth } = require('../middleware/auth');
 const db = require('../config/db');
 
-// Seeded Staff / Dispatcher accounts for VMC Control Center
+// Dedicated Brute-Force Rate Limiter for Login Endpoint
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // limit each IP to 30 login attempts per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts from this IP. Please try again after 15 minutes.' },
+});
+
+// Seeded Staff / Dispatcher accounts for VMC Control Center (All passwords securely bcrypt-hashed)
+const DEFAULT_HASH = bcrypt.hashSync('VmcGov2026!', 10);
+
 const SEEDED_USERS = [
   {
     id: 901,
@@ -13,7 +25,7 @@ const SEEDED_USERS = [
     role: 'admin',
     department: 'Central Municipal Command',
     ward_id: null,
-    password: 'VmcGov2026!',
+    password_hash: DEFAULT_HASH,
   },
   {
     id: 902,
@@ -22,7 +34,7 @@ const SEEDED_USERS = [
     role: 'dispatcher',
     department: 'Zonal Redressal Cell',
     ward_id: 1,
-    password: 'VmcGov2026!',
+    password_hash: DEFAULT_HASH,
   },
   {
     id: 1,
@@ -31,7 +43,7 @@ const SEEDED_USERS = [
     role: 'officer',
     department: 'Road & Building Dept',
     ward_id: 1,
-    password: 'VmcGov2026!',
+    password_hash: DEFAULT_HASH,
   },
   {
     id: 3,
@@ -40,7 +52,7 @@ const SEEDED_USERS = [
     role: 'officer',
     department: 'Road & Building Dept',
     ward_id: 1,
-    password: 'VmcGov2026!',
+    password_hash: DEFAULT_HASH,
   },
 ];
 
@@ -49,7 +61,7 @@ const SEEDED_USERS = [
  * Staff authentication endpoint returning JWT token
  * Checks PostgreSQL users table with bcrypt password_hash, or falls back to SEEDED_USERS.
  */
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -84,12 +96,17 @@ router.post('/login', async (req, res) => {
     // If DB query fails or table does not exist, fall through to SEEDED_USERS
   }
 
-  // 2. Fallback to SEEDED_USERS
+  // 2. Fallback to SEEDED_USERS with bcrypt comparison
   const user = SEEDED_USERS.find(
-    (u) => u.email.toLowerCase() === normalizedEmail && u.password === password
+    (u) => u.email.toLowerCase() === normalizedEmail
   );
 
   if (!user) {
+    return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password_hash);
+  if (!isMatch) {
     return res.status(401).json({ error: 'Invalid email or password.' });
   }
 

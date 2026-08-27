@@ -68,6 +68,11 @@ function validateCreateComplaint(req, res, next) {
     return res.status(400).json({ error: 'Description exceeds maximum allowed length of 1000 characters.' });
   }
 
+  // Prevent script/HTML injection in complaint descriptions
+  if (description && /<script|javascript:|onerror=|onload=|<iframe|<embed/i.test(description)) {
+    return res.status(400).json({ error: 'Description contains invalid characters or HTML script tags.' });
+  }
+
   next();
 }
 

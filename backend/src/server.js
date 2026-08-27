@@ -87,6 +87,9 @@ const io = new Server(server, {
 socketService.initSocket(io);
 
 // 7. Mount API Routes
+app.get('/camera', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views/camera.html'));
+});
 app.use('/api/auth', authRouter);
 app.use('/api/complaints', complaintsRouter);
 app.use('/api/wards', wardsRouter);
