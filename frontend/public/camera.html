@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VMC Photo Capture</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #0B2545; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 16px; text-align: center; }
+    .card { background: #133E87; border-radius: 16px; padding: 20px; max-width: 380px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border: 1px solid #1E51A4; }
+    h1 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    p { font-size: 12px; color: #CBD5E1; margin-bottom: 16px; }
+    .preview-box { width: 100%; height: 220px; background: #081B33; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 16px; border: 2px dashed #3B82F6; cursor: pointer; position: relative; }
+    .preview-box img { width: 100%; height: 100%; object-fit: cover; }
+    .btn { background: #2563EB; color: white; border: none; border-radius: 10px; padding: 14px 18px; font-size: 14px; font-weight: 700; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.15s; margin-bottom: 8px; }
+    .btn:active { transform: scale(0.98); }
+    .btn-green { background: #16A34A; }
+    .btn-gray { background: #475569; }
+    #cameraInput { display: none; }
+    .spinner { display: none; width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s infinite linear; margin: 0 auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="font-size: 36px; margin-bottom: 8px;">📸</div>
+    <h1>Take Photo Evidence</h1>
+    <p>Vadodara Municipal Corporation (VMC)</p>
+
+    <div class="preview-box" id="previewBox" onclick="openCamera()">
+      <span id="previewPlaceholder" style="font-size: 13px; color: #93C5FD;">📷 Tap here to Snap Photo</span>
+      <img id="previewImg" style="display: none;" alt="Captured Photo" />
+    </div>
+
+    <!-- Native Camera Capture Trigger -->
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFileSelected(event)">
+
+    <button id="snapBtn" class="btn" onclick="openCamera()">
+      <span>📷 Open Camera & Snap</span>
+    </button>
+
+    <button id="submitBtn" class="btn btn-green" style="display: none;" onclick="uploadAndSubmit()">
+      <span>✅ Use Photo & Submit Ticket</span>
+    </button>
+
+    <button id="retakeBtn" class="btn btn-gray" style="display: none;" onclick="openCamera()">
+      <span>🔄 Retake Photo</span>
+    </button>
+
+    <div id="loadingBox" style="display: none; margin-top: 12px;">
+      <div class="spinner" style="display: block;"></div>
+      <p style="margin-top: 8px; font-size: 11px;">Uploading evidence to VMC server...</p>
+    </div>
+  </div>
+
+  <script>
+    let selectedFile = null;
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    function openCamera() {
+      document.getElementById('cameraInput').click();
+    }
+
+    // Auto-trigger camera immediately on open
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        openCamera();
+      }, 250);
+    });
+
+    function handleFileSelected(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      selectedFile = file;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        document.getElementById('previewImg').src = event.target.result;
+        document.getElementById('previewImg').style.display = 'block';
+        document.getElementById('previewPlaceholder').style.display = 'none';
+
+        document.getElementById('snapBtn').style.display = 'none';
+        document.getElementById('submitBtn').style.display = 'flex';
+        document.getElementById('retakeBtn').style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function uploadAndSubmit() {
+      if (!selectedFile) return;
+
+      document.getElementById('submitBtn').style.display = 'none';
+      document.getElementById('retakeBtn').style.display = 'none';
+      document.getElementById('loadingBox').style.display = 'block';
+
+      const formData = new FormData();
+      formData.append('photo', selectedFile);
+
+      try {
+        const backendUrl = window.location.origin.includes(':3000') ? 'http://localhost:5000' : '';
+        const res = await fetch(`${backendUrl}/api/upload`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (data && data.url) {
+          if (tg && tg.sendData) {
+            tg.sendData(JSON.stringify({ photo_url: data.url }));
+            tg.close();
+          } else {
+            alert('Photo uploaded! Return to Telegram to view ticket.');
+          }
+        } else {
+          alert('Upload failed. Please try again.');
+          document.getElementById('submitBtn').style.display = 'flex';
+          document.getElementById('retakeBtn').style.display = 'flex';
+          document.getElementById('loadingBox').style.display = 'none';
+        }
+      } catch (err) {
+        alert('Upload error: ' + err.message);
+        document.getElementById('submitBtn').style.display = 'flex';
+        document.getElementById('retakeBtn').style.display = 'flex';
+        document.getElementById('loadingBox').style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -331,13 +331,16 @@ async function sendLocationPrompt(chatId, categoryTitle) {
 }
 
 /**
- * STEP 3: Request Photo Evidence (Optional)
+ * STEP 3: Request Photo Evidence (3 Options: Take Photo, Skip, Cancel)
  */
 async function sendPhotoPrompt(chatId, session) {
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '⏭️ Skip Photo & Register Now', callback_data: 'skip_photo' },
+        { text: '📷 Take / Attach Photo', callback_data: 'action_take_photo' },
+      ],
+      [
+        { text: '⏭️ Skip Photo & Register Directly', callback_data: 'skip_photo' },
       ],
       [
         { text: '❌ Cancel Report', callback_data: 'cancel_report' },
@@ -347,7 +350,7 @@ async function sendPhotoPrompt(chatId, session) {
 
   return sendMessage(
     chatId,
-    `📍 <b>Location Set:</b> ${session.locationName || 'Ward Assigned'}\n⚡ <b>Coordinates:</b> ${session.lat.toFixed(4)}, ${session.lng.toFixed(4)}\n\n📷 <b>Attach Photo Evidence (Optional):</b>\n• <b>Snap a live photo</b> using the <b>Camera 📷</b> or <b>Paperclip 📎</b>\n• Or tap <b>"⏭️ Skip Photo & Register Now"</b> below to file immediately without a photo:`,
+    `📍 <b>Location Set:</b> ${session.locationName || 'Ward Assigned'}\n⚡ <b>Coordinates:</b> ${session.lat.toFixed(4)}, ${session.lng.toFixed(4)}\n\n📷 <b>Attach Photo Evidence (Optional):</b>\n• 1️⃣ Tap <b>"📷 Take / Attach Photo"</b> below to snap a picture\n• 2️⃣ Or tap <b>"⏭️ Skip Photo & Register Directly"</b> to submit without a photo:`,
     { reply_markup: keyboard }
   );
 }
@@ -572,6 +575,21 @@ async function handleTelegramUpdate(update) {
 
         await sendPhotoPrompt(chatId, session);
         return;
+      }
+
+      // Handle WebApp Camera Data (from Telegram Mini App)
+      if (msg.web_app_data) {
+        try {
+          const parsed = JSON.parse(msg.web_app_data.data);
+          if (parsed && parsed.photo_url) {
+            session.photo_url = parsed.photo_url;
+            telegramSessions.set(chatId, session);
+            await finalizeComplaintRegistration(chatId, session, senderName, username);
+            return;
+          }
+        } catch (e) {
+          console.error('[Telegram WebApp Data Parse Error]:', e.message);
+        }
       }
 
       // Handle Photo Evidence Upload (STEP 3 -> STEP 4)
