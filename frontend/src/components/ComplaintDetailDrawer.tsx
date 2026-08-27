@@ -19,8 +19,8 @@ interface DrawerProps {
   complaint: Complaint | null;
   officers: Officer[];
   onClose: () => void;
-  onUpdateStatus: (id: number, status: string, officerId?: number) => Promise<boolean | void>;
-  onResolve: (id: number, officerId?: number, photoAfterUrl?: string) => Promise<boolean | void>;
+  onUpdateStatus: (id: number, status: string, officerId?: number, photoAfterUrl?: string | null) => Promise<boolean | void>;
+  onResolve: (id: number, officerId?: number, photoAfterUrl?: string | null) => Promise<boolean | void>;
 }
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
@@ -41,19 +41,42 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [resolutionPhotoUrl, setResolutionPhotoUrl] = useState<string | null>(null);
+  const [activityLogs, setActivityLogs] = useState<{ id: number; old_status: string; new_status: string; changed_at: string; officer_name?: string | null }[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{ isOpen: boolean; src: string; title: string; subtitle?: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const currentComplaintIdRef = useRef<number | null>(null);
 
   const { language, t } = useLanguage();
 
   useEffect(() => {
     if (complaint) {
-      setSelectedOfficer(complaint.assigned_officer_id ?? undefined);
-      setResolutionPhotoUrl(complaint.photo_after_url ?? null);
-      setErrorMessage(null);
+      if (currentComplaintIdRef.current !== complaint.id) {
+        currentComplaintIdRef.current = complaint.id;
+        setSelectedOfficer(complaint.assigned_officer_id ?? undefined);
+        setResolutionPhotoUrl(complaint.photo_after_url ?? null);
+        setErrorMessage(null);
+      } else {
+        if (complaint.assigned_officer_id !== undefined) {
+          setSelectedOfficer(complaint.assigned_officer_id);
+        }
+        if (complaint.photo_after_url && !resolutionPhotoUrl) {
+          setResolutionPhotoUrl(complaint.photo_after_url);
+        }
+      }
+
+      // Fetch audit logs
+      fetch(`${API_URL}/api/complaints/${complaint.id}/logs`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data)) setActivityLogs(data);
+        })
+        .catch(() => {});
+    } else {
+      currentComplaintIdRef.current = null;
+      setActivityLogs([]);
     }
-  }, [complaint]);
+  }, [complaint, resolutionPhotoUrl]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -247,6 +270,34 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
                   </div>
                 </div>
 
+                {/* Chronic Escalation Alert & Accountability Record */}
+                {(complaint.is_chronic_overdue || (complaint.days_unresolved || 0) >= 60 || complaint.assigned_by_supervisor_name) && (
+                  <div className="p-3.5 rounded-lg bg-red-50/70 border border-red-200 space-y-2.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-red-900">
+                      <span className="flex items-center gap-1.5">
+                        <span>🚨</span>
+                        <span>Supervisor Escalation & Accountability Record</span>
+                      </span>
+                      <span className="text-[10px] font-mono bg-red-100 text-red-800 px-2 py-0.5 rounded border border-red-300">
+                        {complaint.days_unresolved ? `${complaint.days_unresolved}d Overdue` : 'Escalation Alert'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
+                      <div className="bg-white p-2 rounded border border-red-100">
+                        <span className="text-slate-500 font-medium block text-[10px] uppercase">Assigned Worker:</span>
+                        <strong className="text-slate-900">{complaint.officer_name || 'Rajesh Patel'}</strong>
+                        <span className="text-slate-500 block text-[10px]">{complaint.officer_department || 'Road & Building Dept'}</span>
+                      </div>
+                      <div className="bg-white p-2 rounded border border-red-100">
+                        <span className="text-slate-500 font-medium block text-[10px] uppercase">Assigner Supervisor:</span>
+                        <strong className="text-slate-900">{complaint.assigned_by_supervisor_name || 'Sayajigunj Zonal Dispatcher'}</strong>
+                        <span className="text-slate-500 block text-[10px]">Zonal Redressal Cell (Ward {complaint.ward_id || 1})</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Error Toast */}
                 {errorMessage && (
                   <div className="p-3 rounded bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">
@@ -311,54 +362,74 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
                       </div>
 
                       {repairPhotoFull ? (
-                        <div
-                          onClick={() =>
-                            setLightbox({
-                              isOpen: true,
-                              src: repairPhotoFull,
-                              title: `${catLabel} #${complaint.id} — Resolution Proof`,
-                              subtitle: `Verified by field engineering crew • ${complaint.resolved_at ? new Date(complaint.resolved_at).toLocaleDateString() : 'Work Completed'}`,
-                            })
-                          }
-                          className="relative group cursor-pointer overflow-hidden rounded border border-emerald-300 aspect-video bg-black flex items-center justify-center"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={repairPhotoFull}
-                            alt="Officer resolution photo"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-semibold">
-                            <span>🔍</span> {t('drawer.click_to_expand')}
+                        <div className="flex flex-col gap-1.5">
+                          <div
+                            onClick={() =>
+                              setLightbox({
+                                isOpen: true,
+                                src: repairPhotoFull,
+                                title: `${catLabel} #${complaint.id} — Resolution Proof`,
+                                subtitle: `Verified by field engineering crew • ${complaint.resolved_at ? new Date(complaint.resolved_at).toLocaleDateString() : 'Work Completed'}`,
+                              })
+                            }
+                            className="relative group cursor-pointer overflow-hidden rounded border border-emerald-300 aspect-video bg-black flex items-center justify-center"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={repairPhotoFull}
+                              alt="Officer resolution photo"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-semibold">
+                              <span>🔍</span> {t('drawer.click_to_expand')}
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="aspect-video rounded border border-dashed border-slate-300 bg-white flex flex-col items-center justify-center p-3 text-center">
-                          {complaint.status !== 'Resolved' ? (
-                            <>
-                              <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileUpload}
-                                className="hidden"
-                                id="officer-photo-upload"
-                              />
-                              <label
-                                htmlFor="officer-photo-upload"
-                                className="text-[11px] font-bold text-[#133E87] hover:text-[#0B2545] cursor-pointer flex flex-col items-center"
+                          {complaint.status !== 'Resolved' && (
+                            <div className="flex items-center justify-center gap-3 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploadingPhoto}
+                                className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
                               >
-                                <span className="text-xl mb-1">📤</span>
-                                {isUploadingPhoto ? t('drawer.uploading') : t('drawer.upload_resolution_photo')}
-                              </label>
-                            </>
-                          ) : (
-                            <span className="text-[11px] text-slate-400 font-medium">
-                              Resolution proof logged
-                            </span>
+                                <span>🔄</span>
+                                <span>{isUploadingPhoto ? 'Uploading...' : 'Change Photo'}</span>
+                              </button>
+                              <span className="text-slate-300 text-xs">•</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setResolutionPhotoUrl(null);
+                                  if (fileInputRef.current) fileInputRef.current.value = '';
+                                }}
+                                disabled={isUploadingPhoto}
+                                className="text-xs font-bold text-red-600 hover:text-red-800 flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>🗑️</span>
+                                <span>Remove Photo</span>
+                              </button>
+                            </div>
                           )}
                         </div>
+                      ) : (
+                        <div
+                          onClick={() => fileInputRef.current?.click()}
+                          className="aspect-video rounded border border-dashed border-blue-300 hover:border-blue-500 bg-white hover:bg-blue-50/50 flex flex-col items-center justify-center p-3 text-center cursor-pointer transition-colors"
+                        >
+                          <span className="text-2xl mb-1">📤</span>
+                          <span className="text-[11px] font-bold text-[#133E87]">
+                            {isUploadingPhoto ? 'Uploading Photo...' : 'Click to Upload Resolution Photo'}
+                          </span>
+                          <span className="text-[10px] text-slate-400 mt-0.5">JPG, PNG, WEBP from laptop</span>
+                        </div>
                       )}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
                     </div>
                   </div>
                 </div>
@@ -377,6 +448,42 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
                     {t('drawer.timeline')}
                   </div>
                   <StatusStepper currentStatus={complaint.status} />
+                </div>
+
+                {/* Activity Log & Municipal Audit Trail */}
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5 flex items-center justify-between">
+                    <span>Audit Trail & Activity Log</span>
+                    <span className="text-[10px] font-mono text-slate-400 font-normal">
+                      {activityLogs.length} events logged
+                    </span>
+                  </div>
+                  {activityLogs.length > 0 ? (
+                    <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                      {activityLogs.map((log) => (
+                        <div
+                          key={log.id || log.changed_at}
+                          className="p-2.5 rounded bg-slate-50 border border-slate-200 text-xs flex items-center justify-between"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-slate-800">
+                              {log.old_status} → <strong className="text-[#0B2545]">{log.new_status}</strong>
+                            </span>
+                            <span className="text-[10px] text-slate-500">
+                              By: {log.officer_name || 'VMC System Command'}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-slate-400">
+                            {new Date(log.changed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded bg-slate-50 border border-dashed border-slate-200 text-center text-slate-400 text-[11px]">
+                      No prior status transitions recorded.
+                    </div>
+                  )}
                 </div>
 
                 {/* Assign Officer */}
@@ -404,7 +511,7 @@ export const ComplaintDetailDrawer: React.FC<DrawerProps> = ({
                             setIsSubmitting(true);
                             setErrorMessage(null);
                             try {
-                              await onUpdateStatus(complaint.id, 'Assigned', selectedOfficer);
+                              await onUpdateStatus(complaint.id, 'Assigned', selectedOfficer, resolutionPhotoUrl || undefined);
                             } catch {
                               setErrorMessage('Failed to assign officer. Please try again.');
                             } finally {

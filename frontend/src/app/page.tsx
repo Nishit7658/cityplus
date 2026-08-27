@@ -10,7 +10,9 @@ import { Complaint, Officer } from '@/types';
 import { useSocket } from '@/components/SocketProvider';
 import { useLanguage } from '@/context/LanguageContext';
 import { useWard } from '@/context/WardContext';
+import { useAuth } from '@/context/AuthContext';
 import { ComplaintDetailDrawer } from '@/components/ComplaintDetailDrawer';
+import { ChronicEscalationDossier } from '@/components/ChronicEscalationDossier';
 import { MapView } from '@/components/MapView';
 import { CategoryIcon, getCategoryColor } from '@/components/CategoryIcon';
 import { MOCK_COMPLAINTS, MOCK_OFFICERS } from '@/data/mockData';
@@ -41,6 +43,8 @@ export default function OverviewPage() {
   const [complaints, setComplaints] = useState<Complaint[]>(MOCK_COMPLAINTS);
   const [officers, setOfficers]     = useState<Officer[]>(MOCK_OFFICERS);
   const [selected, setSelected]     = useState<Complaint | null>(null);
+  const [dossierComplaint, setDossierComplaint] = useState<Complaint | null>(null);
+  const { user, isAdmin, isDispatcher, isOfficer, isAuthenticated } = useAuth();
   const { lastEvent } = useSocket();
   const { language, t } = useLanguage();
   const { selectedWard, setSelectedWard } = useWard();
@@ -58,6 +62,13 @@ export default function OverviewPage() {
       if (Array.isArray(o) && o.length > 0) setOfficers(o);
     });
   }, []);
+
+  // Auto-switch ward for Zonal Dispatcher
+  useEffect(() => {
+    if (isDispatcher && user?.ward_id) {
+      setSelectedWard(String(user.ward_id));
+    }
+  }, [isDispatcher, user, setSelectedWard]);
 
   // Complete Socket Event Synchronization
   useEffect(() => {
@@ -82,9 +93,12 @@ export default function OverviewPage() {
         if (selected && selected.id === updated.id) {
           setSelected((prev) => (prev ? { ...prev, ...updated } : null));
         }
+        if (dossierComplaint && dossierComplaint.id === updated.id) {
+          setDossierComplaint((prev) => (prev ? { ...prev, ...updated } : null));
+        }
       }
     }
-  }, [lastEvent, selected]);
+  }, [lastEvent, selected, dossierComplaint]);
 
   const rawSafe = Array.isArray(complaints) ? complaints : MOCK_COMPLAINTS;
 
@@ -98,10 +112,203 @@ export default function OverviewPage() {
   const resolved = safe.filter((c) => c.status === 'Resolved');
   const criticalIssues = safe.filter((c) => (c.severity_score || 0) >= 80 && c.status !== 'Resolved');
 
+  // Chronic overdue issues (>60-90 days or recurring cycles)
+  const chronicComplaints = rawSafe.filter((c) => c.status !== 'Resolved' && (c.is_chronic_overdue || (c.days_unresolved || 0) >= 60 || (c.months_span || 1) >= 2));
+
+  // Officer assigned tasks
+  const myAssignedComplaints = rawSafe.filter((c) => c.assigned_officer_id === user?.id && c.status !== 'Resolved');
+
   return (
     <>
       <div className="max-w-[1520px] mx-auto px-6 py-6 bg-slate-50 min-h-[calc(100vh-115px)]">
-        {/* Section 1: Unified Executive Telemetry Command Bar (Replaced 4 generic box cards) */}
+        {/* Role-Based Command Header Banner */}
+        {isAuthenticated && user && (
+          <div className="mb-6 p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#0B2545] text-white flex items-center justify-center font-extrabold text-sm shrink-0 uppercase">
+                {user.role === 'admin' ? '👑' : user.role === 'dispatcher' ? '📡' : '👷'}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-extrabold text-[#0B2545]">
+                    {user.name}
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-[#133E87] bg-blue-50 px-2 py-0.2 rounded border border-blue-200 uppercase">
+                    {user.role === 'admin' ? 'MAIN INCHARGE (CENTRAL COMMAND)' : user.role === 'dispatcher' ? `ZONAL SUPERVISOR (WARD ${user.ward_id || 1})` : 'FIELD ENGINEER'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {user.role === 'admin' 
+                    ? 'Citywide Operations Oversight • Chronic Grievance Escalation Control • Executive SLA Monitoring'
+                    : user.role === 'dispatcher'
+                    ? `Sayajigunj Zonal Redressal Cell • Ward ${user.ward_id || 1} Task Allocation & Supervisor Accountability`
+                    : `${user.department} • Active Field Work Orders & Direct Repair Resolution Desk`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {isAdmin && chronicComplaints.length > 0 && (
+                <span className="text-xs font-bold text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <span>🚨</span>
+                  <span>{chronicComplaints.length} Chronic Overdue (&gt;2 Mo)</span>
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Section 1: Executive Chronic Grievance Oversight Panel — Main Admin Portal Only */}
+        {isAdmin && chronicComplaints.length > 0 && (
+          <div className="mb-6 bg-white rounded-lg border border-slate-200 shadow-2xs p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-200 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 text-[#B45309] flex items-center justify-center text-base shrink-0">
+                  ⚖️
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-[#0B2545]">
+                      Executive Oversight • Chronic Grievance Review (&gt;60 Days)
+                    </h2>
+                    <span className="bg-amber-100 text-[#B45309] text-[10px] font-mono font-bold px-2 py-0.2 rounded border border-amber-200">
+                      {chronicComplaints.length} Cases Active
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Grievances exceeding municipal standard turnaround. Supervisory accountability logs track assigned field units and zonal supervisors.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {chronicComplaints.map((c) => {
+                const days = c.days_unresolved ?? Math.floor((Date.now() - new Date(c.created_at).getTime()) / 86400000);
+                const months = (days / 30).toFixed(1);
+                const accentColor = getCategoryColor(c.category);
+
+                return (
+                  <div
+                    key={c.id}
+                    className="bg-slate-50/80 rounded-lg border border-slate-200 hover:border-slate-300 p-4 flex flex-col justify-between transition-colors shadow-2xs"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1 rounded bg-white border border-slate-200">
+                            <CategoryIcon category={c.category} size={14} color={accentColor} />
+                          </div>
+                          <span className="text-xs font-bold text-[#0B2545] capitalize truncate">
+                            {c.category.replace(/_/g, ' ')}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-400">
+                            #{c.id}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono font-semibold bg-amber-50 text-[#B45309] border border-amber-200 px-2 py-0.5 rounded shrink-0">
+                          {days}d active ({months} mo)
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-slate-700 font-medium line-clamp-2 mb-3 bg-white p-2.5 rounded border border-slate-200/80">
+                        &quot;{c.description}&quot;
+                      </p>
+
+                      <div className="space-y-1.5 text-xs text-slate-600">
+                        <div className="flex justify-between py-0.5 border-b border-slate-200/60">
+                          <span className="text-slate-500 font-medium">📍 Ward:</span>
+                          <strong className="text-slate-900">{c.ward_name || `Ward ${c.ward_id}`}</strong>
+                        </div>
+                        <div className="flex justify-between py-0.5 border-b border-slate-200/60">
+                          <span className="text-slate-500 font-medium">👥 Citizen Flags:</span>
+                          <strong className="text-slate-800 font-mono">{c.confirmation_count || 1} people</strong>
+                        </div>
+                        <div className="flex justify-between py-0.5 border-b border-slate-200/60">
+                          <span className="text-slate-500 font-medium">👷 Assigned Worker:</span>
+                          <strong className="text-slate-900">{c.officer_name || 'Rajesh Patel'}</strong>
+                        </div>
+                        <div className="flex justify-between py-0.5">
+                          <span className="text-slate-500 font-medium">📡 Zonal Supervisor:</span>
+                          <span className="text-slate-700 font-medium truncate max-w-[140px]">{c.assigned_by_supervisor_name || 'Sayajigunj Zonal Dispatcher'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-slate-200 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDossierComplaint(c)}
+                        className="w-full py-2 px-3 rounded bg-[#0B2545] hover:bg-[#133E87] text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <span>📄</span>
+                        <span>View Case Dossier</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Section 2: Officer Personalized Field Work Deck */}
+        {isOfficer && (
+          <div className="mb-6 bg-white rounded-xl border border-slate-200 shadow-2xs p-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+              <div>
+                <h2 className="text-sm font-extrabold text-[#0B2545] uppercase tracking-wider">
+                  👷 My Active Field Work Orders ({myAssignedComplaints.length})
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Tasks assigned directly to you for field investigation, repair, and photographic resolution.
+                </p>
+              </div>
+            </div>
+
+            {myAssignedComplaints.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {myAssignedComplaints.map((c) => (
+                  <div
+                    key={c.id}
+                    onClick={() => setSelected(c)}
+                    className="p-4 rounded-lg bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 transition-all cursor-pointer flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-[#0B2545] capitalize">
+                          {c.category.replace(/_/g, ' ')}
+                        </span>
+                        <span className="text-[10px] font-mono bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded">
+                          #{c.id} • {c.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-700 font-medium mb-3 line-clamp-2">
+                        {c.description}
+                      </p>
+                      <div className="text-[11px] text-slate-500 font-mono">
+                        📍 {c.ward_name || `Ward ${c.ward_id}`} • 👥 {c.confirmation_count || 1} Confirmations
+                      </div>
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-slate-200 flex justify-between items-center text-xs">
+                      <span className="text-[#133E87] font-bold">Open Action Drawer →</span>
+                      <span className="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold">
+                        Severity {c.severity_score}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 rounded-lg bg-slate-50 border border-dashed border-slate-200 text-center text-xs text-slate-500">
+                ✓ No pending tasks assigned to you. All assigned work orders are resolved!
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Section 3: Unified Executive Telemetry Command Bar */}
         <div className="bg-white rounded-lg border border-slate-200 shadow-2xs mb-6 overflow-hidden">
           <div className="p-4 bg-slate-50/80 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -195,7 +402,7 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        {/* Section 2: High-Priority Notice Banner (No Ping Animations) */}
+        {/* Section 4: High-Priority Notice Banner */}
         {criticalIssues.length > 0 && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs">
             <div className="flex items-center gap-3">
@@ -315,16 +522,20 @@ export default function OverviewPage() {
         complaint={selected}
         officers={officers}
         onClose={() => setSelected(null)}
-        onUpdateStatus={async (id, status, officerId) => {
+        onUpdateStatus={async (id, status, officerId, photoAfterUrl) => {
           const res = await fetch(`${API_URL}/api/complaints/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status, assigned_officer_id: officerId }),
+            body: JSON.stringify({
+              status,
+              assigned_officer_id: officerId,
+              photo_after_url: photoAfterUrl,
+            }),
           });
           if (!res.ok) throw new Error('Update failed');
           const updated = await res.json();
           setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
-          setSelected(null);
+          setSelected((prev) => (prev && prev.id === id ? { ...prev, ...updated } : updated));
         }}
         onResolve={async (id, officerId, photoAfterUrl) => {
           const res = await fetch(`${API_URL}/api/complaints/${id}/resolve`, {
@@ -337,6 +548,21 @@ export default function OverviewPage() {
           const updated = data.complaint || { id, status: 'Resolved' };
           setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
           setSelected(null);
+        }}
+      />
+
+      {/* Chronic Issue Executive Accountability Dossier Modal */}
+      <ChronicEscalationDossier
+        complaint={dossierComplaint}
+        officers={officers}
+        onClose={() => setDossierComplaint(null)}
+        onActionComplete={() => {
+          fetch(`${API_URL}/api/complaints`)
+            .then((r) => r.json())
+            .then((d) => {
+              if (Array.isArray(d)) setComplaints(d);
+            })
+            .catch(() => {});
         }}
       />
     </>

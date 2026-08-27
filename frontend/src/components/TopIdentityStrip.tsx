@@ -4,11 +4,13 @@
 // Official Indian National Flag Tricolor Trim, State Emblem of India, Trilingual i18n, WardContext & Citizen Intake
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { NationalEmblem } from './NationalEmblem';
 import { CitizenReportModal } from './CitizenReportModal';
 import { useSocket } from './SocketProvider';
 import { useLanguage, Language } from '@/context/LanguageContext';
 import { useWard } from '@/context/WardContext';
+import { useAuth } from '@/context/AuthContext';
 import { MOCK_COMPLAINTS } from '@/data/mockData';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -23,6 +25,7 @@ export const TopIdentityStrip: React.FC = () => {
   const { lastEvent } = useSocket();
   const { language, setLanguage, t } = useLanguage();
   const { selectedWard, setSelectedWard } = useWard();
+  const { user, isAuthenticated, logout } = useAuth();
   const [todayCount, setTodayCount] = useState<number>(MOCK_COMPLAINTS.length);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   
@@ -158,20 +161,44 @@ export const TopIdentityStrip: React.FC = () => {
               </select>
             </div>
 
-            {/* Duty Officer Card */}
-            <div className="hidden md:flex items-center gap-2 pl-3 border-l border-slate-200">
-              <div className="w-7 h-7 rounded-full bg-[#0B2545] text-white flex items-center justify-center font-bold text-xs">
-                VMC
+            {/* Duty Officer Profile / Auth CTA */}
+            {isAuthenticated && user ? (
+              <div className="hidden md:flex items-center gap-2 pl-3 border-l border-slate-200">
+                <div className="w-7 h-7 rounded-full bg-[#0B2545] text-white flex items-center justify-center font-bold text-xs uppercase">
+                  {user.name.slice(0, 2)}
+                </div>
+                <div className="flex flex-col text-left">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-[#0B2545] leading-tight">
+                      {user.name}
+                    </span>
+                    <span className="text-[9px] font-mono font-bold text-[#133E87] bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200 uppercase">
+                      {user.role}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-medium leading-none">
+                    {user.department || 'Vadodara Central'}
+                  </span>
+                </div>
+                <button
+                  onClick={logout}
+                  title="Sign Out"
+                  className="ml-1 p-1 text-slate-400 hover:text-red-600 rounded transition-colors cursor-pointer text-xs"
+                >
+                  🚪
+                </button>
               </div>
-              <div className="flex flex-col text-left">
-                <span className="text-xs font-bold text-[#0B2545] leading-tight">
-                  {t('vmc.officer_title', 'Control Officer')}
-                </span>
-                <span className="text-[10px] text-slate-500 font-medium leading-none">
-                  {t('vmc.officer_sub', 'Vadodara Central')}
-                </span>
+            ) : (
+              <div className="hidden md:flex items-center pl-3 border-l border-slate-200">
+                <Link
+                  href="/login"
+                  className="h-8 px-3 rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 no-underline"
+                >
+                  <span>🔑</span>
+                  <span>Staff Login</span>
+                </Link>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </header>

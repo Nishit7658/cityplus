@@ -211,16 +211,20 @@ function QueueContent() {
         complaint={selected}
         officers={officers}
         onClose={() => setSelected(null)}
-        onUpdateStatus={async (id, status, officerId) => {
+        onUpdateStatus={async (id, status, officerId, photoAfterUrl) => {
           const res = await fetch(`${API_URL}/api/complaints/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status, assigned_officer_id: officerId }),
+            body: JSON.stringify({
+              status,
+              assigned_officer_id: officerId,
+              photo_after_url: photoAfterUrl,
+            }),
           });
           if (!res.ok) throw new Error('Update failed');
           const updated = await res.json();
           setComplaints((prev) => prev.map((c) => (c.id === id ? { ...c, ...updated } : c)));
-          setSelected(null);
+          setSelected((prev) => (prev && prev.id === id ? { ...prev, ...updated } : updated));
         }}
         onResolve={async (id, officerId, photoAfterUrl) => {
           const res = await fetch(`${API_URL}/api/complaints/${id}/resolve`, {

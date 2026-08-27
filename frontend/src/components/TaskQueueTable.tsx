@@ -248,7 +248,19 @@ export const TaskQueueTable: React.FC<TaskQueueTableProps> = ({
                     </span>
                   </td>
                   <td className="px-4 py-3.5 whitespace-nowrap">
-                    {getStatusBadge(c.status)}
+                    <div className="flex flex-col gap-1 items-start">
+                      {getStatusBadge(c.status)}
+                      {c.status !== 'Resolved' && (c.is_chronic_overdue || (c.days_unresolved || 0) >= 60 || (c.months_span || 1) >= 2) && (
+                        <span className="text-[9px] font-bold text-white bg-red-700 px-1.5 py-0.2 rounded inline-flex items-center gap-0.5">
+                          <span>🚨</span> CHRONIC (&gt;60d)
+                        </span>
+                      )}
+                      {c.status === 'Pending' && !c.is_chronic_overdue && (Date.now() - new Date(c.created_at).getTime()) > 24 * 3600 * 1000 && (
+                        <span className="text-[9px] font-bold text-red-700 bg-red-50 border border-red-200 px-1.5 py-0.2 rounded inline-flex items-center gap-0.5">
+                          <span>⚠️</span> SLA Breach (&gt;24h)
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2">

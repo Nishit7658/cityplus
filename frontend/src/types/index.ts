@@ -17,10 +17,16 @@ export interface Complaint {
   assigned_officer_name?: string;
   officer_name?: string;
   officer_department?: string;
+  officer_phone?: string | null;
+  assigned_by_supervisor_id?: number | null;
+  assigned_by_supervisor_name?: string | null;
   reopened_count: number;
   is_recurring?: boolean;
   total_cycles?: number;
   months_span?: number;
+  days_unresolved?: number;
+  is_chronic_overdue?: boolean;
+  evidence_photos?: string[];
   photo_url?: string | null;
   photo_after_url?: string | null;
   created_at: string;
