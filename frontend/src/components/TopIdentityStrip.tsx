@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { NationalEmblem } from './NationalEmblem';
 import { CitizenReportModal } from './CitizenReportModal';
 import { useSocket } from './SocketProvider';
@@ -22,12 +23,18 @@ const LANGUAGE_OPTIONS: { code: Language; label: string; native: string }[] = [
 ];
 
 export const TopIdentityStrip: React.FC = () => {
+  const router = useRouter();
   const { lastEvent } = useSocket();
   const { language, setLanguage, t } = useLanguage();
   const { selectedWard, setSelectedWard } = useWard();
   const { user, isAuthenticated, logout } = useAuth();
   const [todayCount, setTodayCount] = useState<number>(MOCK_COMPLAINTS.length);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
+  const handleSignOut = () => {
+    logout();
+    router.push('/login');
+  };
   
   const wards = [
     { key: 'all', label: t('vmc.all_wards') },
@@ -161,41 +168,42 @@ export const TopIdentityStrip: React.FC = () => {
               </select>
             </div>
 
-            {/* Duty Officer Profile / Auth CTA */}
+            {/* Duty Officer Profile / Sign Out */}
             {isAuthenticated && user ? (
-              <div className="hidden md:flex items-center gap-2 pl-3 border-l border-slate-200">
-                <div className="w-7 h-7 rounded-full bg-[#0B2545] text-white flex items-center justify-center font-bold text-xs uppercase">
+              <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+                <div className="w-7 h-7 rounded-full bg-[#0B2545] text-white flex items-center justify-center font-bold text-xs uppercase shrink-0">
                   {user.name.slice(0, 2)}
                 </div>
-                <div className="flex flex-col text-left">
+                <div className="hidden sm:flex flex-col text-left">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-[#0B2545] leading-tight">
+                    <span className="text-xs font-bold text-[#0B2545] leading-tight truncate max-w-[120px]">
                       {user.name}
                     </span>
                     <span className="text-[9px] font-mono font-bold text-[#133E87] bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200 uppercase">
                       {user.role}
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-500 font-medium leading-none">
+                  <span className="text-[10px] text-slate-500 font-medium leading-none truncate max-w-[120px]">
                     {user.department || 'Vadodara Central'}
                   </span>
                 </div>
                 <button
-                  onClick={logout}
-                  title="Sign Out"
-                  className="ml-1 p-1 text-slate-400 hover:text-red-600 rounded transition-colors cursor-pointer text-xs"
+                  onClick={handleSignOut}
+                  title="Sign Out of VMC Portal"
+                  className="h-8 px-2.5 rounded border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 shrink-0 shadow-2xs"
                 >
-                  🚪
+                  <span>🚪</span>
+                  <span>Sign Out</span>
                 </button>
               </div>
             ) : (
-              <div className="hidden md:flex items-center pl-3 border-l border-slate-200">
+              <div className="flex items-center pl-3 border-l border-slate-200">
                 <Link
                   href="/login"
-                  className="h-8 px-3 rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 no-underline"
+                  className="h-8 px-3 rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 no-underline shrink-0"
                 >
                   <span>🔑</span>
-                  <span>Staff Login</span>
+                  <span>Sign In</span>
                 </Link>
               </div>
             )}
