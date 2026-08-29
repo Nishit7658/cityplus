@@ -5,6 +5,7 @@ const FormData = require('form-data');
 const gisService = require('./gisService');
 const socketService = require('./socketService');
 const db = require('../config/db');
+const { getT } = require('./telegramI18n');
 require('dotenv').config();
 
 function getBotToken() {
@@ -16,7 +17,7 @@ function getTelegramApi() {
 }
 
 // State tracking for Telegram users
-// States: 'START' | 'CATEGORY' | 'LOCATION' | 'PHOTO'
+// States: 'LANG' | 'CATEGORY' | 'LOCATION' | 'PHOTO' | 'START'
 const telegramSessions = new Map();
 
 const WARDS_DATA = [
@@ -27,7 +28,9 @@ const WARDS_DATA = [
     lng: 73.1878,
     keywords: [
       'sayajigunj', 'sayaji', 'railway', 'station', 'ward 1', 'ward1', 'msu', 'university', 'kala ghoda',
-      'pratapgunj', 'kadakbazar', 'dairy den', 'natubhai circle', 'jetalpur', 'sayaji baug', 'kamati baug'
+      'pratapgunj', 'kadakbazar', 'dairy den', 'natubhai circle', 'jetalpur', 'sayaji baug', 'kamati baug',
+      'સયાજીગંજ', 'સયાજી', 'સ્ટેશન', 'રેલ્વે', 'વોર્ડ ૧', 'એમએસયુ', 'યુનિવર્સિટી', 'કાલા ઘોડા', 'પ્રતાપગંજ', 'જેતલપુર', 'સયાજી બાગ', 'કમાટી બાગ',
+      'सयाजीगंज', 'सयाजी', 'स्टेशन', 'रेलवे', 'वार्ड १', 'एमएसयू', 'यूनिवर्सिटी', 'काला घोड़ा', 'प्रतापगंज', 'जेतलपुर', 'सयाजी बाग', 'कमाटी बाग'
     ]
   },
   {
@@ -37,7 +40,9 @@ const WARDS_DATA = [
     lng: 73.1642,
     keywords: [
       'akota', 'dandia', 'bazaar', 'ward 2', 'ward2', 'alkapuri', 'rc dutt', 'productivity', 'sheetal studio',
-      'akota bridge', 'harinagar', 'bpc road', 'old padra road', 'op road', 'sun pharma', 'chakraputi', 'chapad'
+      'akota bridge', 'harinagar', 'bpc road', 'old padra road', 'op road', 'sun pharma', 'chakraputi', 'chapad',
+      'અકોટા', 'દાંડિયા', 'બજાર', 'વોર્ડ ૨', 'અલકાપુરી', 'અકોટા બ્રિજ', 'હરિબાગ', 'હરીનગર', 'ઓપી રોડ', 'ઓલ્ડ પાદરા રોડ',
+      'अकोटा', 'दांडिया', 'बाजार', 'वार्ड २', 'अलकापुरी', 'अकोटा ब्रिज', 'हरिनगर', 'ओपी रोड', 'ओल्ड पादरा रोड'
     ]
   },
   {
@@ -47,7 +52,9 @@ const WARDS_DATA = [
     lng: 73.2054,
     keywords: [
       'raopura', 'mandvi', 'nyayamandir', 'ward 3', 'ward3', 'tower', 'chokhandi', 'lehripura', 'jubilee baug',
-      'champaner gate', 'gendi gate', 'fatehpura', 'mg road', 'khanderao market', 'sur sagar', 'sursagar'
+      'champaner gate', 'gendi gate', 'fatehpura', 'mg road', 'khanderao market', 'sur sagar', 'sursagar',
+      'રાવપુરા', 'માંડવી', 'ન્યાયમંદિર', 'વોર્ડ ૩', 'ચોખંડી', 'લહેરીપુરા', 'જુબિલી બાગ', 'ચાંપાનેર દરવાજો', 'ગેંડી ગેટ', 'ફતેહપુરા', 'સૂર સાગર', 'સુરસાગર',
+      'रावपुरा', 'मांडवी', 'न्यायमंदिर', 'वार्ड ३', 'चोखंडी', 'लहेरीपुरा', 'जुबली बाग', 'चंपानेर गेट', 'गैंडी गेट', 'फतेहपुरा', 'सूर सागर', 'सूरतसागर'
     ]
   },
   {
@@ -57,7 +64,9 @@ const WARDS_DATA = [
     lng: 73.1989,
     keywords: [
       'karelibaug', 'kareli', 'amit nagar', 'ward 4', 'ward4', 'harni', 'airport', 'sangam', 'vip road',
-      'muktanand circle', 'bright school', 'water tank', 'anand nagar', 'harni ring road', 'motnath'
+      'muktanand circle', 'bright school', 'water tank', 'anand nagar', 'harni ring road', 'motnath',
+      'કારેલીબાગ', 'કારેલી', 'અમિત નગર', 'વોર્ડ ૪', 'હરણી', 'એરપોર્ટ', 'સંગમ', 'વીઆઇપી રોડ', 'મુક્તાનંદ સર્કલ', 'મોતનાથ',
+      'कारेलीबाग', 'कारेली', 'अमित नगर', 'वार्ड ४', 'हरणी', 'एयरपोर्ट', 'संगम', 'वीआईपी रोड', 'मुक्तानंद सर्कल', 'मोतनाथ'
     ]
   },
   {
@@ -67,7 +76,9 @@ const WARDS_DATA = [
     lng: 73.1895,
     keywords: [
       'fatehgunj', 'fateh', 'sama', 'chhani', 'ward 5', 'ward5', 'nizampura', 'sama savli', 'chhani jakatnaka',
-      'abhilasha', 'tp 13', 'gsfc', 'navrachana', 'chhani village', 'sama canal', 'dumad', 'ranoli'
+      'abhilasha', 'tp 13', 'gsfc', 'navrachana', 'chhani village', 'sama canal', 'dumad', 'ranoli',
+      'ફતેહગંજ', 'ફતેહ', 'સમા', 'છાણી', 'વોર્ડ ૫', 'નિઝામપુરા', 'સમા સાવલી', 'અભિલાષા', 'નવરચના', 'દુમાડ', 'રણોલી',
+      'फतेहगंज', 'फतेह', 'समा', 'छाणी', 'वार्ड ५', 'निजामपुरा', 'समा सावली', 'अभिलाषा', 'नवरचना', 'दुमाड', 'रणोली'
     ]
   },
   {
@@ -77,7 +88,9 @@ const WARDS_DATA = [
     lng: 73.1956,
     keywords: [
       'manjalpur', 'tarsali', 'ward 6', 'ward6', 'lalbaug', 'darbar chowkdi', 'eva mall', 'kubereshwar',
-      'shreyas school', 'susen', 'tarsali ring road', 'vrajdham', 'makarpura road'
+      'shreyas school', 'susen', 'tarsali ring road', 'vrajdham', 'makarpura road',
+      'માંજલપુર', 'તરસાલી', 'વોર્ડ ૬', 'લાલબાગ', 'દરબાર ચોકડી', 'ઇવા મોલ', 'કુબેરેશ્વર', 'સુસેન', 'વ્રજધામ',
+      'मांजलपुर', 'तरसाली', 'वार्ड ६', 'लालबाग', 'दरबार चौकड़ी', 'इवा मॉल', 'कुबेरेश्वर', 'सुसेन', 'व्रजधाम'
     ]
   },
   {
@@ -87,7 +100,9 @@ const WARDS_DATA = [
     lng: 73.1923,
     keywords: [
       'makarpura', 'gidc', 'jambuva', 'ward 7', 'ward7', 'air force', 'airforce', 'novino', 'maneja',
-      'vadsar', 'danteshwar', 'ongc colony', 'makarpura palace', 'tarsali bypass', 'por', 'kelanpur'
+      'vadsar', 'danteshwar', 'ongc colony', 'makarpura palace', 'tarsali bypass', 'por', 'kelanpur',
+      'મકરપુરા', 'જીઆઇડીસી', 'જાંબુવા', 'વોર્ડ ૭', 'માણેજા', 'વડસર', 'દાંતેશ્વર', 'પોર', 'કેલનપુર',
+      'मकरपुरा', 'जीआईडीसी', 'जांबुवा', 'वार्ड ७', 'मानेजा', 'वडसर', 'दांतेश्वर', 'पोर', 'केलनपुर'
     ]
   },
   {
@@ -97,7 +112,9 @@ const WARDS_DATA = [
     lng: 73.1412,
     keywords: [
       'gotri', 'sevasi', 'vasna', 'bhayli', 'ward 8', 'ward8', 'laxmipura', 'vasna road', 'bhayli road',
-      'sterling hospital', 'yash complex', 'priya cinema', 'new alkapuri', 'bil', 'khanpur', 'ampad'
+      'sterling hospital', 'yash complex', 'priya cinema', 'new alkapuri', 'bil', 'khanpur', 'ampad',
+      'ગોત્રી', 'સેવાસી', 'વાસણા', 'ભાયલી', 'વોર્ડ ૮', 'લક્ષ્મીપુરા', 'વાસણા રોડ', 'ન્યૂ અલકાપુરી', 'બીલ', 'ખાનપુર',
+      'गोत्री', 'सेवासा', 'वासना', 'भायली', 'वार्ड ८', 'लक्ष्मीपुरा', 'वासना रोड', 'न्यू अलकापुरी', 'बील', 'खानपुर'
     ]
   },
   {
@@ -107,7 +124,9 @@ const WARDS_DATA = [
     lng: 73.1624,
     keywords: [
       'gorwa', 'subhanpura', 'panchvati', 'ward 9', 'ward9', 'ellora park', 'high tension', 'refinery road',
-      'karodiya', 'undera', 'alembic road', 'madhavnagar', 'ipcl', 'bapod'
+      'karodiya', 'undera', 'alembic road', 'madhavnagar', 'ipcl', 'bapod',
+      'ગોરવા', 'સુભાનપુરા', 'પંચવટી', 'વોર્ડ ૯', 'એલોરા પાર્ક', 'રિફાઇનરી રોડ', 'કરોડિયા', 'ઉંડેરા', 'એલેમ્બિક રોડ', 'બાપોદ',
+      'गोरवा', 'सुभानपुरा', 'पंचवटी', 'वार्ड ९', 'एलोरा पार्क', 'रिफाइनरी रोड', 'करोड़िया', 'उंडेरा', 'एलेम्बिक रोड', 'बापोद'
     ]
   },
   {
@@ -117,7 +136,9 @@ const WARDS_DATA = [
     lng: 73.2341,
     keywords: [
       'waghodia', 'kapurai', 'panigate', 'ajwa', 'ward 10', 'ward10', 'parivar char rasta', 'kendranagar',
-      'soma talav', 'dabhoi road', 'golden chowkdi', 'ajwa road', 'waghodia road', 'gurukul', 'khatamba'
+      'soma talav', 'dabhoi road', 'golden chowkdi', 'ajwa road', 'waghodia road', 'gurukul', 'khatamba',
+      'વાઘોડિયા', 'કપુરાઈ', 'પાણીગેટ', 'આજવા', 'વોર્ડ ૧૦', 'પરિવાર ચાર રસ્તા', 'સોમા તળાવ', 'ડભોઈ રોડ', 'ગોલ્ડન ચોકડી', 'આજવા રોડ', 'વાઘોડિયા રોડ',
+      'वाघोडिया', 'कपुराई', 'पानीगेट', 'आजवा', 'वार्ड १०', 'परिवार चार रास्ता', 'सोमा तालाब', 'डभोई रोड', 'गोल्डन चौकड़ी', 'आजवा रोड', 'वाघोडिया रोड'
     ]
   },
 ];
@@ -194,13 +215,14 @@ async function sendPhoto(chatId, photoPathOrUrl, caption, extra = {}) {
  * Section 4: Closed-Loop Verification
  * Outbound inline button message asking user if fix is verified
  */
-async function sendClosedLoopVerification(chatId, complaintId, category, photoAfterUrl) {
-  const caption = `🔧 <b>VMC Resolution Verification</b>\n\nYour civic grievance report #${complaintId} regarding <b>${category}</b> has been marked as <b>Resolved</b> by VMC engineering crews.\n\n<i>Did this repair meet municipal standards? Please confirm below:</i>`;
+async function sendClosedLoopVerification(chatId, complaintId, category, photoAfterUrl, lang = 'en') {
+  const t = getT(lang);
+  const caption = t.closed_loop_caption(complaintId, category);
   const replyMarkup = {
     inline_keyboard: [
       [
-        { text: '✅ Yes, Verified Fixed', callback_data: `verify_yes_${complaintId}` },
-        { text: '❌ No, Still Broken', callback_data: `verify_no_${complaintId}` },
+        { text: t.yes_verified_btn, callback_data: `verify_yes_${complaintId}` },
+        { text: t.no_broken_btn, callback_data: `verify_no_${complaintId}` },
       ],
     ],
   };
@@ -244,76 +266,110 @@ async function sendMessage(chatId, text, extra = {}) {
 }
 
 /**
- * STEP 1: Send Greeting & Category Selection Menu
+ * STEP 0: Send Language Selection Menu
  */
-async function sendCategoryMenu(chatId) {
+async function sendLanguageMenu(chatId) {
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '🕳️ Road Pothole', callback_data: 'cat_pothole' },
-        { text: '💧 Water Leakage', callback_data: 'cat_water_leak' },
+        { text: '🇬🇧 English', callback_data: 'lang_en' },
       ],
       [
-        { text: '💡 Streetlight', callback_data: 'cat_broken_streetlight' },
-        { text: '🗑️ Garbage Dump', callback_data: 'cat_garbage_overflow' },
+        { text: '🇮🇳 ગુજરાતી (Gujarati)', callback_data: 'lang_gu' },
       ],
       [
-        { text: '⚠️ Open Manhole', callback_data: 'cat_open_manhole' },
-        { text: '⚡ Exposed Wiring', callback_data: 'cat_exposed_wiring' },
+        { text: '🇮🇳 हिन्दी (Hindi)', callback_data: 'lang_hi' },
+      ],
+    ],
+  };
+
+  const greetingText =
+    `🏛️ <b>Vadodara Municipal Corporation (VMC)</b>\n` +
+    `વડોદરા મહાનગરપાલિકા નાગરિક ફરિયાદ નિવારણ પોર્ટલ\n` +
+    `वडोदरा महानगर पालिका नागरिक शिकायत निवारण पोर्टल\n\n` +
+    `🌐 <b>Please choose your language / આપની ભાષા પસંદ કરો / अपनी भाषा चुनें:</b>`;
+
+  return sendMessage(chatId, greetingText, { reply_markup: keyboard });
+}
+
+/**
+ * STEP 1: Send Greeting & Category Selection Menu (Localized)
+ */
+async function sendCategoryMenu(chatId, lang = 'en') {
+  const t = getT(lang);
+  const keyboard = {
+    inline_keyboard: [
+      [
+        { text: t.categories.pothole, callback_data: 'cat_pothole' },
+        { text: t.categories.water_leak, callback_data: 'cat_water_leak' },
       ],
       [
-        { text: '🔥 Gas Pipeline', callback_data: 'cat_gas_leak' },
-        { text: '🚦 Traffic Signal', callback_data: 'cat_traffic_signal' },
+        { text: t.categories.broken_streetlight, callback_data: 'cat_broken_streetlight' },
+        { text: t.categories.garbage_overflow, callback_data: 'cat_garbage_overflow' },
+      ],
+      [
+        { text: t.categories.open_manhole, callback_data: 'cat_open_manhole' },
+        { text: t.categories.exposed_wiring, callback_data: 'cat_exposed_wiring' },
+      ],
+      [
+        { text: t.categories.gas_leak, callback_data: 'cat_gas_leak' },
+        { text: t.categories.traffic_signal, callback_data: 'cat_traffic_signal' },
+      ],
+      [
+        { text: t.change_language_btn, callback_data: 'change_language' },
       ],
     ],
   };
 
   return sendMessage(
     chatId,
-    `👋 <b>Namaste / Hello!</b>\nWelcome to <b>Vadodara Municipal Corporation (VMC)</b> Citizen Grievance Portal.\n\nPlease select the type of civic issue you would like to report:`,
+    t.welcome_header,
     { reply_markup: keyboard }
   );
 }
 
 /**
- * STEP 2: Request Location
+ * STEP 2: Request Location (Localized)
  */
-async function sendLocationPrompt(chatId, categoryTitle) {
+async function sendLocationPrompt(chatId, categoryKey, lang = 'en') {
+  const t = getT(lang);
+  const categoryTitle = t.categories[categoryKey] || categoryKey;
+
   const inlineWards = {
     inline_keyboard: [
       [
-        { text: '📍 Ward 1 (Sayajigunj)', callback_data: 'ward_1' },
-        { text: '📍 Ward 2 (Akota)', callback_data: 'ward_2' },
+        { text: t.wards[0].label, callback_data: 'ward_1' },
+        { text: t.wards[1].label, callback_data: 'ward_2' },
       ],
       [
-        { text: '📍 Ward 3 (Raopura)', callback_data: 'ward_3' },
-        { text: '📍 Ward 4 (Karelibaug)', callback_data: 'ward_4' },
+        { text: t.wards[2].label, callback_data: 'ward_3' },
+        { text: t.wards[3].label, callback_data: 'ward_4' },
       ],
       [
-        { text: '📍 Ward 5 (Fatehgunj)', callback_data: 'ward_5' },
-        { text: '📍 Ward 6 (Manjalpur)', callback_data: 'ward_6' },
+        { text: t.wards[4].label, callback_data: 'ward_5' },
+        { text: t.wards[5].label, callback_data: 'ward_6' },
       ],
       [
-        { text: '📍 Ward 7 (Makarpura)', callback_data: 'ward_7' },
-        { text: '📍 Ward 8 (Gotri)', callback_data: 'ward_8' },
+        { text: t.wards[6].label, callback_data: 'ward_7' },
+        { text: t.wards[7].label, callback_data: 'ward_8' },
       ],
       [
-        { text: '📍 Ward 9 (Gorwa)', callback_data: 'ward_9' },
-        { text: '📍 Ward 10 (Waghodia)', callback_data: 'ward_10' },
+        { text: t.wards[8].label, callback_data: 'ward_9' },
+        { text: t.wards[9].label, callback_data: 'ward_10' },
       ],
       [
-        { text: '⚙️ My Location is OFF (How to Turn On / Quick Help)', callback_data: 'location_off_help' },
+        { text: t.location_off_btn, callback_data: 'location_off_help' },
       ],
       [
-        { text: '❌ Cancel Report', callback_data: 'cancel_report' },
+        { text: t.cancel_btn, callback_data: 'cancel_report' },
       ],
     ],
   };
 
   const gpsReplyKeyboard = {
     keyboard: [
-      [{ text: '📍 Share Live / Current GPS Location', request_location: true }],
-      [{ text: '❌ Cancel' }],
+      [{ text: t.share_gps_btn, request_location: true }],
+      [{ text: t.cancel_btn }],
     ],
     resize_keyboard: true,
     one_time_keyboard: true,
@@ -321,70 +377,99 @@ async function sendLocationPrompt(chatId, categoryTitle) {
 
   await sendMessage(
     chatId,
-    `Issue selected: <b>${categoryTitle}</b>\n\n📍 <b>Please choose your Location:</b>\n\n1️⃣ <b>Tap "📍 Share Live / Current GPS Location"</b> button below 👇\n2️⃣ <b>Or tap your Ward button</b>\n3️⃣ <b>Or type your area/landmark</b> (e.g. <i>Sayajigunj, Akota, Gotri, MSU, Alkapuri</i>)\n\n<i>💡 If your phone location is OFF, tap your Ward button above or tap "⚙️ My Location is OFF" below.</i>`,
+    t.location_prompt(categoryTitle),
     { reply_markup: inlineWards }
   );
 
-  return sendMessage(chatId, '👇 Tap below to send 1-click GPS location from your phone:', {
+  return sendMessage(chatId, t.location_keyboard_hint, {
     reply_markup: gpsReplyKeyboard,
   });
 }
 
 /**
- * STEP 3: Request Photo Evidence (3 Options: Take Photo, Skip, Cancel)
+ * STEP 3: Request Photo Evidence (Localized)
  */
 async function sendPhotoPrompt(chatId, session) {
+  const lang = session.lang || 'en';
+  const t = getT(lang);
+
   const keyboard = {
     inline_keyboard: [
       [
-        { text: '📷 Take / Attach Photo', callback_data: 'action_take_photo' },
+        { text: t.take_photo_btn, callback_data: 'action_take_photo' },
       ],
       [
-        { text: '⏭️ Skip Photo & Register Directly', callback_data: 'skip_photo' },
+        { text: t.skip_photo_btn, callback_data: 'skip_photo' },
       ],
       [
-        { text: '❌ Cancel Report', callback_data: 'cancel_report' },
+        { text: t.cancel_btn, callback_data: 'cancel_report' },
       ],
     ],
   };
 
   return sendMessage(
     chatId,
-    `📍 <b>Location Set:</b> ${session.locationName || 'Ward Assigned'}\n⚡ <b>Coordinates:</b> ${session.lat.toFixed(4)}, ${session.lng.toFixed(4)}\n\n📷 <b>Attach Photo Evidence (Optional):</b>\n• 1️⃣ Tap <b>"📷 Take / Attach Photo"</b> below to snap a picture\n• 2️⃣ Or tap <b>"⏭️ Skip Photo & Register Directly"</b> to submit without a photo:`,
+    t.photo_prompt(session.locationName || 'Ward Assigned', session.lat || 22.3112, session.lng || 73.1878),
     { reply_markup: keyboard }
   );
 }
 
 /**
- * STEP 4: Finalize Registration and Send Final Confirmation
+ * STEP 4: Finalize Registration and Send Final Confirmation (Localized)
  */
 async function finalizeComplaintRegistration(chatId, session, senderName, username) {
+  const lang = session.lang || 'en';
+  const t = getT(lang);
+
+  const rawCategoryKey = session.categoryKey || 'pothole';
+  const englishCategoryMap = {
+    pothole: 'Road Pothole',
+    water_leak: 'Water Leakage',
+    broken_streetlight: 'Broken Streetlight',
+    garbage_overflow: 'Garbage Dump',
+    open_manhole: 'Open Manhole',
+    exposed_wiring: 'Exposed Wiring',
+    gas_leak: 'Gas Pipeline',
+    traffic_signal: 'Traffic Signal',
+  };
+  const categoryForDb = englishCategoryMap[rawCategoryKey] || session.category || 'Road Pothole';
+  const localizedCategory = (t.categories && t.categories[rawCategoryKey]) || categoryForDb;
+
   const result = await gisService.processIncomingReport({
     latitude: session.lat,
     longitude: session.lng,
-    category: session.category || 'Pothole',
+    category: categoryForDb,
     reporterPhone: `tg_${chatId}`,
-    description: `Telegram report in ${session.locationName || 'Vadodara'} from ${senderName} (@${username || chatId})`,
+    description: `Telegram (${lang.toUpperCase()}) report in ${session.locationName || 'Vadodara'} from ${senderName} (@${username || chatId})`,
     photoUrl: session.photo_url || null,
   });
 
   const complaint = result.complaint;
-  const photoStatus = session.photo_url ? '📸 Photo Attached ✓' : '📷 No Photo Attached';
+  const hasPhoto = Boolean(session.photo_url);
 
   await sendMessage(
     chatId,
-    `🎉 <b>Your Complaint is Successfully Registered!</b>\n\n` +
-    `📋 <b>Ticket ID:</b> #${complaint.id}\n` +
-    `🕳️ <b>Issue:</b> ${complaint.category}\n` +
-    `📍 <b>Location:</b> ${session.locationName || `Ward ${complaint.ward_id}`}\n` +
-    `⚡ <b>Coordinates:</b> ${session.lat.toFixed(5)}, ${session.lng.toFixed(5)}\n` +
-    `🏢 <b>Assigned Team:</b> VMC Field Response Squad\n` +
-    `🖼️ <b>Evidence:</b> ${photoStatus}\n\n` +
-    `⏱️ <i>You will receive live status notifications here as VMC crews inspect and resolve your issue.</i>`,
+    t.success_registration(
+      { ...complaint, category: localizedCategory },
+      session.locationName,
+      session.lat,
+      session.lng,
+      hasPhoto
+    ),
     { reply_markup: { remove_keyboard: true } }
   );
 
-  telegramSessions.set(chatId, { state: 'START', category: null, lat: null, lng: null, locationName: null, photo_url: null });
+  // Preserve user language preference for subsequent notifications
+  telegramSessions.set(chatId, {
+    state: 'START',
+    lang: session.lang || 'en',
+    categoryKey: null,
+    category: null,
+    lat: null,
+    lng: null,
+    locationName: null,
+    photo_url: null,
+  });
 
   if (result.action === 'created') {
     socketService.emitEvent('complaint:created', result.complaint);
@@ -403,14 +488,34 @@ async function handleTelegramUpdate(update) {
       const cb = update.callback_query;
       const chatId = cb.message.chat.id;
       const data = cb.data;
-      const session = telegramSessions.get(chatId) || { state: 'START' };
+      const session = telegramSessions.get(chatId) || { state: 'START', lang: 'en' };
       const senderName = cb.from.first_name ? `${cb.from.first_name} ${cb.from.last_name || ''}`.trim() : `User ${chatId}`;
       const username = cb.from.username || '';
+      const t = getT(session.lang);
 
-      // Cancel Report
+      // STEP 0: Language Selection Callback
+      if (data.startsWith('lang_')) {
+        const selectedLang = data.replace('lang_', ''); // 'en', 'gu', 'hi'
+        session.lang = ['en', 'gu', 'hi'].includes(selectedLang) ? selectedLang : 'en';
+        session.state = 'CATEGORY';
+        telegramSessions.set(chatId, session);
+
+        await sendCategoryMenu(chatId, session.lang);
+        return;
+      }
+
+      // Change Language Action
+      if (data === 'change_language') {
+        session.state = 'LANG';
+        telegramSessions.set(chatId, session);
+        await sendLanguageMenu(chatId);
+        return;
+      }
+
+      // Cancel Report Action
       if (data === 'cancel_report') {
-        telegramSessions.set(chatId, { state: 'START', category: null, lat: null, lng: null, locationName: null, photo_url: null });
-        await sendMessage(chatId, '❌ Report cancelled. Send /start or "hi" anytime to file a grievance.');
+        telegramSessions.set(chatId, { state: 'START', lang: session.lang || 'en', categoryKey: null, category: null, lat: null, lng: null, locationName: null, photo_url: null });
+        await sendMessage(chatId, t.cancelled);
         return;
       }
 
@@ -419,10 +524,7 @@ async function handleTelegramUpdate(update) {
         const complaintId = parseInt(data.replace('verify_yes_', ''), 10);
         await db.query(`UPDATE complaints SET status = 'Resolved', updated_at = NOW() WHERE id = $1;`, [complaintId]);
 
-        await sendMessage(
-          chatId,
-          `✅ <b>Thank you for confirming!</b> Report #${complaintId} is now permanently closed as <b>Resolved</b> in VMC audit records.`
-        );
+        await sendMessage(chatId, t.verification_yes_ack(complaintId));
 
         const updatedRes = await db.query(`SELECT * FROM complaints WHERE id = $1;`, [complaintId]);
         if (updatedRes.rows && updatedRes.rows.length > 0) {
@@ -441,10 +543,7 @@ async function handleTelegramUpdate(update) {
         const reopened = (updateRes.rows && updateRes.rows[0]) || { id: complaintId, status: 'Pending', reopened_count: 1 };
         await db.query(`INSERT INTO status_logs (complaint_id, old_status, new_status) VALUES ($1, 'Resolved', 'Pending');`, [complaintId]);
 
-        await sendMessage(
-          chatId,
-          `⚠️ <b>We apologize for the inconvenience.</b> Report #${complaintId} has been <b>RE-OPENED</b> and escalated with high priority to executive engineers.`
-        );
+        await sendMessage(chatId, t.verification_no_ack(complaintId));
 
         socketService.emitEvent('complaint:reopened', reopened);
         return;
@@ -453,23 +552,15 @@ async function handleTelegramUpdate(update) {
       // STEP 1 -> STEP 2: Category Selected -> Ask for Location
       if (data.startsWith('cat_')) {
         const categoryKey = data.replace('cat_', '');
-        const categoryMap = {
-          pothole: 'Road Pothole',
-          water_leak: 'Water Leakage',
-          broken_streetlight: 'Broken Streetlight',
-          garbage_overflow: 'Garbage Dump',
-          open_manhole: 'Open Manhole',
-          exposed_wiring: 'Exposed Wiring',
-          gas_leak: 'Gas Pipeline',
-          traffic_signal: 'Traffic Signal',
-        };
-        const categoryTitle = categoryMap[categoryKey] || categoryKey;
+        const currentT = getT(session.lang || 'en');
+        const categoryTitle = (currentT.categories && currentT.categories[categoryKey]) || categoryKey;
 
         session.state = 'LOCATION';
+        session.categoryKey = categoryKey;
         session.category = categoryTitle;
         telegramSessions.set(chatId, session);
 
-        await sendLocationPrompt(chatId, categoryTitle);
+        await sendLocationPrompt(chatId, categoryKey, session.lang || 'en');
         return;
       }
 
@@ -477,11 +568,13 @@ async function handleTelegramUpdate(update) {
       if (data.startsWith('ward_')) {
         const wardId = parseInt(data.replace('ward_', ''), 10);
         const ward = WARDS_DATA.find((w) => w.id === wardId) || WARDS_DATA[0];
+        const currentT = getT(session.lang || 'en');
+        const localizedWard = (currentT.wards && currentT.wards.find((w) => w.id === wardId)) || ward;
 
         session.state = 'PHOTO';
         session.lat = ward.lat;
         session.lng = ward.lng;
-        session.locationName = ward.name;
+        session.locationName = localizedWard.name || ward.name;
         session.wardId = ward.id;
         telegramSessions.set(chatId, session);
 
@@ -497,22 +590,13 @@ async function handleTelegramUpdate(update) {
 
       // Location OFF Help Guide
       if (data === 'location_off_help') {
-        await sendMessage(
-          chatId,
-          `⚙️ <b>How to Turn ON Location on Your Device:</b>\n\n` +
-          `📱 <b>Android:</b> Swipe down from top ➔ Tap <b>Location 📍</b> icon to Turn ON (or Settings ➔ Location ➔ Turn On).\n` +
-          `🍏 <b>iPhone / iOS:</b> Go to <b>Settings ➔ Privacy & Security ➔ Location Services ➔ Turn ON</b>.\n\n` +
-          `💡 <b>Fastest Option:</b> You don't even need GPS turned on! Simply <b>tap your Ward button</b> in the menu above to proceed immediately!`
-        );
+        await sendMessage(chatId, t.location_off_help);
         return;
       }
 
       // Take Photo Action Button
       if (data === 'action_take_photo' || data === 'prompt_photo_help') {
-        await sendMessage(
-          chatId,
-          `📸 <b>Ready to Take / Attach Photo:</b>\n\n1️⃣ Tap the <b>Camera 📷</b> or <b>Paperclip 📎</b> icon next to the message bar.\n2️⃣ Snap a live photo of the issue or choose from your gallery.\n3️⃣ Tap <b>Send</b> — your complaint will be registered immediately with the photo attached!`
-        );
+        await sendMessage(chatId, t.photo_help);
         return;
       }
 
@@ -532,24 +616,43 @@ async function handleTelegramUpdate(update) {
     if (update.message) {
       const msg = update.message;
       const chatId = msg.chat.id;
-      const session = telegramSessions.get(chatId) || { state: 'START' };
+      const session = telegramSessions.get(chatId) || { state: 'START', lang: 'en' };
       const senderName = msg.from.first_name ? `${msg.from.first_name} ${msg.from.last_name || ''}`.trim() : `User ${chatId}`;
       const username = msg.from.username || '';
+      const t = getT(session.lang || 'en');
 
-      // Reset / Greeting commands
+      // Check text commands & greetings
       if (msg.text) {
         const text = msg.text.trim();
         const lower = text.toLowerCase();
 
-        if (['/start', '/report', '/restart', '/reset', '/menu', 'hi', 'hello', 'hey', 'start'].includes(lower)) {
-          telegramSessions.set(chatId, { state: 'CATEGORY', category: null, lat: null, lng: null, locationName: null, photo_url: null });
-          await sendCategoryMenu(chatId);
+        // Language change command
+        if (['/lang', '/language', 'language', 'ભાષા', 'भाषा'].includes(lower)) {
+          session.state = 'LANG';
+          telegramSessions.set(chatId, session);
+          await sendLanguageMenu(chatId);
           return;
         }
 
-        if (['/cancel', 'cancel', '❌ cancel', '/exit'].includes(lower)) {
-          telegramSessions.set(chatId, { state: 'START', category: null, lat: null, lng: null, locationName: null, photo_url: null });
-          await sendMessage(chatId, '❌ Report cancelled. Send "hi" or /start anytime to begin.');
+        // Reset / Greeting commands in all 3 languages
+        const greetingKeywords = [
+          '/start', '/report', '/restart', '/reset', '/menu', 'hi', 'hello', 'hey', 'start',
+          'namaste', 'kem cho', 'kemcho', 'નમસ્તે', 'નમસ્કાર', 'કેમ છો', 'કેમછો', 'હેલો', 'હાય',
+          'नमस्ते', 'नमस्कार', 'हेलो', 'हाय', 'शुरू', 'શરૂ'
+        ];
+
+        if (greetingKeywords.includes(lower)) {
+          // Always prompt language selection first on initial greeting/start
+          session.state = 'LANG';
+          telegramSessions.set(chatId, session);
+          await sendLanguageMenu(chatId);
+          return;
+        }
+
+        // Cancel command in all 3 languages
+        if (['/cancel', 'cancel', '❌ cancel', '/exit', 'રદ કરો', 'रद्द करें', 'રદ', 'रद्द'].includes(lower)) {
+          telegramSessions.set(chatId, { state: 'START', lang: session.lang || 'en', categoryKey: null, category: null, lat: null, lng: null, locationName: null, photo_url: null });
+          await sendMessage(chatId, t.cancelled);
           return;
         }
       }
@@ -565,7 +668,7 @@ async function handleTelegramUpdate(update) {
         session.lat = latitude;
         session.lng = longitude;
         session.locationName = nearestWard ? nearestWard.name : 'GPS Location';
-        session.category = session.category || 'Road Pothole';
+        session.categoryKey = session.categoryKey || 'pothole';
         telegramSessions.set(chatId, session);
 
         if (session.photo_url) {
@@ -607,14 +710,14 @@ async function handleTelegramUpdate(update) {
 
         // If location is not yet selected, save photo and ask for category/location
         telegramSessions.set(chatId, session);
-        if (!session.category) {
+        if (!session.categoryKey) {
           session.state = 'CATEGORY';
-          await sendMessage(chatId, '📸 <b>Photo received!</b>\nPlease select what issue is shown in the photo:');
-          await sendCategoryMenu(chatId);
+          await sendMessage(chatId, t.photo_received_choose_cat);
+          await sendCategoryMenu(chatId, session.lang || 'en');
         } else {
           session.state = 'LOCATION';
-          await sendMessage(chatId, '📸 <b>Photo received!</b>\nPlease select the location:');
-          await sendLocationPrompt(chatId, session.category);
+          await sendMessage(chatId, t.photo_received_choose_loc);
+          await sendLocationPrompt(chatId, session.categoryKey, session.lang || 'en');
         }
         return;
       }
@@ -623,8 +726,24 @@ async function handleTelegramUpdate(update) {
       if (msg.text) {
         const text = msg.text.trim();
 
+        // If waiting for Language Selection and user typed a language name
+        if (session.state === 'LANG') {
+          const lower = text.toLowerCase();
+          if (lower.includes('guj') || lower.includes('ગુજ')) {
+            session.lang = 'gu';
+          } else if (lower.includes('hin') || lower.includes('હિન્') || lower.includes('हिन्द')) {
+            session.lang = 'hi';
+          } else {
+            session.lang = 'en';
+          }
+          session.state = 'CATEGORY';
+          telegramSessions.set(chatId, session);
+          await sendCategoryMenu(chatId, session.lang);
+          return;
+        }
+
         // If waiting for Location
-        if (session.state === 'LOCATION' || session.category) {
+        if (session.state === 'LOCATION' || session.categoryKey) {
           const loc = resolveLandmarkCoordinates(text);
           if (loc.matched) {
             session.state = 'PHOTO';
@@ -644,7 +763,7 @@ async function handleTelegramUpdate(update) {
           } else {
             await sendMessage(
               chatId,
-              `⚠️ Location <b>"${text}"</b> was not recognized in Vadodara.\n\nPlease <b>tap your Ward button</b> above or send a GPS location pin:`
+              t.unrecognized_location(text)
             );
             return;
           }
@@ -657,9 +776,10 @@ async function handleTelegramUpdate(update) {
           return;
         }
 
-        // Default greeting
-        telegramSessions.set(chatId, { state: 'CATEGORY', category: null });
-        await sendCategoryMenu(chatId);
+        // Default greeting / initial prompt -> Send Language Menu
+        session.state = 'LANG';
+        telegramSessions.set(chatId, session);
+        await sendLanguageMenu(chatId);
       }
     }
   } catch (err) {
@@ -720,6 +840,7 @@ function stopPolling() {
 
 module.exports = {
   sendMessage,
+  sendLanguageMenu,
   sendCategoryMenu,
   sendLocationPrompt,
   sendPhotoPrompt,
