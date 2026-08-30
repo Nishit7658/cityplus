@@ -12,7 +12,7 @@ describe('🌐 Telegram Bot Trilingual System (English, Gujarati, Hindi)', () =>
       expect(t.lang_name).toBeDefined();
       expect(t.welcome_header).toBeDefined();
       expect(Object.keys(t.categories).length).toBe(8);
-      expect(t.wards.length).toBe(10);
+      expect(t.wards.length).toBe(19);
       expect(typeof t.location_prompt).toBe('function');
       expect(typeof t.photo_prompt).toBe('function');
       expect(typeof t.success_registration).toBe('function');

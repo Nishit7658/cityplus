@@ -48,6 +48,15 @@ export const TopIdentityStrip: React.FC = () => {
     { key: '8', label: t('ward.8') },
     { key: '9', label: t('ward.9') },
     { key: '10', label: t('ward.10') },
+    { key: '11', label: t('ward.11') },
+    { key: '12', label: t('ward.12') },
+    { key: '13', label: t('ward.13') },
+    { key: '14', label: t('ward.14') },
+    { key: '15', label: t('ward.15') },
+    { key: '16', label: t('ward.16') },
+    { key: '17', label: t('ward.17') },
+    { key: '18', label: t('ward.18') },
+    { key: '19', label: t('ward.19') },
   ];
 
   useEffect(() => {

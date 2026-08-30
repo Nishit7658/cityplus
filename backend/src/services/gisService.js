@@ -68,7 +68,7 @@ async function assignGeographicWard(lat, lng) {
  * 2. Checks problem_spots for persistent location history
  * 3. Creates complaint or increments confirmation_count atomically
  */
-async function processIncomingReport({ latitude, longitude, category, reporterPhone, description, photoUrl }) {
+async function processIncomingReport({ latitude, longitude, category, reporterPhone, description, photoUrl, wardId }) {
   const normCategory = normalizeCategory(category);
   const lat = parseFloat(latitude) || 22.3072;
   const lng = parseFloat(longitude) || 73.1812;
@@ -177,8 +177,13 @@ async function processIncomingReport({ latitude, longitude, category, reporterPh
     }
   }
 
-  // Assign geographic ward
-  const wardId = await assignGeographicWard(lat, lng);
+  // Assign geographic ward (strictly respect explicitly selected wardId if passed)
+  let finalWardId = null;
+  if (wardId && parseInt(wardId, 10) >= 1 && parseInt(wardId, 10) <= 19) {
+    finalWardId = parseInt(wardId, 10);
+  } else {
+    finalWardId = await assignGeographicWard(lat, lng);
+  }
 
   // Calculate initial severity score
   const initialSeverity = calculateSeverityScore(1, new Date(), normCategory);
@@ -203,7 +208,7 @@ async function processIncomingReport({ latitude, longitude, category, reporterPh
     initialSeverity,
     isRecurring,
     problemSpotId,
-    wardId,
+    finalWardId,
     photoUrl || null,
   ]);
 

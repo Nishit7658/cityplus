@@ -5,21 +5,30 @@ async function seed() {
   console.log('🌱 Starting CityPulse VMC Database Seeding...');
 
   try {
-    // 1. Seed 10 Official Wards of Vadodara Municipal Corporation
+    // 1. Seed 19 Official Wards of Vadodara Municipal Corporation
     const wardsData = [
-      { id: 1, ward_number: 1, name: 'Ward 1 — Sayajigunj', lat: 22.3112, lng: 73.1878, population: 185000, area: 14.2 },
-      { id: 2, ward_number: 2, name: 'Ward 2 — Akota', lat: 22.2981, lng: 73.1642, population: 162000, area: 12.8 },
-      { id: 3, ward_number: 3, name: 'Ward 3 — Raopura', lat: 22.3025, lng: 73.2054, population: 198000, area: 11.5 },
-      { id: 4, ward_number: 4, name: 'Ward 4 — Karelibaug', lat: 22.3214, lng: 73.1989, population: 174000, area: 15.0 },
-      { id: 5, ward_number: 5, name: 'Ward 5 — Fatehgunj', lat: 22.3168, lng: 73.1895, population: 155000, area: 13.6 },
-      { id: 6, ward_number: 6, name: 'Ward 6 — Manjalpur', lat: 22.2680, lng: 73.1950, population: 210000, area: 18.2 },
-      { id: 7, ward_number: 7, name: 'Ward 7 — Gotri', lat: 22.3150, lng: 73.1480, population: 188000, area: 16.4 },
-      { id: 8, ward_number: 8, name: 'Ward 8 — Makarpura', lat: 22.2450, lng: 73.1880, population: 225000, area: 21.0 },
-      { id: 9, ward_number: 9, name: 'Ward 9 — Gorwa', lat: 22.3380, lng: 73.1620, population: 168000, area: 14.8 },
-      { id: 10, ward_number: 10, name: 'Ward 10 — Nizampura', lat: 22.3340, lng: 73.1820, population: 172000, area: 13.9 },
+      { id: 1, ward_number: 1, name: 'Ward 1 — Sayajigunj & Fatehgunj', lat: 22.3112, lng: 73.1878, population: 185000, area: 14.2 },
+      { id: 2, ward_number: 2, name: 'Ward 2 — Harni & Warasia', lat: 22.3385, lng: 73.2140, population: 162000, area: 12.8 },
+      { id: 3, ward_number: 3, name: 'Ward 3 — Waghodia Road & Bapod', lat: 22.2987, lng: 73.2341, population: 198000, area: 11.5 },
+      { id: 4, ward_number: 4, name: 'Ward 4 — Karelibaug & Sangam', lat: 22.3214, lng: 73.1989, population: 174000, area: 15.0 },
+      { id: 5, ward_number: 5, name: 'Ward 5 — Raopura & Mandvi', lat: 22.3025, lng: 73.2054, population: 155000, area: 13.6 },
+      { id: 6, ward_number: 6, name: 'Ward 6 — Akota & Gotri', lat: 22.2981, lng: 73.1642, population: 210000, area: 18.2 },
+      { id: 7, ward_number: 7, name: 'Ward 7 — Nizampura & Chhani', lat: 22.3340, lng: 73.1820, population: 188000, area: 16.4 },
+      { id: 8, ward_number: 8, name: 'Ward 8 — Nagarwada', lat: 22.3120, lng: 73.2010, population: 145000, area: 9.8 },
+      { id: 9, ward_number: 9, name: 'Ward 9 — Ajwa Road', lat: 22.3110, lng: 73.2315, population: 168000, area: 14.8 },
+      { id: 10, ward_number: 10, name: 'Ward 10 — Subhanpura & Gorwa', lat: 22.3341, lng: 73.1624, population: 172000, area: 13.9 },
+      { id: 11, ward_number: 11, name: 'Ward 11 — Vasna-Bhayli & Diwalipura', lat: 22.2885, lng: 73.1465, population: 195000, area: 17.5 },
+      { id: 12, ward_number: 12, name: 'Ward 12 — Makarpura & Maneja', lat: 22.2512, lng: 73.1923, population: 220000, area: 22.0 },
+      { id: 13, ward_number: 13, name: 'Ward 13 — Wadi & Ghadiali Pole', lat: 22.2965, lng: 73.2085, population: 140000, area: 8.5 },
+      { id: 14, ward_number: 14, name: 'Ward 14 — Tarsali & Danteshwar', lat: 22.2615, lng: 73.2045, population: 180000, area: 16.0 },
+      { id: 15, ward_number: 15, name: 'Ward 15 — Bapod & Ajwa Outer', lat: 22.3180, lng: 73.2450, population: 150000, area: 15.2 },
+      { id: 16, ward_number: 16, name: 'Ward 16 — Kishanwadi & Soma Talav', lat: 22.2850, lng: 73.2210, population: 165000, area: 12.4 },
+      { id: 17, ward_number: 17, name: 'Ward 17 — Manjalpur & Atladra', lat: 22.2684, lng: 73.1780, population: 205000, area: 19.5 },
+      { id: 18, ward_number: 18, name: 'Ward 18 — Tandalja & Vasna Road', lat: 22.2840, lng: 73.1610, population: 175000, area: 14.0 },
+      { id: 19, ward_number: 19, name: 'Ward 19 — Kapurai-Tarsali (South)', lat: 22.2450, lng: 73.2250, population: 160000, area: 18.0 },
     ];
 
-    console.log('Inserting/Upserting 10 Wards...');
+    console.log('Inserting/Upserting 19 Wards...');
     for (const w of wardsData) {
       await db.query(
         `INSERT INTO wards (id, ward_number, name, centroid_lat, centroid_lng, population, area_sq_km)

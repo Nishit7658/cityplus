@@ -2,13 +2,13 @@ const request = require('supertest');
 const { app } = require('../src/server');
 
 describe('🗺️ Step 4: Geographic Ward Boundary Polygons & GIS Spatial Data', () => {
-  test('GET /api/wards/geojson should return valid RFC 7946 FeatureCollection with 10 wards', async () => {
+  test('GET /api/wards/geojson should return valid RFC 7946 FeatureCollection with 19 wards', async () => {
     const res = await request(app).get('/api/wards/geojson');
 
     expect(res.statusCode).toBe(200);
     expect(res.body.type).toBe('FeatureCollection');
     expect(Array.isArray(res.body.features)).toBe(true);
-    expect(res.body.features.length).toBe(10);
+    expect(res.body.features.length).toBe(19);
 
     // Verify properties of first ward (Sayajigunj)
     const ward1 = res.body.features.find((f) => f.id === 1 || f.properties.id === 1);
@@ -19,12 +19,12 @@ describe('🗺️ Step 4: Geographic Ward Boundary Polygons & GIS Spatial Data',
     expect(ward1.geometry.coordinates[0].length).toBeGreaterThanOrEqual(4);
   });
 
-  test('GET /api/wards should list 10 municipal wards with complaint counts', async () => {
+  test('GET /api/wards should list 19 municipal wards with complaint counts', async () => {
     const res = await request(app).get('/api/wards');
 
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBe(10);
+    expect(res.body.length).toBe(19);
     expect(res.body[0]).toHaveProperty('total_complaints');
   });
 });

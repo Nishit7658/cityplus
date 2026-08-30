@@ -4,29 +4,42 @@
  * real-time transparency aggregation, and persistent in-memory state.
  */
 
-// 10 Official Wards of Vadodara Municipal Corporation with Real Coordinates
+// 19 Official Administrative Wards of Vadodara Municipal Corporation (VMC)
 const WARDS = [
-  { id: 1, name: 'Ward 1 — Sayajigunj', ward_number: 1, lat: 22.3112, lng: 73.1878 },
-  { id: 2, name: 'Ward 2 — Akota', ward_number: 2, lat: 22.2981, lng: 73.1642 },
-  { id: 3, name: 'Ward 3 — Raopura', ward_number: 3, lat: 22.3025, lng: 73.2054 },
-  { id: 4, name: 'Ward 4 — Karelibaug', ward_number: 4, lat: 22.3214, lng: 73.1989 },
-  { id: 5, name: 'Ward 5 — Fatehgunj', ward_number: 5, lat: 22.3168, lng: 73.1895 },
-  { id: 6, name: 'Ward 6 — Manjalpur', ward_number: 6, lat: 22.2684, lng: 73.1956 },
-  { id: 7, name: 'Ward 7 — Makarpura', ward_number: 7, lat: 22.2512, lng: 73.1923 },
-  { id: 8, name: 'Ward 8 — Gotri', ward_number: 8, lat: 22.3125, lng: 73.1412 },
-  { id: 9, name: 'Ward 9 — Gorwa', ward_number: 9, lat: 22.3341, lng: 73.1624 },
-  { id: 10, name: 'Ward 10 — Waghodia Road', ward_number: 10, lat: 22.2987, lng: 73.2341 },
+  { id: 1, name: 'Ward 1 — Sayajigunj & Fatehgunj', ward_number: 1, lat: 22.3112, lng: 73.1878, areas: 'Sayajigunj, Fatehgunj, MS University' },
+  { id: 2, name: 'Ward 2 — Harni & Warasia', ward_number: 2, lat: 22.3385, lng: 73.2140, areas: 'Harni, Warasia, Sawad, Shweta Park' },
+  { id: 3, name: 'Ward 3 — Waghodia Road & Bapod', ward_number: 3, lat: 22.2987, lng: 73.2341, areas: 'Waghodia Road, Bapod, Kapurai' },
+  { id: 4, name: 'Ward 4 — Karelibaug & Sangam', ward_number: 4, lat: 22.3214, lng: 73.1989, areas: 'Karelibaug, Sangam, VIP Road' },
+  { id: 5, name: 'Ward 5 — Raopura & Mandvi', ward_number: 5, lat: 22.3025, lng: 73.2054, areas: 'Raopura, Dandia Bazar, Mandvi' },
+  { id: 6, name: 'Ward 6 — Akota & Gotri', ward_number: 6, lat: 22.2981, lng: 73.1642, areas: 'Akota, Gotri, Hari Nagar' },
+  { id: 7, name: 'Ward 7 — Nizampura & Chhani', ward_number: 7, lat: 22.3340, lng: 73.1820, areas: 'Nizampura, Chhani, TP-13' },
+  { id: 8, name: 'Ward 8 — Nagarwada', ward_number: 8, lat: 22.3120, lng: 73.2010, areas: 'Nagarwada, Karelibaug (part)' },
+  { id: 9, name: 'Ward 9 — Ajwa Road', ward_number: 9, lat: 22.3110, lng: 73.2315, areas: 'Ajwa Road, Kishanwadi' },
+  { id: 10, name: 'Ward 10 — Subhanpura & Gorwa', ward_number: 10, lat: 22.3341, lng: 73.1624, areas: 'Subhanpura, Gorwa, Laxmipura' },
+  { id: 11, name: 'Ward 11 — Vasna-Bhayli & Diwalipura', ward_number: 11, lat: 22.2885, lng: 73.1465, areas: 'Vasna-Bhayli, Diwalipura' },
+  { id: 12, name: 'Ward 12 — Makarpura & Maneja', ward_number: 12, lat: 22.2512, lng: 73.1923, areas: 'Makarpura, Maneja, GIDC' },
+  { id: 13, name: 'Ward 13 — Wadi & Ghadiali Pole', ward_number: 13, lat: 22.2965, lng: 73.2085, areas: 'Wadi, Ghadiali Pole, Khanderao' },
+  { id: 14, name: 'Ward 14 — Tarsali & Danteshwar', ward_number: 14, lat: 22.2615, lng: 73.2045, areas: 'Tarsali, Soma Talav, Danteshwar' },
+  { id: 15, name: 'Ward 15 — Bapod & Ajwa Outer', ward_number: 15, lat: 22.3180, lng: 73.2450, areas: 'Bapod, Ajwa Road (outer)' },
+  { id: 16, name: 'Ward 16 — Kishanwadi & Soma Talav', ward_number: 16, lat: 22.2850, lng: 73.2210, areas: 'Kishanwadi, Soma Talav' },
+  { id: 17, name: 'Ward 17 — Manjalpur & Atladra', ward_number: 17, lat: 22.2684, lng: 73.1780, areas: 'Manjalpur, Atladra, Bill-Chapad' },
+  { id: 18, name: 'Ward 18 — Tandalja & Vasna Road', ward_number: 18, lat: 22.2840, lng: 73.1610, areas: 'Tandalja, Vasna Road' },
+  { id: 19, name: 'Ward 19 — Kapurai-Tarsali (South)', ward_number: 19, lat: 22.2450, lng: 73.2250, areas: 'Kapurai-Tarsali (South)' },
 ];
 
 const OFFICERS = [
   { id: 1, name: 'Rajesh Patel', phone: '+91 98250 12345', department: 'Road & Building Dept', ward_id: 1 },
   { id: 2, name: 'Amit Shah', phone: '+91 98250 23456', department: 'Drainage & Sewerage', ward_id: 4 },
-  { id: 3, name: 'Sneha Dave', phone: '+91 98250 34567', department: 'Solid Waste Management', ward_id: 5 },
-  { id: 4, name: 'Vikram Solanki', phone: '+91 98250 45678', department: 'Electrical & Lighting', ward_id: 3 },
-  { id: 5, name: 'Mehul Mehta', phone: '+91 98250 56789', department: 'Water Supply Department', ward_id: 2 },
-  { id: 6, name: 'Pooja Joshi', phone: '+91 98250 67890', department: 'Health & Sanitation', ward_id: 6 },
-  { id: 7, name: 'Kiran Desai', phone: '+91 98250 78901', department: 'Road & Building Dept', ward_id: 7 },
-  { id: 8, name: 'Dharmesh Rana', phone: '+91 98250 89012', department: 'Drainage & Sewerage', ward_id: 8 },
+  { id: 3, name: 'Sneha Dave', phone: '+91 98250 34567', department: 'Solid Waste Management', ward_id: 2 },
+  { id: 4, name: 'Vikram Solanki', phone: '+91 98250 45678', department: 'Electrical & Lighting', ward_id: 5 },
+  { id: 5, name: 'Mehul Mehta', phone: '+91 98250 56789', department: 'Water Supply Department', ward_id: 6 },
+  { id: 6, name: 'Pooja Joshi', phone: '+91 98250 67890', department: 'Health & Sanitation', ward_id: 17 },
+  { id: 7, name: 'Kiran Desai', phone: '+91 98250 78901', department: 'Road & Building Dept', ward_id: 12 },
+  { id: 8, name: 'Dharmesh Rana', phone: '+91 98250 89012', department: 'Drainage & Sewerage', ward_id: 11 },
+  { id: 9, name: 'Bhavin Trivedi', phone: '+91 98250 90123', department: 'Road & Building Dept', ward_id: 3 },
+  { id: 10, name: 'Ankita Parmar', phone: '+91 98250 01234', department: 'Water Supply Department', ward_id: 10 },
+  { id: 11, name: 'Nilesh Vaghela', phone: '+91 98250 11223', department: 'Electrical & Lighting', ward_id: 7 },
+  { id: 12, name: 'Komal Bhatt', phone: '+91 98250 22334', department: 'Solid Waste Management', ward_id: 14 },
 ];
 
 const PROBLEM_SPOTS = [

@@ -157,7 +157,7 @@ router.post('/:id/escalate-action', optionalAuth, async (req, res) => {
  */
 router.post('/', validateCreateComplaint, async (req, res) => {
   try {
-    const { category, description, reporter_phone, latitude, longitude, photo_url } = req.body;
+    const { category, description, reporter_phone, latitude, longitude, photo_url, ward_id } = req.body;
 
     const phone = (reporter_phone || '+91 98250 00000').trim();
     const lat = latitude ? parseFloat(latitude) : 22.3072;
@@ -170,6 +170,7 @@ router.post('/', validateCreateComplaint, async (req, res) => {
       reporterPhone: phone,
       description: description || `Public citizen report (${category})`,
       photoUrl: photo_url || null,
+      wardId: ward_id ? parseInt(ward_id, 10) : undefined,
     });
 
     if (result.action === 'created') {
@@ -382,38 +383,43 @@ router.post('/:id/resolve', optionalAuth, async (req, res) => {
       [id, complaint.status, actorId]
     );
 
-    // 2. Trigger outbound closed-loop citizen verification
-    try {
-      if (complaint.reporter_phone) {
-        const phoneStr = String(complaint.reporter_phone);
-        if (phoneStr.startsWith('tg_')) {
-          const chatId = phoneStr.replace('tg_', '');
-          await telegramService.sendClosedLoopVerification(
-            chatId,
-            complaint.id,
-            complaint.category,
-            photo_after_url || resolvedComplaint.photo_after_url
-          );
-        } else {
-          await whatsappService.sendClosedLoopVerification(
-            complaint.reporter_phone,
-            complaint.id,
-            complaint.category,
-            photo_after_url || resolvedComplaint.photo_after_url
-          );
-        }
-      }
-    } catch (wsErr) {
-      console.warn('⚠️ [Outbound Verification Notice]:', wsErr.message);
-    }
-
+    // 2. Broadcast real-time events immediately
     socketService.emitEvent('complaint:resolved', resolvedComplaint);
     socketService.emitEvent('complaint:updated', resolvedComplaint);
 
-    return res.json({
+    // 3. Respond to web client immediately (under 100ms)
+    res.json({
       success: true,
       message: `Complaint #${id} marked as resolved. Outbound verification prompt dispatched to citizen.`,
       complaint: resolvedComplaint,
+    });
+
+    // 4. Trigger outbound closed-loop citizen verification asynchronously in background
+    setImmediate(async () => {
+      try {
+        if (complaint.reporter_phone) {
+          const phoneStr = String(complaint.reporter_phone);
+          const photoToVerify = photo_after_url || resolvedComplaint.photo_after_url;
+          if (phoneStr.startsWith('tg_')) {
+            const chatId = phoneStr.replace('tg_', '');
+            await telegramService.sendClosedLoopVerification(
+              chatId,
+              complaint.id,
+              complaint.category,
+              photoToVerify
+            );
+          } else {
+            await whatsappService.sendClosedLoopVerification(
+              complaint.reporter_phone,
+              complaint.id,
+              complaint.category,
+              photoToVerify
+            );
+          }
+        }
+      } catch (wsErr) {
+        console.warn('⚠️ [Async Outbound Verification Notice]:', wsErr.message);
+      }
     });
   } catch (error) {
     console.error('[POST /api/complaints/:id/resolve Error]:', error);

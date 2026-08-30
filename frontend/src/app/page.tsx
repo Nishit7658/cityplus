@@ -87,9 +87,11 @@ export default function OverviewPage() {
     ) {
       const updated = lastEvent.data as Complaint;
       if (updated && updated.id) {
-        setComplaints((prev) =>
-          prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
-        );
+        setComplaints((prev) => {
+          const existing = prev.find((c) => c.id === updated.id);
+          const merged = existing ? { ...existing, ...updated } : updated;
+          return [merged, ...prev.filter((c) => c.id !== updated.id)];
+        });
         if (selected && selected.id === updated.id) {
           setSelected((prev) => (prev ? { ...prev, ...updated } : null));
         }

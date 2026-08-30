@@ -20,9 +20,9 @@ describe('Transparency API Integration Tests', () => {
       res.body.resolved_complaints + res.body.pending_complaints
     );
 
-    // Must return all 10 VMC Wards
+    // Must return all 19 VMC Wards
     expect(Array.isArray(res.body.wards)).toBe(true);
-    expect(res.body.wards.length).toBe(10);
+    expect(res.body.wards.length).toBe(19);
     expect(res.body.wards[0]).toHaveProperty('ward_name');
     expect(res.body.wards[0]).toHaveProperty('total');
     expect(res.body.wards[0]).toHaveProperty('resolved');

@@ -23,122 +23,212 @@ const telegramSessions = new Map();
 const WARDS_DATA = [
   {
     id: 1,
-    name: 'Ward 1 — Sayajigunj',
+    name: 'Ward 1 — Sayajigunj & Fatehgunj',
     lat: 22.3112,
     lng: 73.1878,
     keywords: [
-      'sayajigunj', 'sayaji', 'railway', 'station', 'ward 1', 'ward1', 'msu', 'university', 'kala ghoda',
-      'pratapgunj', 'kadakbazar', 'dairy den', 'natubhai circle', 'jetalpur', 'sayaji baug', 'kamati baug',
-      'સયાજીગંજ', 'સયાજી', 'સ્ટેશન', 'રેલ્વે', 'વોર્ડ ૧', 'એમએસયુ', 'યુનિવર્સિટી', 'કાલા ઘોડા', 'પ્રતાપગંજ', 'જેતલપુર', 'સયાજી બાગ', 'કમાટી બાગ',
-      'सयाजीगंज', 'सयाजी', 'स्टेशन', 'रेलवे', 'वार्ड १', 'एमएसयू', 'यूनिवर्सिटी', 'काला घोड़ा', 'प्रतापगंज', 'जेतलपुर', 'सयाजी बाग', 'कमाटी बाग'
+      'sayajigunj', 'fatehgunj', 'ms university', 'msu', 'railway station', 'kala ghoda', 'pratapgunj',
+      'kadakbazar', 'dairy den', 'natubhai circle', 'jetalpur', 'sayaji baug', 'kamati baug', 'ward 1', 'ward1',
+      'સયાજીગંજ', 'ફતેહગંજ', 'એમએસયુ', 'સ્ટેશન', 'કાલા ઘોડા', 'પ્રતાપગંજ', 'વોર્ડ ૧',
+      'सयाजीगंज', 'फतेहगंज', 'एमएसयू', 'स्टेशन', 'काला घोड़ा', 'प्रतापगंज', 'वार्ड १'
     ]
   },
   {
     id: 2,
-    name: 'Ward 2 — Akota',
-    lat: 22.2981,
-    lng: 73.1642,
+    name: 'Ward 2 — Harni & Warasia',
+    lat: 22.3385,
+    lng: 73.2140,
     keywords: [
-      'akota', 'dandia', 'bazaar', 'ward 2', 'ward2', 'alkapuri', 'rc dutt', 'productivity', 'sheetal studio',
-      'akota bridge', 'harinagar', 'bpc road', 'old padra road', 'op road', 'sun pharma', 'chakraputi', 'chapad',
-      'અકોટા', 'દાંડિયા', 'બજાર', 'વોર્ડ ૨', 'અલકાપુરી', 'અકોટા બ્રિજ', 'હરિબાગ', 'હરીનગર', 'ઓપી રોડ', 'ઓલ્ડ પાદરા રોડ',
-      'अकोटा', 'दांडिया', 'बाजार', 'वार्ड २', 'अलकापुरी', 'अकोटा ब्रिज', 'हरिनगर', 'ओपी रोड', 'ओल्ड पादरा रोड'
+      'harni', 'warasia', 'sawad', 'shweta park', 'harni airport', 'sangam char rasta', 'motnath', 'harni road', 'ward 2', 'ward2',
+      'હરણી', 'વારસિયા', 'સવાદ', 'શ્વેતા પાર્ક', 'એરપોર્ટ', 'મોતનાથ', 'વોર્ડ ૨',
+      'हरणी', 'वारसिया', 'सवाद', 'श्वेता पार्क', 'एयरपोर्ट', 'मोतनाथ', 'वार्ड २'
     ]
   },
   {
     id: 3,
-    name: 'Ward 3 — Raopura',
-    lat: 22.3025,
-    lng: 73.2054,
+    name: 'Ward 3 — Waghodia Road & Bapod',
+    lat: 22.2987,
+    lng: 73.2341,
     keywords: [
-      'raopura', 'mandvi', 'nyayamandir', 'ward 3', 'ward3', 'tower', 'chokhandi', 'lehripura', 'jubilee baug',
-      'champaner gate', 'gendi gate', 'fatehpura', 'mg road', 'khanderao market', 'sur sagar', 'sursagar',
-      'રાવપુરા', 'માંડવી', 'ન્યાયમંદિર', 'વોર્ડ ૩', 'ચોખંડી', 'લહેરીપુરા', 'જુબિલી બાગ', 'ચાંપાનેર દરવાજો', 'ગેંડી ગેટ', 'ફતેહપુરા', 'સૂર સાગર', 'સુરસાગર',
-      'रावपुरा', 'मांडवी', 'न्यायमंदिर', 'वार्ड ३', 'चोखंडी', 'लहेरीपुरा', 'जुबली बाग', 'चंपानेर गेट', 'गैंडी गेट', 'फतेहपुरा', 'सूर सागर', 'सूरतसागर'
+      'waghodia', 'waghodia road', 'bapod', 'kapurai', 'parivar char rasta', 'kendranagar', 'gurukul', 'khatamba', 'ward 3', 'ward3',
+      'વાઘોડિયા', 'વાઘોડિયા રોડ', 'બાપોદ', 'કપુરાઈ', 'પરિવાર ચાર રસ્તા', 'વોર્ડ ૩',
+      'वाघोडिया', 'वाघोडिया रोड', 'बापोद', 'कपुराई', 'परिवार चार रास्ता', 'वार्ड ३'
     ]
   },
   {
     id: 4,
-    name: 'Ward 4 — Karelibaug',
+    name: 'Ward 4 — Karelibaug & Sangam',
     lat: 22.3214,
     lng: 73.1989,
     keywords: [
-      'karelibaug', 'kareli', 'amit nagar', 'ward 4', 'ward4', 'harni', 'airport', 'sangam', 'vip road',
-      'muktanand circle', 'bright school', 'water tank', 'anand nagar', 'harni ring road', 'motnath',
-      'કારેલીબાગ', 'કારેલી', 'અમિત નગર', 'વોર્ડ ૪', 'હરણી', 'એરપોર્ટ', 'સંગમ', 'વીઆઇપી રોડ', 'મુક્તાનંદ સર્કલ', 'મોતનાથ',
-      'कारेलीबाग', 'कारेली', 'अमित नगर', 'वार्ड ४', 'हरणी', 'एयरपोर्ट', 'संगम', 'वीआईपी रोड', 'मुक्तानंद सर्कल', 'मोतनाथ'
+      'karelibaug', 'kareli', 'sangam', 'vip road', 'muktanand circle', 'bright school', 'khaswadi', 'bahucharaji', 'amrapali', 'ward 4', 'ward4',
+      'કારેલીબાગ', 'સંગમ', 'વીઆઈપી રોડ', 'મુક્તાનંદ', 'ખાસવાડી', 'વોર્ડ ૪',
+      'कारेलीबाग', 'संगम', 'वीआईपी रोड', 'मुक्तानंद', 'खासवाड़ी', 'वार्ड ४'
     ]
   },
   {
     id: 5,
-    name: 'Ward 5 — Fatehgunj',
-    lat: 22.3168,
-    lng: 73.1895,
+    name: 'Ward 5 — Raopura & Mandvi',
+    lat: 22.3025,
+    lng: 73.2054,
     keywords: [
-      'fatehgunj', 'fateh', 'sama', 'chhani', 'ward 5', 'ward5', 'nizampura', 'sama savli', 'chhani jakatnaka',
-      'abhilasha', 'tp 13', 'gsfc', 'navrachana', 'chhani village', 'sama canal', 'dumad', 'ranoli',
-      'ફતેહગંજ', 'ફતેહ', 'સમા', 'છાણી', 'વોર્ડ ૫', 'નિઝામપુરા', 'સમા સાવલી', 'અભિલાષા', 'નવરચના', 'દુમાડ', 'રણોલી',
-      'फतेहगंज', 'फतेह', 'समा', 'छाणी', 'वार्ड ५', 'निजामपुरा', 'समा सावली', 'अभिलाषा', 'नवरचना', 'दुमाड', 'रणोली'
+      'raopura', 'dandia bazar', 'mandvi', 'nyaymandir', 'nyayamandir', 'jubileebaug', 'champaner gate', 'mg road', 'lehripura', 'tower', 'ward 5', 'ward5',
+      'રાવપુરા', 'દાંડિયા બજાર', 'માંડવી', 'ન્યાયમંદિર', 'જુબિલી બાગ', 'ચાંપાનેર ગેટ', 'વોર્ડ ૫',
+      'रावपुरा', 'दांडिया बाजार', 'मांडवी', 'न्यायमंदिर', 'जुबली बाग', 'चंपानेर गेट', 'वार्ड ५'
     ]
   },
   {
     id: 6,
-    name: 'Ward 6 — Manjalpur',
-    lat: 22.2684,
-    lng: 73.1956,
+    name: 'Ward 6 — Akota & Gotri',
+    lat: 22.2981,
+    lng: 73.1642,
     keywords: [
-      'manjalpur', 'tarsali', 'ward 6', 'ward6', 'lalbaug', 'darbar chowkdi', 'eva mall', 'kubereshwar',
-      'shreyas school', 'susen', 'tarsali ring road', 'vrajdham', 'makarpura road',
-      'માંજલપુર', 'તરસાલી', 'વોર્ડ ૬', 'લાલબાગ', 'દરબાર ચોકડી', 'ઇવા મોલ', 'કુબેરેશ્વર', 'સુસેન', 'વ્રજધામ',
-      'मांजलपुर', 'तरसाली', 'वार्ड ६', 'लालबाग', 'दरबार चौकड़ी', 'इवा मॉल', 'कुबेरेश्वर', 'सुसेन', 'व्रजधाम'
+      'akota', 'gotri', 'hari nagar', 'harinagar', 'alkapuri', 'rc dutt road', 'akota bridge', 'bpc road', 'productivity road', 'ward 6', 'ward6',
+      'અકોટા', 'ગોત્રી', 'હરિ નગર', 'અલકાપુરી', 'અકોટા બ્રિજ', 'વોર્ડ ૬',
+      'अकोटा', 'गोत्री', 'हरि नगर', 'अलकापुरी', 'अकोटा ब्रिज', 'वार्ड ६'
     ]
   },
   {
     id: 7,
-    name: 'Ward 7 — Makarpura',
-    lat: 22.2512,
-    lng: 73.1923,
+    name: 'Ward 7 — Nizampura & Chhani',
+    lat: 22.3340,
+    lng: 73.1820,
     keywords: [
-      'makarpura', 'gidc', 'jambuva', 'ward 7', 'ward7', 'air force', 'airforce', 'novino', 'maneja',
-      'vadsar', 'danteshwar', 'ongc colony', 'makarpura palace', 'tarsali bypass', 'por', 'kelanpur',
-      'મકરપુરા', 'જીઆઇડીસી', 'જાંબુવા', 'વોર્ડ ૭', 'માણેજા', 'વડસર', 'દાંતેશ્વર', 'પોર', 'કેલનપુર',
-      'मकरपुरा', 'जीआईडीसी', 'जांबुवा', 'वार्ड ७', 'मानेजा', 'वडसर', 'दांतेश्वर', 'पोर', 'केलनपुर'
+      'nizampura', 'chhani', 'tp-13', 'tp 13', 'chhani jakatnaka', 'mehsananagar', 'gsfc', 'swaminarayan chhani', 'ward 7', 'ward7',
+      'નિઝામપુરા', 'છાણી', 'ટીપી ૧૩', 'છાણી જકાતનાકા', 'જીએસએફસી', 'વોર્ડ ૭',
+      'निजामपुरा', 'छाणी', 'टीपी १३', 'छाणी जकातनाका', 'जीएसएफसी', 'वार्ड ७'
     ]
   },
   {
     id: 8,
-    name: 'Ward 8 — Gotri',
-    lat: 22.3125,
-    lng: 73.1412,
+    name: 'Ward 8 — Nagarwada',
+    lat: 22.3120,
+    lng: 73.2010,
     keywords: [
-      'gotri', 'sevasi', 'vasna', 'bhayli', 'ward 8', 'ward8', 'laxmipura', 'vasna road', 'bhayli road',
-      'sterling hospital', 'yash complex', 'priya cinema', 'new alkapuri', 'bil', 'khanpur', 'ampad',
-      'ગોત્રી', 'સેવાસી', 'વાસણા', 'ભાયલી', 'વોર્ડ ૮', 'લક્ષ્મીપુરા', 'વાસણા રોડ', 'ન્યૂ અલકાપુરી', 'બીલ', 'ખાનપુર',
-      'गोत्री', 'सेवासा', 'वासना', 'भायली', 'वार्ड ८', 'लक्ष्मीपुरा', 'वासना रोड', 'न्यू अलकापुरी', 'बील', 'खानपुर'
+      'nagarwada', 'karelibaug part', 'bhadra kacheri', 'salatwada', 'macchipith', 'panigate road', 'ward 8', 'ward8',
+      'નાગરવાડા', 'સલાટવાડા', 'મચ્છીપીઠ', 'ભદ્ર કચેરી', 'વોર્ડ ૮',
+      'नागरवाड़ा', 'सलाटवाड़ा', 'मच्छीपीठ', 'भद्र कचेरी', 'वार्ड ८'
     ]
   },
   {
     id: 9,
-    name: 'Ward 9 — Gorwa',
-    lat: 22.3341,
-    lng: 73.1624,
+    name: 'Ward 9 — Ajwa Road',
+    lat: 22.3110,
+    lng: 73.2315,
     keywords: [
-      'gorwa', 'subhanpura', 'panchvati', 'ward 9', 'ward9', 'ellora park', 'high tension', 'refinery road',
-      'karodiya', 'undera', 'alembic road', 'madhavnagar', 'ipcl', 'bapod',
-      'ગોરવા', 'સુભાનપુરા', 'પંચવટી', 'વોર્ડ ૯', 'એલોરા પાર્ક', 'રિફાઇનરી રોડ', 'કરોડિયા', 'ઉંડેરા', 'એલેમ્બિક રોડ', 'બાપોદ',
-      'गोरवा', 'सुभानपुरा', 'पंचवटी', 'वार्ड ९', 'एलोरा पार्क', 'रिफाइनरी रोड', 'करोड़िया', 'उंडेरा', 'एलेम्बिक रोड', 'बापोद'
+      'ajwa road', 'ajwa', 'kishanwadi', 'sayaji park', 'sardar estate', 'kamlanagar', 'ekta nagar', 'panigate tank', 'ward 9', 'ward9',
+      'આજવા રોડ', 'કિશનવાડી', 'સરદાર એસ્ટેટ', 'કમલાનગર', 'એકતા નગર', 'વોર્ડ ૯',
+      'आजवा रोड', 'किशनवाड़ी', 'सरदार एस्टेट', 'कमलानगर', 'एकता नगर', 'वार्ड ९'
     ]
   },
   {
     id: 10,
-    name: 'Ward 10 — Waghodia Road',
-    lat: 22.2987,
-    lng: 73.2341,
+    name: 'Ward 10 — Subhanpura & Gorwa',
+    lat: 22.3341,
+    lng: 73.1624,
     keywords: [
-      'waghodia', 'kapurai', 'panigate', 'ajwa', 'ward 10', 'ward10', 'parivar char rasta', 'kendranagar',
-      'soma talav', 'dabhoi road', 'golden chowkdi', 'ajwa road', 'waghodia road', 'gurukul', 'khatamba',
-      'વાઘોડિયા', 'કપુરાઈ', 'પાણીગેટ', 'આજવા', 'વોર્ડ ૧૦', 'પરિવાર ચાર રસ્તા', 'સોમા તળાવ', 'ડભોઈ રોડ', 'ગોલ્ડન ચોકડી', 'આજવા રોડ', 'વાઘોડિયા રોડ',
-      'वाघोडिया', 'कपुराई', 'पानीगेट', 'आजवा', 'वार्ड १०', 'परिवार चार रास्ता', 'सोमा तालाब', 'डभोई रोड', 'गोल्डन चौकड़ी', 'आजवा रोड', 'वाघोडिया रोड'
+      'subhanpura', 'gorwa', 'laxmipura', 'panchvati', 'ellora park', 'high tension road', 'alembic', 'samta', 'ward 10', 'ward10',
+      'સુભાનપુરા', 'ગોરવા', 'લક્ષ્મીપુરા', 'પંચવટી', 'એલોરા પાર્ક', 'વોર્ડ ૧૦',
+      'सुभानपुरा', 'गोरवा', 'लक्ष्मीपुरा', 'पंचवटी', 'एलोरा पार्क', 'वार्ड १०'
+    ]
+  },
+  {
+    id: 11,
+    name: 'Ward 11 — Vasna-Bhayli & Diwalipura',
+    lat: 22.2885,
+    lng: 73.1465,
+    keywords: [
+      'vasna', 'bhayli', 'vasna-bhayli', 'diwalipura', 'court', 'old padra road', 'chakli circle', 'monalisa char rasta', 'ward 11', 'ward11',
+      'વાસણા', 'ભાયલી', 'દિવાળીપુરા', 'ઓલ્ડ પાદરા રોડ', 'ચકલી સર્કલ', 'વોર્ડ ૧૧',
+      'वासणा', 'भायली', 'दिवालीपुरा', 'ओल्ड पादरा रोड', 'चकली सर्कल', 'वार्ड ११'
+    ]
+  },
+  {
+    id: 12,
+    name: 'Ward 12 — Makarpura & Maneja',
+    lat: 22.2512,
+    lng: 73.1923,
+    keywords: [
+      'makarpura', 'maneja', 'gidc', 'makarpura gidc', 'air force', 'novino', 'ongc', 'makarpura depot', 'ward 12', 'ward12',
+      'મકરપુરા', 'માણેજા', 'જીઆઇડીસી', 'નોવિનો', 'ઓએનજીસી', 'વોર્ડ ૧૨',
+      'मकरपुरा', 'मानेजा', 'जीआईडीसी', 'नोविनो', 'ओएनजीसी', 'वार्ड १२'
+    ]
+  },
+  {
+    id: 13,
+    name: 'Ward 13 — Wadi & Ghadiali Pole',
+    lat: 22.2965,
+    lng: 73.2085,
+    keywords: [
+      'wadi', 'ghadiali pole', 'khanderao market', 'chokhandi', 'mogalwada', 'gajrawadi', 'panigate darwaja', 'ward 13', 'ward13',
+      'વાડી', 'ઘડિયાળી પોળ', 'મોગલવાડા', 'ગાજરાવાડી', 'પાણીગેટ દરવાજો', 'વોર્ડ ૧૩',
+      'वाडी', 'घडियाली पोल', 'मोगलवाड़ा', 'गाजरावाड़ी', 'पानीगेट दरवाजा', 'वार्ड १३'
+    ]
+  },
+  {
+    id: 14,
+    name: 'Ward 14 — Tarsali & Danteshwar',
+    lat: 22.2615,
+    lng: 73.2045,
+    keywords: [
+      'tarsali', 'soma talav', 'danteshwar', 'tarsali bypass', 'susen circle', 'kubereshwar marg', 'shreyas school', 'ward 14', 'ward14',
+      'તરસાલી', 'સોમા તળાવ', 'દાંતેશ્વર', 'સુસેન સર્કલ', 'કુબેરેશ્વર', 'વોર્ડ ૧૪',
+      'तरसाली', 'सोमा तालाब', 'दांतेश्वर', 'सुसेन सर्कल', 'कुबेरेश्वर', 'वार्ड १४'
+    ]
+  },
+  {
+    id: 15,
+    name: 'Ward 15 — Bapod & Ajwa Outer',
+    lat: 22.3180,
+    lng: 73.2450,
+    keywords: [
+      'bapod outer', 'ajwa road outer', 'sikandar nagar', 'madhav park', 'shree hari society', 'nimeta road', 'ward 15', 'ward15',
+      'બાપોદ આઉટર', 'આજવા આઉટર', 'સિકંદર નગર', 'માધવ પાર્ક', 'નિમેટા રોડ', 'વોર્ડ ૧૫',
+      'बापोद आउटर', 'आजवा आउटर', 'सिकंदर नगर', 'माधव पार्क', 'निमेता रोड', 'वार्ड १५'
+    ]
+  },
+  {
+    id: 16,
+    name: 'Ward 16 — Kishanwadi & Soma Talav',
+    lat: 22.2850,
+    lng: 73.2210,
+    keywords: [
+      'kishanwadi part', 'soma talav cross', 'dabhoi road', 'pratapnagar', 'onkar nagar', 'ramdevnagar', 'ward 16', 'ward16',
+      'કિશનવાડી પાર્ટ', 'સોમા તળાવ ક્રોસ', 'ડભોઈ રોડ', 'પ્રતાપનગર', 'ઓમકાર નગર', 'વોર્ડ ૧૬',
+      'किशनवाड़ी पार्ट', 'सोमा तालाब क्रॉस', 'डभोई रोड', 'प्रतापनगर', 'ओमकार नगर', 'वार्ड १६'
+    ]
+  },
+  {
+    id: 17,
+    name: 'Ward 17 — Manjalpur & Atladra',
+    lat: 22.2684,
+    lng: 73.1780,
+    keywords: [
+      'manjalpur', 'atladra', 'bill', 'chapad', 'bill-chapad', 'swaminarayan mandir atladra', 'eva mall', 'sun pharma road', 'kalali', 'ward 17', 'ward17',
+      'માંજલપુર', 'અટલાદરા', 'બીલ', 'ચાપડ', 'ઇવા મોલ', 'કલાલી', 'વોર્ડ ૧૭',
+      'मांजलपुर', 'अटलादरा', 'बील', 'चापड', 'इवा मॉल', 'कलाली', 'वार्ड १७'
+    ]
+  },
+  {
+    id: 18,
+    name: 'Ward 18 — Tandalja & Vasna Road',
+    lat: 22.2840,
+    lng: 73.1610,
+    keywords: [
+      'tandalja', 'vasna road', 'ashwamegh', 'bansal mall', 'tandalja road', 'sun pharma', 'samta char rasta', 'ward 18', 'ward18',
+      'તાંદલજા', 'વાસણા રોડ', 'અશ્વમેઘ', 'બંસલ મોલ', 'સમત ચાર રસ્તા', 'વોર્ડ ૧૮',
+      'तांदलजा', 'वासणा रोड', 'अश्वमेघ', 'बंसल मॉल', 'समता चार रास्ता', 'वार्ड १८'
+    ]
+  },
+  {
+    id: 19,
+    name: 'Ward 19 — Kapurai-Tarsali (South)',
+    lat: 22.2450,
+    lng: 73.2250,
+    keywords: [
+      'kapurai south', 'tarsali south', 'nh-48', 'national highway bypass', 'jambuva bridge', 'por highway', 'kapurai cross', 'ward 19', 'ward19',
+      'કપુરાઈ દક્ષિણ', 'તરસાલી દક્ષિણ', 'જાંબુવા બ્રિજ', 'પોર હાઇવે', 'વોર્ડ ૧૯',
+      'कपुराई दक्षिण', 'तरसाली दक्षिण', 'जांबुवा ब्रिज', 'पोर हाईवे', 'वार्ड १९'
     ]
   },
 ];
@@ -170,26 +260,41 @@ async function sendPhoto(chatId, photoPathOrUrl, caption, extra = {}) {
     return { ok: true, result: { message_id: 100 } };
   }
 
-  // Check if it's a local file in /uploads
+  // Check possible local file paths
   let localFilePath = null;
   if (typeof photoPathOrUrl === 'string') {
-    if (photoPathOrUrl.startsWith('/uploads/') || photoPathOrUrl.startsWith('uploads/')) {
-      const filename = photoPathOrUrl.replace(/^\/?uploads\//, '');
-      const fullPath = path.join(__dirname, '../../uploads', filename);
-      if (fs.existsSync(fullPath)) {
-        localFilePath = fullPath;
+    const rawName = photoPathOrUrl.replace(/^\/?uploads\//, '');
+    const candidatePaths = [
+      path.join(__dirname, '../../uploads', rawName),
+      path.join(__dirname, '../uploads', rawName),
+      path.join(process.cwd(), 'uploads', rawName),
+      path.join(process.cwd(), 'backend/uploads', rawName),
+      photoPathOrUrl,
+    ];
+
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p) && fs.statSync(p).isFile()) {
+        localFilePath = p;
+        break;
       }
-    } else if (fs.existsSync(photoPathOrUrl)) {
-      localFilePath = photoPathOrUrl;
     }
   }
 
-  // If local file exists, send actual binary file stream to Telegram
+  // If local file exists, send actual binary file to Telegram
   if (localFilePath) {
     try {
+      const fileBuffer = fs.readFileSync(localFilePath);
+      const filename = path.basename(localFilePath);
+      const ext = path.extname(filename).toLowerCase();
+      const mimeType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+
       const form = new FormData();
       form.append('chat_id', String(chatId));
-      form.append('photo', fs.createReadStream(localFilePath));
+      form.append('photo', fileBuffer, {
+        filename,
+        contentType: mimeType,
+        knownLength: fileBuffer.length,
+      });
       if (caption) form.append('caption', caption);
       form.append('parse_mode', 'HTML');
       if (extra && extra.reply_markup) {
@@ -198,23 +303,34 @@ async function sendPhoto(chatId, photoPathOrUrl, caption, extra = {}) {
 
       const response = await axios.post(`${getTelegramApi()}/sendPhoto`, form, {
         headers: form.getHeaders(),
-        timeout: 25000,
+        timeout: 45000,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
       });
-      console.log(`📸 [Telegram Bot] Sent local photo "${path.basename(localFilePath)}" to chat #${chatId}`);
+      console.log(`📸 [Telegram Bot] Sent local photo "${filename}" (${(fileBuffer.length / 1024).toFixed(1)} KB) to chat #${chatId}`);
       return response.data;
     } catch (err) {
-      console.error('[Telegram sendPhoto Local File Upload Error]:', err.response ? err.response.data : err.message);
+      console.error('[Telegram sendPhoto Local Upload Failed, falling back to message]:', err.response ? err.response.data : err.message);
       return await sendMessage(chatId, caption, extra);
     }
   }
 
-  return callTelegram('sendPhoto', {
-    chat_id: chatId,
-    photo: photoPathOrUrl,
-    caption,
-    parse_mode: 'HTML',
-    ...extra,
-  });
+  // If remote URL or fallback
+  try {
+    const result = await callTelegram('sendPhoto', {
+      chat_id: chatId,
+      photo: photoPathOrUrl,
+      caption,
+      parse_mode: 'HTML',
+      ...extra,
+    });
+    if (!result) {
+      return await sendMessage(chatId, caption, extra);
+    }
+    return result;
+  } catch {
+    return await sendMessage(chatId, caption, extra);
+  }
 }
 
 /**
@@ -352,35 +468,20 @@ async function sendLocationPrompt(chatId, categoryKey, lang = 'en') {
   const t = getT(lang);
   const categoryTitle = t.categories[categoryKey] || categoryKey;
 
+  const wardButtons = (t.wards || []).map((w) => ({
+    text: w.label,
+    callback_data: `ward_${w.id}`,
+  }));
+
+  const inlineKeyboardRows = [];
+  for (let i = 0; i < wardButtons.length; i += 2) {
+    inlineKeyboardRows.push(wardButtons.slice(i, i + 2));
+  }
+  inlineKeyboardRows.push([{ text: t.location_off_btn, callback_data: 'location_off_help' }]);
+  inlineKeyboardRows.push([{ text: t.cancel_btn, callback_data: 'cancel_report' }]);
+
   const inlineWards = {
-    inline_keyboard: [
-      [
-        { text: t.wards[0].label, callback_data: 'ward_1' },
-        { text: t.wards[1].label, callback_data: 'ward_2' },
-      ],
-      [
-        { text: t.wards[2].label, callback_data: 'ward_3' },
-        { text: t.wards[3].label, callback_data: 'ward_4' },
-      ],
-      [
-        { text: t.wards[4].label, callback_data: 'ward_5' },
-        { text: t.wards[5].label, callback_data: 'ward_6' },
-      ],
-      [
-        { text: t.wards[6].label, callback_data: 'ward_7' },
-        { text: t.wards[7].label, callback_data: 'ward_8' },
-      ],
-      [
-        { text: t.wards[8].label, callback_data: 'ward_9' },
-        { text: t.wards[9].label, callback_data: 'ward_10' },
-      ],
-      [
-        { text: t.location_off_btn, callback_data: 'location_off_help' },
-      ],
-      [
-        { text: t.cancel_btn, callback_data: 'cancel_report' },
-      ],
-    ],
+    inline_keyboard: inlineKeyboardRows,
   };
 
   const gpsReplyKeyboard = {
@@ -452,6 +553,17 @@ async function finalizeComplaintRegistration(chatId, session, senderName, userna
   const categoryForDb = englishCategoryMap[rawCategoryKey] || session.category || 'Road Pothole';
   const localizedCategory = (t.categories && t.categories[rawCategoryKey]) || categoryForDb;
 
+  // Ensure wardId is resolved
+  let finalWardId = session.wardId;
+  if (!finalWardId && session.lat && session.lng) {
+    const inMemoryStore = require('../config/inMemoryStore');
+    const nearest = inMemoryStore.findNearestWard(session.lat, session.lng);
+    finalWardId = nearest ? nearest.id : 1;
+    if (!session.locationName && nearest) {
+      session.locationName = nearest.name;
+    }
+  }
+
   const result = await gisService.processIncomingReport({
     latitude: session.lat,
     longitude: session.lng,
@@ -459,6 +571,7 @@ async function finalizeComplaintRegistration(chatId, session, senderName, userna
     reporterPhone: `tg_${chatId}`,
     description: `Telegram (${lang.toUpperCase()}) report in ${session.locationName || 'Vadodara'} from ${senderName} (@${username || chatId})`,
     photoUrl: session.photo_url || null,
+    wardId: finalWardId || 1,
   });
 
   const complaint = result.complaint;
@@ -593,9 +706,13 @@ async function handleTelegramUpdate(update) {
         const currentT = getT(session.lang || 'en');
         const localizedWard = (currentT.wards && currentT.wards.find((w) => w.id === wardId)) || ward;
 
+        // Generate realistic point inside this ward (offset by 100-300m so it doesn't collide with static seed demo records)
+        const latOffset = (Math.random() * 0.005 - 0.0025);
+        const lngOffset = (Math.random() * 0.005 - 0.0025);
+
         session.state = 'PHOTO';
-        session.lat = ward.lat;
-        session.lng = ward.lng;
+        session.lat = parseFloat((ward.lat + latOffset).toFixed(5));
+        session.lng = parseFloat((ward.lng + lngOffset).toFixed(5));
         session.locationName = localizedWard.name || ward.name;
         session.wardId = ward.id;
         telegramSessions.set(chatId, session);
@@ -690,6 +807,7 @@ async function handleTelegramUpdate(update) {
         session.lat = latitude;
         session.lng = longitude;
         session.locationName = nearestWard ? nearestWard.name : 'GPS Location';
+        session.wardId = nearestWard ? nearestWard.id : 1;
         session.categoryKey = session.categoryKey || 'pothole';
         telegramSessions.set(chatId, session);
 

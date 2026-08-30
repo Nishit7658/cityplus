@@ -30,16 +30,25 @@ const CATEGORIES = [
 ];
 
 const WARDS = [
-  { id: 1, name: 'Ward 1 — Sayajigunj (MSU, Railway Station, Kala Ghoda)', lat: 22.3112, lng: 73.1878 },
-  { id: 2, name: 'Ward 2 — Akota (Alkapuri, RC Dutt Road, Old Padra Road)', lat: 22.2981, lng: 73.1642 },
-  { id: 3, name: 'Ward 3 — Raopura (Mandvi, Nyayamandir, Panigate, Jubilee Baug)', lat: 22.3025, lng: 73.2054 },
-  { id: 4, name: 'Ward 4 — Karelibaug (Harni, Vadodara Airport, Amit Nagar, VIP Road)', lat: 22.3214, lng: 73.1989 },
-  { id: 5, name: 'Ward 5 — Fatehgunj (Sama, Chhani, Sama-Savli Road, Nizampura)', lat: 22.3168, lng: 73.1895 },
-  { id: 6, name: 'Ward 6 — Manjalpur (Tarsali, Lalbaug, Darbar Chowkdi, Susen)', lat: 22.2684, lng: 73.1956 },
-  { id: 7, name: 'Ward 7 — Makarpura (Maneja, GIDC, Jambuva, Vadsar, ONGC)', lat: 22.2512, lng: 73.1923 },
-  { id: 8, name: 'Ward 8 — Gotri (Sevasi, Bhayli, Vasna Road, Laxmipura, Bil)', lat: 22.3125, lng: 73.1412 },
-  { id: 9, name: 'Ward 9 — Gorwa (Subhanpura, Panchvati, Ellora Park, Undera)', lat: 22.3341, lng: 73.1624 },
-  { id: 10, name: 'Ward 10 — Waghodia Road (Ajwa Road, Kapurai, Soma Talav, Golden Chowkdi)', lat: 22.2987, lng: 73.2341 },
+  { id: 1, name: 'Ward 1 — Sayajigunj & Fatehgunj (MS University, Station, Kala Ghoda)', lat: 22.3112, lng: 73.1878 },
+  { id: 2, name: 'Ward 2 — Harni & Warasia (Sawad, Shweta Park, Airport Road)', lat: 22.3385, lng: 73.2140 },
+  { id: 3, name: 'Ward 3 — Waghodia Road & Bapod (Kapurai, Parivar Char Rasta)', lat: 22.2987, lng: 73.2341 },
+  { id: 4, name: 'Ward 4 — Karelibaug & Sangam (VIP Road, Muktanand, Bright School)', lat: 22.3214, lng: 73.1989 },
+  { id: 5, name: 'Ward 5 — Raopura & Mandvi (Dandia Bazar, Nyaymandir, Jubilee Baug)', lat: 22.3025, lng: 73.2054 },
+  { id: 6, name: 'Ward 6 — Akota & Gotri (Hari Nagar, Alkapuri, RC Dutt Road)', lat: 22.2981, lng: 73.1642 },
+  { id: 7, name: 'Ward 7 — Nizampura & Chhani (TP-13, Chhani Jakatnaka, GSFC)', lat: 22.3340, lng: 73.1820 },
+  { id: 8, name: 'Ward 8 — Nagarwada (Karelibaug Part, Bhadra Kacheri, Salatwada)', lat: 22.3120, lng: 73.2010 },
+  { id: 9, name: 'Ward 9 — Ajwa Road (Kishanwadi, Sardar Estate, Sayaji Park)', lat: 22.3110, lng: 73.2315 },
+  { id: 10, name: 'Ward 10 — Subhanpura & Gorwa (Laxmipura, Panchvati, Ellora Park)', lat: 22.3341, lng: 73.1624 },
+  { id: 11, name: 'Ward 11 — Vasna-Bhayli & Diwalipura (Old Padra Road, Court, Chakli Circle)', lat: 22.2885, lng: 73.1465 },
+  { id: 12, name: 'Ward 12 — Makarpura & Maneja (GIDC, Novino, ONGC, Air Force)', lat: 22.2512, lng: 73.1923 },
+  { id: 13, name: 'Ward 13 — Wadi & Ghadiali Pole (Khanderao Market, Chokhandi, Mogalwada)', lat: 22.2965, lng: 73.2085 },
+  { id: 14, name: 'Ward 14 — Tarsali & Danteshwar (Soma Talav, Susen Circle, Kubereshwar)', lat: 22.2615, lng: 73.2045 },
+  { id: 15, name: 'Ward 15 — Bapod & Ajwa Outer (Sikandar Nagar, Madhav Park, Nimeta)', lat: 22.3180, lng: 73.2450 },
+  { id: 16, name: 'Ward 16 — Kishanwadi & Soma Talav (Dabhoi Road, Pratapnagar, Ramdevnagar)', lat: 22.2850, lng: 73.2210 },
+  { id: 17, name: 'Ward 17 — Manjalpur & Atladra (Bill, Chapad, Eva Mall, Swaminarayan Mandir)', lat: 22.2684, lng: 73.1780 },
+  { id: 18, name: 'Ward 18 — Tandalja & Vasna Road (Ashwamegh, Bansal Mall, Sun Pharma)', lat: 22.2840, lng: 73.1610 },
+  { id: 19, name: 'Ward 19 — Kapurai-Tarsali South (NH-48, Jambuva Bridge, Por Highway)', lat: 22.2450, lng: 73.2250 },
 ];
 
 export const CitizenReportModal: React.FC<CitizenReportModalProps> = ({
