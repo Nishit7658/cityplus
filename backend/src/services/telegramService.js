@@ -145,9 +145,15 @@ const WARDS_DATA = [
 
 function resolveLandmarkCoordinates(text) {
   if (!text) return { matched: false };
-  const lower = text.toLowerCase().trim();
+  // Clean punctuation and normalize whitespace
+  const cleanText = text
+    .toLowerCase()
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
   for (const w of WARDS_DATA) {
-    if (w.keywords.some((k) => lower.includes(k))) {
+    if (w.keywords.some((k) => cleanText.includes(k))) {
       return { matched: true, lat: w.lat, lng: w.lng, name: w.name, wardId: w.id };
     }
   }
@@ -216,7 +222,10 @@ async function sendPhoto(chatId, photoPathOrUrl, caption, extra = {}) {
  * Outbound inline button message asking user if fix is verified
  */
 async function sendClosedLoopVerification(chatId, complaintId, category, photoAfterUrl, lang = 'en') {
-  const t = getT(lang);
+  const session = telegramSessions.get(chatId) || telegramSessions.get(Number(chatId)) || {};
+  const effectiveLang = session.lang || lang || 'en';
+  const t = getT(effectiveLang);
+
   const caption = t.closed_loop_caption(complaintId, category);
   const replyMarkup = {
     inline_keyboard: [
@@ -237,19 +246,27 @@ async function sendClosedLoopVerification(chatId, complaintId, category, photoAf
 /**
  * Send HTTP request to Telegram Bot API
  */
-async function callTelegram(method, payload) {
+async function callTelegram(method, payload, retries = 2) {
   const token = getBotToken();
   if (!token || token === 'your_telegram_bot_token_here') {
     console.log(`[Telegram Simulation] ${method}:`, JSON.stringify(payload, null, 2));
     return { ok: true, simulated: true };
   }
 
-  try {
-    const response = await axios.post(`${getTelegramApi()}/${method}`, payload);
-    return response.data;
-  } catch (error) {
-    console.error(`[Telegram API Error - ${method}]:`, error.response ? error.response.data : error.message);
-    return null;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await axios.post(`${getTelegramApi()}/${method}`, payload, {
+        timeout: 20000,
+      });
+      return response.data;
+    } catch (error) {
+      if (attempt < retries && (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED')) {
+        await new Promise((r) => setTimeout(r, 800));
+        continue;
+      }
+      console.error(`[Telegram API Error - ${method}]:`, error.response ? error.response.data : error.message);
+      return null;
+    }
   }
 }
 
@@ -493,6 +510,11 @@ async function handleTelegramUpdate(update) {
       const username = cb.from.username || '';
       const t = getT(session.lang);
 
+      // Immediately acknowledge callback query to stop button loading spinner on Telegram UI
+      if (cb.id) {
+        callTelegram('answerCallbackQuery', { callback_query_id: cb.id }).catch(() => {});
+      }
+
       // STEP 0: Language Selection Callback
       if (data.startsWith('lang_')) {
         const selectedLang = data.replace('lang_', ''); // 'en', 'gu', 'hi'
@@ -515,7 +537,7 @@ async function handleTelegramUpdate(update) {
       // Cancel Report Action
       if (data === 'cancel_report') {
         telegramSessions.set(chatId, { state: 'START', lang: session.lang || 'en', categoryKey: null, category: null, lat: null, lng: null, locationName: null, photo_url: null });
-        await sendMessage(chatId, t.cancelled);
+        await sendMessage(chatId, t.cancelled, { reply_markup: { remove_keyboard: true } });
         return;
       }
 
@@ -634,6 +656,13 @@ async function handleTelegramUpdate(update) {
           return;
         }
 
+        // Cancel command in all 3 languages
+        if (['/cancel', 'cancel', '❌ cancel', '/exit', 'રદ કરો', 'રદ', 'रद्द करें', 'रद्द', '❌ રદ કરો', '❌ રદ કરો (cancel)', '❌ ફરિયાદ રદ કરો (cancel)', '❌ शिकायत रद्द करें (cancel)'].includes(lower)) {
+          telegramSessions.set(chatId, { state: 'START', lang: session.lang || 'en', categoryKey: null, category: null, lat: null, lng: null, locationName: null, photo_url: null });
+          await sendMessage(chatId, t.cancelled, { reply_markup: { remove_keyboard: true } });
+          return;
+        }
+
         // Reset / Greeting commands in all 3 languages
         const greetingKeywords = [
           '/start', '/report', '/restart', '/reset', '/menu', 'hi', 'hello', 'hey', 'start',
@@ -646,13 +675,6 @@ async function handleTelegramUpdate(update) {
           session.state = 'LANG';
           telegramSessions.set(chatId, session);
           await sendLanguageMenu(chatId);
-          return;
-        }
-
-        // Cancel command in all 3 languages
-        if (['/cancel', 'cancel', '❌ cancel', '/exit', 'રદ કરો', 'रद्द करें', 'રદ', 'रद्द'].includes(lower)) {
-          telegramSessions.set(chatId, { state: 'START', lang: session.lang || 'en', categoryKey: null, category: null, lat: null, lng: null, locationName: null, photo_url: null });
-          await sendMessage(chatId, t.cancelled);
           return;
         }
       }
@@ -823,8 +845,12 @@ async function startPolling() {
       if (res.data && res.data.ok && Array.isArray(res.data.result)) {
         for (const update of res.data.result) {
           lastUpdateId = update.update_id;
-          console.log(`📩 [Telegram Bot] Received update #${update.update_id}:`, JSON.stringify(update.message ? update.message.text || 'media/location' : update.callback_query ? update.callback_query.data : 'update'));
-          await handleTelegramUpdate(update);
+          try {
+            console.log(`📩 [Telegram Bot] Received update #${update.update_id}:`, JSON.stringify(update.message ? update.message.text || 'media/location' : update.callback_query ? update.callback_query.data : 'update'));
+            await handleTelegramUpdate(update);
+          } catch (updateErr) {
+            console.error(`[Telegram Update #${update.update_id} Error]:`, updateErr.message);
+          }
         }
       }
     } catch (err) {

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { getSocketUrl } from '@/config/api';
 
 interface SocketEvent {
   type: string;
@@ -28,7 +29,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [lastEvent, setLastEvent] = useState<SocketEvent | null>(null);
 
   useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+    const socketUrl = getSocketUrl();
     const socketInstance = io(socketUrl, {
       transports: ['websocket', 'polling'],
     });

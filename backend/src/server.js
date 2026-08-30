@@ -125,12 +125,12 @@ telegramService.startPolling();
 
 const PORT = process.env.PORT || 5000;
 if (process.env.NODE_ENV !== 'test') {
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`===================================================`);
     console.log(`🚀 CityPulse Backend running on port ${PORT}`);
-    console.log(`📍 WhatsApp Webhook: http://localhost:${PORT}/webhook`);
-    console.log(`📍 Telegram Webhook: http://localhost:${PORT}/api/telegram/webhook`);
-    console.log(`📂 Evidence Storage: http://localhost:${PORT}/uploads/`);
+    console.log(`📍 WhatsApp Webhook: http://0.0.0.0:${PORT}/webhook`);
+    console.log(`📍 Telegram Webhook: http://0.0.0.0:${PORT}/api/telegram/webhook`);
+    console.log(`📂 Evidence Storage: http://0.0.0.0:${PORT}/uploads/`);
     console.log(`===================================================`);
   });
 }

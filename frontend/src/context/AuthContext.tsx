@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { getApiUrl } from '@/config/api';
 
 export interface User {
   id: number;
@@ -35,9 +36,8 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const API_URL = getApiUrl();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
