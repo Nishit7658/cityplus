@@ -525,45 +525,42 @@ async function executeInMemoryQuery(text, params = []) {
     if (lower.includes("status = 'resolved'")) {
       complaint.status = 'Resolved';
       complaint.resolved_at = new Date().toISOString();
-    } else if (lower.includes('status = $')) {
-      const statusParamIdx = params.findIndex(
-        (p, idx) =>
-          idx !== parseInt(idMatch[1], 10) - 1 &&
-          typeof p === 'string' &&
-          ['Pending', 'Assigned', 'In Progress', 'Resolved'].includes(p)
-      );
-      if (statusParamIdx !== -1) {
-        complaint.status = params[statusParamIdx];
-        if (complaint.status === 'Resolved') {
-          complaint.resolved_at = new Date().toISOString();
+    } else {
+      const statusMatch = sql.match(/status\s*=\s*\$(\d+)/i);
+      if (statusMatch) {
+        const idx = parseInt(statusMatch[1], 10) - 1;
+        if (params[idx] !== undefined) {
+          complaint.status = params[idx];
+          if (complaint.status === 'Resolved') {
+            complaint.resolved_at = new Date().toISOString();
+          }
         }
       }
     }
 
-    if (lower.includes('assigned_officer_id =')) {
-      const officerParamIdx = params.findIndex(
-        (p, idx) => idx !== parseInt(idMatch[1], 10) - 1 && typeof p === 'number'
-      );
-      if (officerParamIdx !== -1) {
-        complaint.assigned_officer_id = params[officerParamIdx];
+    const officerMatch = sql.match(/assigned_officer_id\s*=\s*\$(\d+)/i);
+    if (officerMatch) {
+      const idx = parseInt(officerMatch[1], 10) - 1;
+      if (params[idx] !== undefined) {
+        complaint.assigned_officer_id = params[idx];
       }
     }
 
-    if (lower.includes('photo_after_url')) {
-      const photoAfterParam = params.find(
-        (p, idx) => idx !== parseInt(idMatch[1], 10) - 1 && typeof p === 'string' && (p.startsWith('/uploads') || p.startsWith('http'))
-      );
-      if (photoAfterParam) {
-        complaint.photo_after_url = photoAfterParam;
+    // Explicit regex match for photo_after_url (avoids matching photo_url)
+    const photoAfterMatch = sql.match(/photo_after_url\s*=\s*(?:COALESCE\(\s*\$(\d+)|(?:\$(\d+)))/i);
+    if (photoAfterMatch) {
+      const idx = parseInt(photoAfterMatch[1] || photoAfterMatch[2], 10) - 1;
+      if (params[idx] !== undefined && params[idx] !== null) {
+        complaint.photo_after_url = params[idx];
       }
     }
 
-    if (lower.includes('photo_url')) {
-      const photoParam = params.find(
-        (p, idx) => idx !== parseInt(idMatch[1], 10) - 1 && typeof p === 'string' && (p.startsWith('/uploads') || p.startsWith('http'))
-      );
-      if (photoParam) {
-        complaint.photo_url = photoParam;
+    // Explicit regex match for photo_url (requires boundary or comma/start so it never matches photo_after_url)
+    const photoUrlMatch = sql.match(/(?:^|[\s,])photo_url\s*=\s*\$(\d+)/i);
+    if (photoUrlMatch) {
+      const idx = parseInt(photoUrlMatch[1], 10) - 1;
+      if (params[idx] !== undefined && params[idx] !== null) {
+        complaint.photo_url = params[idx];
       }
     }
 
