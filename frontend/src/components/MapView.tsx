@@ -77,6 +77,7 @@ export const MapView: React.FC<MapViewProps> = ({
         selectedWard={selectedWard}
         center={center}
         zoom={zoom}
+        height={height}
         showHeatmap={showHeatmap}
       />
 

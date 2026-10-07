@@ -28,6 +28,9 @@ body {
    Leaflet Map Isolation — prevents map elements from leaking above sticky headers
    ============================================================ */
 .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
   isolation: isolate;
   z-index: 1 !important;
 }

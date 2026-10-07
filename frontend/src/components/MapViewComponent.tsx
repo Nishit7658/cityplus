@@ -17,6 +17,7 @@ interface MapViewComponentProps {
   selectedWard?: number | string;
   center?: [number, number];
   zoom?: number;
+  height?: number | string;
   showHeatmap?: boolean;
 }
 
@@ -123,6 +124,7 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
   selectedWard,
   center = [22.3072, 73.1812],
   zoom = 13,
+  height,
   showHeatmap = false,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -184,7 +186,25 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
     markersGroupRef.current = markersGroup;
     mapRef.current = map;
 
+    // Force Leaflet to recalculate container geometry once DOM is settled
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+
+    // Continuous container resize observer
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && mapContainerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        map.invalidateSize();
+      });
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
     return () => {
+      clearTimeout(timer);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (markersGroupRef.current) {
         markersGroupRef.current.clearLayers();
         markersGroupRef.current = null;
@@ -417,12 +437,15 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
     }
   };
 
+  const computedMinHeight = height ? (typeof height === 'number' ? `${height}px` : height) : '480px';
+
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full" style={{ minHeight: computedMinHeight }}>
       <div
         ref={mapContainerRef}
         className="w-full h-full"
         style={{
+          minHeight: computedMinHeight,
           background: '#F1F5F9',
         }}
       />
