@@ -144,6 +144,13 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'overview.exec_note': 'Executive Engineering Note: Sub-base erosion detected. Temporary asphalt patch insufficient. Requires capital structural reinforcement by Drainage & Sewerage Department.',
     'overview.recent_inbound': 'Recent Inbound Citizen Grievances',
     'overview.live_stream': 'Live Stream',
+    'overview.critical_banner': 'Critical Public Infrastructure Hazards',
+    'overview.critical_sub': 'High-risk public hazards requiring immediate priority engineering action',
+    'overview.spots': 'Incidents',
+    'overview.open_triage': 'Open Work Orders',
+    'overview.gis_title': 'VMC Spatial Cartography & Incident Map',
+    'overview.geo_pinned': 'Geo-Pinned Reports',
+    'overview.live_feed': 'Live Citizen Grievance Activity Feed',
 
     // Queue Page
     'queue.title': 'Municipal Work Orders & Citizen Task Queue',
@@ -379,6 +386,13 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'overview.exec_note': 'કાર્યપાલક ઇજનેર નોંધ: પાયામાં ધોવાણ જણાયેલ છે. માત્ર ડામર પેચ પૂરતો નથી. ડ્રેનેજ વિભાગ દ્વારા માળખાકીય મજબૂતીકરણ જરૂરી છે.',
     'overview.recent_inbound': 'તાજેતરમાં આવેલી નાગરિક ફરિયાદો',
     'overview.live_stream': 'લાઈવ સ્ટ્રીમ',
+    'overview.critical_banner': 'ગંભીર જાહેર માળખાકીય જોખમો',
+    'overview.critical_sub': 'ત્વરિત ફીલ્ડ એન્જિનિયરિંગ પગલાં માટે ફ્લેગ કરેલા ઉચ્ચ જોખમ સ્પોટ',
+    'overview.spots': 'સ્થળો',
+    'overview.open_triage': 'વર્ક ઓર્ડર ખોલો',
+    'overview.gis_title': 'VMC ભૌગોલિક માહિતી પ્રણાલી (GIS)',
+    'overview.geo_pinned': 'જીઓ-ટેગ થયેલ ફરિયાદો',
+    'overview.live_feed': 'લાઈવ નાગરિક ફરિયાદ પ્રવાહ',
 
     // Queue Page
     'queue.title': 'મ્યુનિસિપલ વર્ક ઓર્ડર અને નાગરિક ફરિયાદ કતાર',
@@ -614,6 +628,13 @@ const DICTIONARY: Record<Language, Record<string, string>> = {
     'overview.exec_note': 'कार्यपालक अभियंता टिप्पणी: सब-बेस क्षरण पाया गया है। केवल डामर पैच पर्याप्त नहीं है। जल निकासी विभाग द्वारा संरचनात्मक सुदृढ़ीकरण आवश्यक है।',
     'overview.recent_inbound': 'हाल ही में प्राप्त नागरिक शिकायतें',
     'overview.live_stream': 'लाइव स्ट्रीम',
+    'overview.critical_banner': 'गंभीर सार्वजनिक बुनियादी ढांचा खतरे',
+    'overview.critical_sub': 'त्वरित फील्ड इंजीनियरिंग कार्रवाई के लिए उच्च जोखिम वाले स्थान',
+    'overview.spots': 'स्थान',
+    'overview.open_triage': 'कार्य आदेश खोलें',
+    'overview.gis_title': 'VMC भौगोलिक सूचना प्रणाली (GIS)',
+    'overview.geo_pinned': 'जियो-टैग्ड शिकायतें',
+    'overview.live_feed': 'लाइव नागरिक शिकायत गतिविधि फीड',
 
     // Queue Page
     'queue.title': 'नगर निगम कार्य आदेश एवं नागरिक शिकायत कतार',

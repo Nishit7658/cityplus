@@ -24,6 +24,9 @@ const uploadRouter = require('./routes/upload');
 const app = express();
 const server = http.createServer(app);
 
+// Trust reverse proxy (Render, Cloudflare, AWS) so rate-limiting correctly identifies clients
+app.set('trust proxy', 1);
+
 // 1. Security Headers via Helmet
 app.use(
   helmet({
@@ -56,12 +59,13 @@ app.use(
   })
 );
 
-// 3. Rate Limiting Protection
+// 3. Rate Limiting Protection (Behind Cloud Proxy)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // limit each IP to 1000 requests per window
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: { error: 'Too many requests from this IP, please try again after 15 minutes.' },
 });
 app.use('/api/', apiLimiter);

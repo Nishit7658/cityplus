@@ -167,9 +167,9 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
       zoomAnimation: true,
     });
 
-    const streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    const streetLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
+      attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map);
     tileLayerRef.current = streetLayer;
 
@@ -178,7 +178,7 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
     L.control
       .attribution({
         position: 'bottomleft',
-        prefix: '<span style="font-size:10px;color:#888;">© VMC GIS • CARTO</span>',
+        prefix: '<span style="font-size:10px;color:#888;">© VMC GIS • OpenStreetMap</span>',
       })
       .addTo(map);
 
@@ -431,8 +431,8 @@ export const MapViewComponent: React.FC<MapViewComponentProps> = ({
       ).addTo(map);
     } else {
       tileLayerRef.current = L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-        { maxZoom: 19, subdomains: 'abcd' }
+        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }
       ).addTo(map);
     }
   };
