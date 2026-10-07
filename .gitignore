@@ -30,3 +30,9 @@ yarn-error.log*
 # Uploads
 backend/uploads/evidence_*
 uploads/evidence_*
+
+# Internal presentation & evaluation documents
+PROJECT_PRESENTATION_AND_JUDGES_QA.*
+generate_pdf.js
+project report on wad.md
+
